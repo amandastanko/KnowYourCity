@@ -59,7 +59,10 @@ button{font:inherit;color:inherit}
 @keyframes nudge{0%,100%{translate:0 0}50%{translate:0 8px}}
 .house-map{position:relative;width:min(100%,560px);aspect-ratio:1/1.08;justify-self:center;background:var(--ink);clip-path:polygon(50% 0,100% 27%,100% 100%,0 100%,0 27%)}
 .house-map .inner{position:absolute;inset:12px;background:#d9e4d0;clip-path:polygon(50% 0,100% 27%,100% 100%,0 100%,0 27%)}
-#viewDiv{position:absolute;inset:0;pointer-events:none}
+#viewDiv{position:absolute;inset:0}
+.maphint{position:absolute;left:12%;right:12%;bottom:5%;z-index:5;text-align:center;font-weight:700;font-size:14px;background:#fff;border:3px solid var(--ink);border-radius:999px;padding:5px 12px;pointer-events:none;transition:opacity .4s}
+.maphint.gone{opacity:0}
+.esri-ui .esri-zoom{margin:14px 0 0 14px}
 
 /* loading */
 #loading{position:fixed;inset:0;z-index:100;background:#FFD23F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font:800 clamp(22px,3vw,34px) var(--f-display);text-align:center;padding:20px;transition:opacity .5s}
@@ -309,7 +312,6 @@ button{font:inherit;color:inherit}
     <input id="q" type="search" placeholder="Search any U.S. town or city" autocomplete="off" aria-label="Search for a place">
     <ul id="sugg" role="listbox"></ul>
   </div>
-  <button class="pill" id="stateToggle" title="Also compare this place with its state">State comparison: off</button>
   <button class="pill" id="homieToggle" title="Show or hide Homie">Homie: on</button>
 </header>
 
@@ -321,7 +323,7 @@ button{font:inherit;color:inherit}
       <p class="line" id="heroLine">Scroll down and Homie will show you around.</p>
       <p class="cue"><i></i>Scroll to start</p>
     </div>
-    <div class="house-map" data-hid="hero"><div class="inner"><div id="viewDiv"></div></div></div>
+    <div class="house-map" data-hid="hero"><div class="inner"><div id="viewDiv"></div><div class="maphint" id="maphint">Drag to move. Click, then scroll to zoom.</div></div></div>
   </section>
 
   <div id="story"></div>
@@ -359,6 +361,11 @@ button{font:inherit;color:inherit}
 <script>
 /* ---------- Configuration ---------- */
 // Keys can live here for a public deployment. ArcGIS key is optional (OpenStreetMap basemap + free geocoder without it).
+// Optional: an ArcGIS web map for the hero. Its Census Places layer gets filtered to the selected place.
+//   id:         the web map's item ID (share the map publicly), or "" to use a plain basemap
+//   layerTitle: title of the Census Places layer in that web map ("" = first feature layer)
+//   expression: definition query; {GEOID} {STATE} {PLACE} {NAME} are replaced for each place
+var WEBMAP = { id: "", layerTitle: "", expression: "GEOID = '{GEOID}'" };
 var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "AAPTaWduh3eXELl158kRP-_vyBA..8xaoKh-46KJCfHz90o-Y0aI17Tb8I8IBhRjko8G_mA7-7DjCsmDgISPtuoYHpsgVTDGecyPH7BOZKoeEGuX6BnkztKkBovzzu-pSkuhDP6DmrR1TbSnlyUtLsP8_sQef1QvN9CPAVxBYL5bseqICAS3cOq5GBGhje56t5nIEd7dQ73Q-BZcaCFYNqz_uS697ncoJ9Pxpla0hPLPxZYBZikghB3i7z6PrxFS039_jKFabqwF974_DXrQ.AT1_lxq1zj7D" };
 
 (function () {
@@ -453,7 +460,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     var mag = Math.pow(10, String(n).length - 2);
     return (Math.round(n / mag) * mag).toLocaleString("en-US");
   };
-  var S = { showState: safeGet("kyc_state") === "on", st: null, stateName: "", fips: null, items: null, pl: null, us: null, own: null, name: "", R: {}, SAY: {}, facts: [], img: null, geoid: null, loadId: 0, view: null };
+  var S = { showState: true, st: null, stateName: "", fips: null, items: null, pl: null, us: null, own: null, name: "", R: {}, SAY: {}, facts: [], img: null, geoid: null, loadId: 0, view: null };
   var modules = {};
 
   /* ====================================================================
@@ -593,8 +600,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   function n100(v) { return Math.max(v > 0 ? 1 : 0, Math.round(v)); }
   VIZ.crowd = function (r) {
     var c = r.c, st = hasSt(c);
-    return vizWrap(r.id, "crowd", '<div class="crowd' + (st ? " three" : "") + '">' + peopleGrid(n100(c.p), S.name, "here") + peopleGrid(n100(c.pus), "U.S.", "us") +
-      (st ? peopleGrid(n100(c.st), S.stateName, "st") : "") + '</div>', r.say.main);
+    return vizWrap(r.id, "crowd", '<div class="crowd' + (st ? " three" : "") + '">' + peopleGrid(n100(c.p), S.name, "here") + (st ? peopleGrid(n100(c.st), S.stateName, "st") : "") + peopleGrid(n100(c.pus), "U.S.", "us") + '</div>', r.say.main);
   };
 
   // rows of 10 houses, each filled by its share
@@ -608,14 +614,14 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   }
   VIZ.houses = function (r) {
     var c = r.c;
-    return vizWrap(r.id, "houses", '<div class="hrows">' + houseRow(c.p, S.name, "here") + houseRow(c.pus, "U.S.", "us") + (hasSt(c) ? houseRow(c.st, S.stateName, "st") : "") + '</div>', r.say.main);
+    return vizWrap(r.id, "houses", '<div class="hrows">' + houseRow(c.p, S.name, "here") + (hasSt(c) ? houseRow(c.st, S.stateName, "st") : "") + houseRow(c.pus, "U.S.", "us") + '</div>', r.say.main);
   };
 
   // dollars as buildings
   VIZ.tower = function (r) {
     var c = r.c, st = hasSt(c), max = Math.max(c.p, c.pus, st ? c.st : 0) || 1;
     var col = function (v, name, cls) { return '<div class="tcol ' + cls + '" style="--h:' + Math.max(6, v / max * 82) + '%"><div class="v">' + esc(K.fmt(c, v)) + '</div><div class="b"></div><div class="n">' + esc(name) + '</div></div>'; };
-    return vizWrap(r.id, "tower", '<div class="tower' + (st ? " three" : "") + '">' + col(c.p, S.name, "here") + col(c.pus, "U.S.", "us") + (st ? col(c.st, S.stateName, "st") : "") + '</div>', r.say.main);
+    return vizWrap(r.id, "tower", '<div class="tower' + (st ? " three" : "") + '">' + col(c.p, S.name, "here") + (st ? col(c.st, S.stateName, "st") : "") + col(c.pus, "U.S.", "us") + '</div>', r.say.main);
   };
 
   // a scale with pins
@@ -662,7 +668,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     if (c.nW == null || c.nM == null) return VIZ.blocks(r);
     var unit = niceUnit(Math.max(c.nW, c.nM)), st = hasSt(c), SN = S.stateName;
     var norm = function (ratio, name, cls) { return { v: ratio * 100, name: name, cls: cls }; };
-    var rows = [norm(c.p, S.name, "here"), norm(c.pus, "U.S.", "us")]; if (st) rows.push(norm(c.st, SN, "st"));
+    var rows = [norm(c.p, S.name, "here")]; if (st) rows.push(norm(c.st, SN, "st")); rows.push(norm(c.pus, "U.S.", "us"));
     var max = Math.max.apply(null, rows.map(function (x) { return x.v; })) * 1.12, ref = 100 / max * 100;
     var strip = rows.map(function (x) {
       return '<div class="nr ' + x.cls + '"><span class="nl">' + esc(x.name) + '</span><div class="nb"><div class="nf" style="--w:' + (x.v / max * 100).toFixed(1) + '%"><b>' + Math.round(x.v) + '</b></div></div></div>';
@@ -685,7 +691,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       s += '<svg class="B" viewBox="0 0 40 40" style="--i:' + n + '"><use href="#i-house"/></svg></div></div>';
       return s;
     };
-    var inner = '<div class="blocks">' + row(c.p, S.name, "here") + row(c.pus, "U.S.", "us") + (hasSt(c) ? row(c.st, S.stateName, "st") : "") +
+    var inner = '<div class="blocks">' + row(c.p, S.name, "here") + (hasSt(c) ? row(c.st, S.stateName, "st") : "") + row(c.pus, "U.S.", "us") +
       '<div class="key"><span>Owned by a woman, no spouse present</span><span class="b">Owned by a man, no spouse present</span></div></div>';
     return vizWrap(r.id, "blocks", inner, r.say.main);
   };
@@ -727,7 +733,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
         '<p class="cmp">' + esc(r.say.cmp) + '</p></div>';
     }).join("");
     var d = el("div", "bars");
-    d.innerHTML = '<h3>' + esc(title) + '</h3><div class="bar-rows">' + rows + '</div><p class="legend2"><span class="k us"></span>U.S. figure' + (anySt ? '<span class="k st"></span>' + esc(S.stateName) + ' figure' : '') + '</p>';
+    d.innerHTML = '<h3>' + esc(title) + '</h3><div class="bar-rows">' + rows + '</div><p class="legend2">' + (anySt ? '<span class="k st"></span>' + esc(S.stateName) + ' figure' : '') + '<span class="k us"></span>U.S. figure</p>';
     return d;
   }
 
@@ -755,7 +761,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       return '<div class="step" data-hid="' + r.id + '"><div class="col" style="--h:' + clamp(r.c.p, 2, 100) + '%;--u:' + clamp(r.c.pus, 0, 100) + '%' + (st ? ';--u2:' + clamp(r.c.st, 0, 100) + '%' : '') + '"><div class="f"></div><div class="u"></div>' + (st ? '<div class="u2"></div>' : '') + '<div class="pc">' + esc(K.fmt(r.c, r.c.p)) + '</div></div>' +
         '<p class="main">' + esc(r.say.main) + '</p><p class="cmp">' + esc(r.say.cmp) + '</p></div>';
     }).join("");
-    d.innerHTML = '<h3>The staircase of diplomas in ' + esc(S.name) + '</h3><div class="stairs">' + steps + '</div><p class="legend">The dashed line marks the U.S. figure for each step.' + (anySt ? ' The white dotted line marks ' + esc(S.stateName) + '.' : '') + '</p>';
+    d.innerHTML = '<h3>The staircase of diplomas in ' + esc(S.name) + '</h3><div class="stairs">' + steps + '</div><p class="legend">' + (anySt ? 'The white dotted line marks ' + esc(S.stateName) + '. ' : '') + 'The dashed line marks the U.S. figure for each step.</p>';
     return d;
   }
 
@@ -796,7 +802,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       if (!c) return;
       if (useSt) { var cs = calcInd(s, S.st.rows, S.st.ownRow); c.cs = cs; c.st = cs ? cs.pus : null; }
       var r = { id: id, c: c, spec: s, say: K.sentence(c, s, S.name) };
-      if (useSt && c.st != null) { var sl = stateLine(r); if (sl) r.say = { main: r.say.main, cmp: r.say.cmp + " " + sl }; }
+      if (useSt && c.st != null) { var sl = stateLine(r); if (sl) r.say = { main: r.say.main, cmp: sl + " " + r.say.cmp }; }
       S.R[id] = r;
     });
   }
@@ -991,20 +997,6 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   window.addEventListener("resize", function () { if (activeEl) setActive(activeEl); sched(); });
   setHomieOn(homieOn);
 
-  var stBtn = $("#stateToggle");
-  function updateStBtn() { stBtn.textContent = "State comparison: " + (S.showState ? "on" : "off"); stBtn.setAttribute("aria-pressed", S.showState ? "true" : "false"); }
-  stBtn.addEventListener("click", async function () {
-    S.showState = !S.showState; safeSet("kyc_state", S.showState ? "on" : "off"); updateStBtn();
-    if (S.showState && !S.st && S.fips) {
-      stBtn.disabled = true;
-      try { await loadState(S.fips); }
-      catch (e) { S.showState = false; safeSet("kyc_state", "off"); updateStBtn(); showBubble("Couldn't load the state numbers. " + e.message); }
-      stBtn.disabled = false;
-    }
-    if (S.items) { var y = window.scrollY; buildStory(); window.scrollTo(0, y); sched(); }
-  });
-  updateStBtn();
-
   /* ====================================================================
    * Search and navigation
    * ==================================================================== */
@@ -1130,11 +1122,29 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
    * Load a place
    * ==================================================================== */
   function drawPlace(poly) {
-    S.pendingPoly = poly;
     if (!S.view || !poly) return;
     S.view.graphics.removeAll();
     S.view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [30, 27, 75, 0.18], outline: { color: [30, 27, 75, 1], width: 3 } } }));
     S.view.goTo(poly.extent.expand(1.3), { duration: 900 }).catch(function () {});
+  }
+  // Web map: filter its Census Places layer to this place. Otherwise: outline the place from TIGERweb.
+  async function applyPlaceToMap() {
+    var v = S.view, a = S.curAttrs; if (!v || !a) return;
+    if (S.webmap) {
+      try {
+        await v.when();
+        var layer = v.map.allLayers.find(function (l) { return WEBMAP.layerTitle ? l.title === WEBMAP.layerTitle : (l.type === "feature" && "definitionExpression" in l); });
+        if (!layer) throw new Error("no Census Places layer found in the web map" + (WEBMAP.layerTitle ? " named '" + WEBMAP.layerTitle + "'" : ""));
+        await layer.load();
+        layer.definitionExpression = (WEBMAP.expression || "GEOID = '{GEOID}'").replace(/\{(GEOID|STATE|PLACE|NAME)\}/g, function (m, k) { return String(a[k] == null ? "" : a[k]).replace(/'/g, "''"); });
+        layer.visible = true;
+        v.graphics.removeAll();
+        var q = await layer.queryExtent();
+        if (q && q.extent) { await v.goTo(q.extent.expand(1.3), { duration: 900 }); return; }
+        throw new Error("the layer returned no feature for " + a.GEOID);
+      } catch (e) { console.warn("Web map filter failed (" + e.message + "). Drawing the place outline instead."); }
+    }
+    drawPlace(S.pendingPoly);
   }
 
   async function loadPlace(feature) {
@@ -1147,20 +1157,20 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     S.name = a.BASENAME || a.NAME;
 
     var rg = feature.geometry.rings, poly = Poly(rg), wikiP = null;
-    if (poly) drawPlace(poly); else S.pendingPoly = null;
+    S.pendingPoly = poly; S.curAttrs = a; applyPlaceToMap();
     var xs = [], ys = []; rg.forEach(function (r) { r.forEach(function (c) { xs.push(c[0]); ys.push(c[1]); }); });
     var center = { longitude: (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, latitude: (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2 };
 
     if (!CFG.CENSUS_KEY) { showError("This app needs a free Census API key. Paste it into HARDCODED.census at the top of the script in index.html."); return; }
     try {
-      var res = await Promise.all([labelMap(), usRows(), groupRows("for=place:" + a.PLACE + "&in=state:" + a.STATE), loadOwnership(a.PLACE, a.STATE)]);
+      var res = await Promise.all([labelMap(), usRows(), groupRows("for=place:" + a.PLACE + "&in=state:" + a.STATE), loadOwnership(a.PLACE, a.STATE), loadState(a.STATE).catch(function (e) { console.warn("State comparison unavailable:", e.message); })]);
       if (myLoad !== S.loadId) return;
       S.items = K.buildItems(res[0]); S.us = res[1]; S.pl = res[2]; S.own = res[3];
       var nm = K.splitCensusName(S.pl.NAME);
       $("#stateName").textContent = nm.state;
       S.name = a.BASENAME || nm.place; S.stateName = nm.state;
       $("#placeName").textContent = S.name;
-      if (S.showState) { try { await loadState(a.STATE); } catch (e) { console.warn("State comparison unavailable:", e.message); } if (myLoad !== S.loadId) return; }
+
       wikiP = wikiFacts(S.name + ", " + nm.state, center.latitude, center.longitude, S.name);
     } catch (e) { console.error(e); showError(e.message); return; }
 
@@ -1182,14 +1192,21 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   function startMap() {
     if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); return; }
     try {
-      require(["esri/config", "esri/Map", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer"],
-        function (esriConfig, Map, MapView, Graphic, Polygon, WebTileLayer) {
+      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer"],
+        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer) {
           modules.Graphic = Graphic; modules.Polygon = Polygon;
-          var map;
-          if (CFG.ARCGIS_KEY) { esriConfig.apiKey = CFG.ARCGIS_KEY; map = new Map({ basemap: "arcgis/community" }); }
+          var wmId = WEBMAP.id || qs.get("webmap") || "", map;
+          if (CFG.ARCGIS_KEY) esriConfig.apiKey = CFG.ARCGIS_KEY;
+          if (wmId) { map = new WebMap({ portalItem: { id: wmId } }); S.webmap = true; }
+          else if (CFG.ARCGIS_KEY) map = new Map({ basemap: "arcgis/community" });
           else map = new Map({ layers: [new WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
-          S.view = new MapView({ container: "viewDiv", map: map, center: [-117.18, 34.06], zoom: 11, ui: { components: [] } });
-          if (S.pendingPoly) drawPlace(S.pendingPoly);
+          S.view = new MapView({ container: "viewDiv", map: map, center: [-117.18, 34.06], zoom: 11, ui: { components: ["zoom"] },
+            navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
+          // The page scrolls by default. Click the map to zoom with the scroll wheel; moving away gives scrolling back.
+          var box = $("#viewDiv"), hint = $("#maphint");
+          S.view.on("click", function () { S.view.navigation.mouseWheelZoomEnabled = true; if (hint) hint.classList.add("gone"); });
+          box.addEventListener("mouseleave", function () { S.view.navigation.mouseWheelZoomEnabled = false; });
+          S.view.when(function () { applyPlaceToMap(); }, function (e) { console.warn("Map view failed:", e); });
         }, function (err) { console.warn("Map failed to start:", err); });
     } catch (e) { console.warn("Map failed to start:", e); }
   }
