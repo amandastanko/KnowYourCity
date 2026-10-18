@@ -204,6 +204,16 @@ button{font:inherit;color:inherit}
 
 
 
+/* photo breaks */
+.photobreak{position:relative;margin:0;height:clamp(260px,52vh,540px);overflow:hidden;border-top:5px solid var(--ink);border-bottom:5px solid var(--ink);background:var(--ink)}
+.photobreak img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.08);transition:transform 2.2s cubic-bezier(.2,.7,.2,1)}
+.photobreak.in img{transform:scale(1)}
+.photobreak figcaption{position:absolute;left:clamp(14px,3vw,36px);bottom:clamp(14px,3vw,30px);max-width:min(560px,calc(100% - 28px));background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 14px;box-shadow:5px 5px 0 var(--ink);transform:rotate(-1deg)}
+.photobreak figcaption b{display:block;font:800 clamp(16px,1.8vw,22px)/1.15 var(--f-display)}
+.photobreak .credit{display:block;margin-top:4px;font-size:12px;opacity:.85;overflow-wrap:anywhere}
+.photobreak .credit a{text-decoration:underline}
+.photobreak.spot{outline:4px dashed var(--ink);outline-offset:-10px}
+
 /* bars */
 .bars{max-width:1000px;margin:0 auto;padding:6vh 0}
 .bars h3{font:800 clamp(28px,4vw,52px)/1.05 var(--f-display);letter-spacing:-.025em;margin:0 0 1em;max-width:22ch}
@@ -589,6 +599,16 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     return n.map(function (r) { return { name: r.display_name, lon: parseFloat(r.lon), lat: parseFloat(r.lat) }; });
   }
 
+  // "...population of 73,168, up from 68,747 at the 2010 census" -> adds ", an increase of 6.4%"
+  function addGrowth(s) {
+    return s.replace(/population of ([\d,]+),?\s*(up|down) from ([\d,]+)(?: at| in)? the (\d{4}) census/i, function (m, now, dir, then) {
+      var a = +now.replace(/,/g, ""), b = +then.replace(/,/g, "");
+      if (!(a > 0) || !(b > 0)) return m;
+      var pct = Math.abs((a - b) / b * 100), t = pct.toFixed(1).replace(/\.0$/, "");
+      if (pct < 0.05) return m;
+      return m + ", " + (a >= b ? "an increase of " : "a decrease of ") + t + "%";
+    });
+  }
   // Free-licensed photos taken near the place, from Wikimedia Commons (no key needed). Keeps real photos only, with credits.
   var PHOTO_SKIP = /\b(map|maps|logo|flag|seal|coat of arms|diagram|locator|plan|chart|poster|scan|sign|signage|plaque|interior|screenshot|banner|icon|diploma|certificate)\b/i;
   var OK_LICENSE = /^(CC[ -]BY(-SA)?( |$)|CC0|Public domain|PD)/i;
@@ -597,7 +617,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     var out = [];
     try {
       var j = await getJSON("https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsnamespace=6&ggscoord=" + lat + "%7C" + lon +
-        "&ggsradius=10000&ggslimit=50&prop=imageinfo&iiprop=url%7Cextmetadata%7Cmime%7Csize&iiurlwidth=640&format=json&origin=*");
+        "&ggsradius=10000&ggslimit=100&prop=imageinfo&iiprop=url%7Cextmetadata%7Cmime%7Csize&iiurlwidth=640&format=json&origin=*");
       var pages = (j.query && j.query.pages) || {};
       Object.keys(pages).map(function (k) { return pages[k]; }).sort(function (a, b) { return (a.index || 0) - (b.index || 0); }).forEach(function (pg) {
         var ii = pg.imageinfo && pg.imageinfo[0]; if (!ii || !ii.extmetadata) return;
@@ -611,10 +631,12 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
         if (/^(IMG|DSC|P)[_ -]?\d+/i.test(title) && !desc) return;
         var url = ii.thumburl || ii.url; if (avoidUrl && ii.url === avoidUrl) return;
         var author = plainText(m.Artist && m.Artist.value).slice(0, 48) || "Unknown author";
-        out.push({ url: url, title: title.length > 90 ? title.slice(0, 88) + "…" : title, author: author, license: lic, page: ii.descriptionurl });
+        var key = title.toLowerCase().split(/\s+/).slice(0, 2).join(" ");
+        if (out.some(function (o) { return o.key === key; }) || out.filter(function (o) { return o.author === author; }).length >= 3) return;   // keep the set varied
+        out.push({ key: key, url: url, title: title.length > 90 ? title.slice(0, 88) + "…" : title, author: author, license: lic, page: ii.descriptionurl });
       });
     } catch (e) { console.warn("Photo search failed:", e.message); }
-    return out.slice(0, 5);
+    return out.slice(0, 12);
   }
 
   async function wikiFacts(label, lat, lon, base) {
@@ -1028,6 +1050,20 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       story.appendChild(sc);
     });
 
+    // Photo breaks: more nearby photos between the sections as you scroll
+    (function () {
+      var extra = (S.photos || []).slice(5), bi = 0;
+      if (!extra.length) return;
+      [].slice.call(story.children).forEach(function (sc, i) {
+        if (i < 2 || (i - 2) % 2 !== 0 || bi >= extra.length) return;
+        var ph = extra[bi], id = "break" + bi; bi++;
+        var fig = el("figure", "photobreak"); fig.setAttribute("data-hid", id);
+        fig.innerHTML = '<img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><figcaption><b>' + esc(ph.title) + '</b><span class="credit">Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a></span></figcaption>';
+        S.SAY[id] = BREAK_QUIPS[(bi - 1) % BREAK_QUIPS.length].replace("{P}", P);
+        sc.insertAdjacentElement("afterend", fig);
+      });
+    })();
+
     // Next stop
     var end = scene("yellow", null);
     var e = el("div", "end");
@@ -1054,6 +1090,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
 
     observeAll();
   }
+  var BREAK_QUIPS = ["Here's another look at {P}.", "Quick scenery break in {P}!", "More of what {P} looks like.", "Another view around {P}.", "Still in {P}. Look at that!", "One more photo from {P}."];
   var PHOTO_QUIPS = ["Here's what it looks like around here.", "A snapshot from a local.", "Take a look at this view.", "Somebody took this nearby.", "A little scenery for you."];
   var QUIPS = ["Here's a story from this place.", "Locals might know this one.", "A little local trivia.", "One more from around town.", "This one's from the history books.", "And one more for the road."];
 
@@ -1069,7 +1106,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     revealIO = new IntersectionObserver(function (es) {
       es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); revealIO.unobserve(e.target); } });
     }, { threshold: 0.25 });
-    $$(".beat, .composite, .bars, .stackb, .ringcell").forEach(function (n) { revealIO.observe(n); });
+    $$(".beat, .composite, .bars, .stackb, .ringcell, .photobreak").forEach(function (n) { revealIO.observe(n); });
     TARGETS = $$("[data-hid]");
     activeEl = null; sched();
   }
@@ -1336,7 +1373,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     S.photos = (await photoP) || [];
     if (myLoad !== S.loadId) return;
     S.img = w.img; S.wikiUrl = w.url;
-    var facts = w.sentences.concat(w.nearby.sort(function () { return Math.random() - 0.5; }).slice(0, 3));
+    var facts = w.sentences.map(addGrowth).concat(w.nearby.sort(function () { return Math.random() - 0.5; }).slice(0, 3));
     try {
       var pop = K.findItem(S.items, ["sex and age", "total population"]), popV = pop && K.getVals(S.pl, pop.base).e;
       if (popV && a.AREALAND) { var sqmi = a.AREALAND / 2589988.11; if (sqmi > 0.2) facts.push("About " + Math.round(popV / sqmi).toLocaleString() + " people live per square mile here, across roughly " + sqmi.toFixed(1) + " square miles of land."); }
