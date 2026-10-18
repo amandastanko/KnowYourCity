@@ -359,7 +359,7 @@ button{font:inherit;color:inherit}
 <script>
 /* ---------- Configuration ---------- */
 // Keys can live here for a public deployment. ArcGIS key is optional (OpenStreetMap basemap + free geocoder without it).
-var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "AAPTaYM52d1Q4jVvSS6Hvdm2tSg..gmLGy0llO89Rerp3y8tY6ew6egdffD08Yqj51J5v5xRdSjrcTm9BkrsktAVByXEPTxt8AR6chCr_HFWci2UC2X9rDTPYg7zksHlonihoQswcR9siX_GS5g6YwFv1UgdKe_tbiE9RuY-iGU0dT915ZqJN6U07i7t0028XAtxoBqGD-pmGyuik7E7hkka7qtpvnTqKp8j_UFuKf4C1NuQHSjKCwMXvc_Rk-Svw-ehVJQKCGE3MTbtebsU.AT1_lxq1zj7D" };
+var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "AAPTaWduh3eXELl158kRP-_vyBA..8xaoKh-46KJCfHz90o-Y0aI17Tb8I8IBhRjko8G_mA7-7DjCsmDgISPtuoYHpsgVTDGecyPH7BOZKoeEGuX6BnkztKkBovzzu-pSkuhDP6DmrR1TbSnlyUtLsP8_sQef1QvN9CPAVxBYL5bseqICAS3cOq5GBGhje56t5nIEd7dQ73Q-BZcaCFYNqz_uS697ncoJ9Pxpla0hPLPxZYBZikghB3i7z6PrxFS039_jKFabqwF974_DXrQ.AT1_lxq1zj7D" };
 
 (function () {
   var K = window.KYC;
@@ -541,11 +541,12 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
 
   async function geocode(q) {
     if (CFG.ARCGIS_KEY) {
-      var j = await getJSON("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&maxLocations=5&countryCode=USA&category=" +
-        encodeURIComponent("City,Town,Village,Populated Place,Neighborhood") + "&singleLine=" + encodeURIComponent(q) + "&token=" + encodeURIComponent(CFG.ARCGIS_KEY));
-      return (j.candidates || []).map(function (c) { return { name: c.address, lon: c.location.x, lat: c.location.y }; });
+      var j = await getJSON("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&maxLocations=8&countryCode=USA&outFields=Addr_type,City,Region,RegionAbbr&singleLine=" + encodeURIComponent(q) + "&token=" + encodeURIComponent(CFG.ARCGIS_KEY));
+      if (j.error) throw new Error("ArcGIS: " + (j.error.message || j.error.code));
+      var cs = j.candidates || [], towns = cs.filter(function (c) { return c.attributes && /^(Locality|PopulatedPlace)$/i.test(c.attributes.Addr_type || ""); });
+      return (towns.length ? towns : cs).map(function (c) { return { name: c.address, lon: c.location.x, lat: c.location.y }; });
     }
-    var n = await getJSON("https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&limit=5&q=" + encodeURIComponent(q));
+    var n = await getJSON("https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&limit=6&q=" + encodeURIComponent(q));
     return n.map(function (r) { return { name: r.display_name, lon: parseFloat(r.lon), lat: parseFloat(r.lat) }; });
   }
 
@@ -887,7 +888,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     var foot = el("div", "foot");
     foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
       '<p>Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.</p>' +
-      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Basemap: Esri / OpenStreetMap contributors.</p>';
+      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Basemap: Esri / OpenStreetMap contributors.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
     end.appendChild(foot);
     story.appendChild(end);
     var chips = $("#chips", end);
@@ -1060,13 +1061,20 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       var v = input.value.trim();
       if (v.length < 2) { sugg.style.display = "none"; return; }
       var seq = ++suggSeq;
-      suggTimer = setTimeout(async function () {
-        var res = [], err = null;
-        try { res = await searchPlaces(v); } catch (e) { err = e; console.warn("Place search failed:", e); }
-        if (!res.length) { try { res = (await geocode(v)).map(function (g) { return { lon: g.lon, lat: g.lat, name: g.name }; }); } catch (e) { console.warn("Geocoder fallback failed:", e); } }
-        if (seq !== suggSeq) return;
-        suggData = res;
-        renderSugg(res, err ? "Search isn't available right now. Check your connection and try again." : "No Census places match that. Try the city name, then a comma and the state.", input);
+      renderSugg([], "Searching…", input);
+      suggTimer = setTimeout(function () {
+        var errs = [], tigerShown = false;
+        function withTimeout(pr, ms, label) { return Promise.race([pr, new Promise(function (_, rej) { setTimeout(function () { rej(new Error(label + " took too long")); }, ms); })]); }
+        function show(res) { suggData = res; renderSugg(res, "", input); }
+        var tigerP = withTimeout(searchPlaces(v), 12000, "Census place search").catch(function (e) { errs.push(e.message); console.warn("Place search failed:", e); return []; });
+        var geoP = withTimeout(geocode(v), 9000, "Geocoder").then(function (g) { return g.map(function (x) { return { lon: x.lon, lat: x.lat, name: x.name }; }); }).catch(function (e) { errs.push(e.message); console.warn("Geocoder failed:", e); return []; });
+        tigerP.then(function (r) { if (seq === suggSeq && r.length) { tigerShown = true; show(r); } });
+        geoP.then(function (r) { if (seq === suggSeq && !tigerShown && r.length) show(r); });
+        Promise.all([tigerP, geoP]).then(function (all) {
+          if (seq !== suggSeq || all[0].length || all[1].length) return;
+          suggData = [];
+          renderSugg([], errs.length ? "Search isn't working right now (" + errs[0] + ")." : "No Census places match that. Try the city name, then a comma and the state.", input);
+        });
       }, 250);
     });
     input.addEventListener("keydown", function (e) {
@@ -1190,7 +1198,17 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   window.addEventListener("error", function (e) { if ($("#loading") && !$("#loading").classList.contains("gone")) showError("Something went wrong: " + e.message); });
   window.addEventListener("unhandledrejection", function (e) { if (!$("#loading").classList.contains("gone")) showError("Something went wrong: " + ((e.reason && e.reason.message) || e.reason)); });
 
-  startMap();
+  async function checkArcgisKey() {
+    if (!CFG.ARCGIS_KEY) return;
+    try {
+      var j = await getJSON("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&maxLocations=1&singleLine=Redlands&token=" + encodeURIComponent(CFG.ARCGIS_KEY));
+      if (j.error) throw new Error(j.error.message || ("code " + j.error.code));
+    } catch (e) {
+      console.warn("The ArcGIS key was not accepted (" + e.message + "). Using OpenStreetMap instead. In the key's settings, add " + location.origin + " as a referrer URL.");
+      CFG.ARCGIS_KEY = ""; S.keyIssue = true;
+    }
+  }
+  checkArcgisKey().then(startMap, startMap);
   (async function () {
     var wd = setTimeout(function () { if (!$("#loading").classList.contains("gone")) showError("This is taking too long. Check your internet connection and reload."); }, 40000);
     try {
