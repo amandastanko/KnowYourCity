@@ -1142,9 +1142,14 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
         for (var i = 0; i < layers.length; i++) {
           await layers[i].load();
           // Respect the popups configured in the web map. A template with a title and no content should show only the title
-          // (the SDK would otherwise fill in a table of every field).
+          // (the SDK would otherwise fill in a table of every field). Any other kind of content you add is kept.
           var tpl = layers[i].popupTemplate;
-          if (tpl && (tpl.content == null || (Array.isArray(tpl.content) && !tpl.content.length) || tpl.content === "")) tpl.content = [];
+          if (tpl) {
+            var pc = tpl.content, keepc = pc;
+            if (Array.isArray(pc)) keepc = pc.filter(function (e) { return !(e && e.type === "fields"); });
+            if (pc == null || pc === "" || (Array.isArray(keepc) && !keepc.length)) keepc = function () { var d = document.createElement("span"); d.style.display = "none"; return d; };
+            if (keepc !== pc) tpl.content = keepc;
+          }
           layers[i].definitionExpression = expr;
           if (found) continue;
           var q = await layers[i].queryExtent();
@@ -1202,8 +1207,8 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   function startMap() {
     if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); return; }
     try {
-      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer"],
-        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer) {
+      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils"],
+        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils) {
           modules.Graphic = Graphic; modules.Polygon = Polygon;
           var wmId = WEBMAP.id || qs.get("webmap") || "", map;
           if (CFG.ARCGIS_KEY) esriConfig.apiKey = CFG.ARCGIS_KEY;
@@ -1211,11 +1216,14 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
           else if (CFG.ARCGIS_KEY) map = new Map({ basemap: "arcgis/community" });
           else map = new Map({ layers: [new WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
           S.view = new MapView({ container: "viewDiv", map: map, center: [-117.18, 34.06], zoom: 11, ui: { components: ["zoom"] },
+            popup: { collapseEnabled: true, dockEnabled: true, dockOptions: { buttonEnabled: false, breakpoint: false, position: "bottom-center" } },
             navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
           // The page scrolls by default. Click the map to zoom with the scroll wheel; moving away gives scrolling back.
           var box = $("#viewDiv"), hint = $("#maphint");
           S.view.on("click", function () { S.view.navigation.mouseWheelZoomEnabled = true; if (hint) hint.classList.add("gone"); });
           box.addEventListener("mouseleave", function () { S.view.navigation.mouseWheelZoomEnabled = false; });
+          // Popups open collapsed, as a neat title bar along the bottom of the house. Click the arrow to expand.
+          try { reactiveUtils.watch(function () { return S.view.popup.visible; }, function (vis) { if (vis) S.view.popup.collapsed = true; }); } catch (e) { console.warn("Popup collapse unavailable:", e); }
           S.view.when(function () { applyPlaceToMap(); }, function (e) { console.warn("Map view failed:", e); });
         }, function (err) { console.warn("Map failed to start:", err); });
     } catch (e) { console.warn("Map failed to start:", e); }
