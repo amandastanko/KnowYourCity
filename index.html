@@ -109,16 +109,14 @@ button{font:inherit;color:inherit}
 .ruler .line{position:absolute;left:0;right:0;top:92px;height:14px;border-radius:99px;background:var(--track)}
 .ruler .fill{position:absolute;left:0;top:92px;height:14px;border-radius:99px;background:var(--acc);width:0;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
 .in .ruler .fill{width:var(--w)}
-.pin{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;text-align:center;font-weight:700;font-size:15px;line-height:1.15}
-.pin b{font:800 clamp(20px,2.3vw,28px) var(--f-display)}
+.pin{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;text-align:center;font-weight:700;font-size:15px;line-height:1.15;height:106px;justify-content:flex-start}
+.pin .lbl{display:block;white-space:nowrap;transform:translateX(var(--sh,0px))}
+.pin b{display:block;font:800 clamp(20px,2.3vw,28px) var(--f-display)}
 .pin i{display:block;width:22px;height:22px;border-radius:50%;border:4px solid var(--ink);background:var(--acc)}
-.pin.here{top:0}
-.pin.us{bottom:0;flex-direction:column-reverse}
+.pin.top{top:0}.pin.top i{margin-top:6px}
+.pin.bot{bottom:0;flex-direction:column-reverse}.pin.bot i{margin-bottom:6px}
 .pin.us i{background:#fff}
-.pin.here i{margin-top:6px}
-.pin.us i{margin-bottom:6px}
-.pin.here{height:106px;justify-content:flex-start}
-.pin.us{height:106px;justify-content:flex-start}
+.pin.st i{background:var(--ink);border-color:#fff;border-radius:6px;transform:rotate(45deg)}
 
 /* rings */
 .ringwrap{display:grid;justify-items:center;gap:8px}
@@ -198,6 +196,21 @@ button{font:inherit;color:inherit}
 .err{max-width:760px;margin:20vh auto;background:#fff;border:4px solid var(--ink);border-radius:22px;padding:26px}
 .err h2{font:800 32px var(--f-display);margin:0 0 8px}
 
+
+/* state comparison */
+.cg.st .dots i.on{--c:#fff}
+.crowd.three .dots{width:clamp(96px,14vw,160px)}
+.hrow.st .hs1 .fg{fill:#fff}
+.tcol.st .b{background-color:#fff;background-image:repeating-linear-gradient(0deg,transparent 0 16px,rgba(30,27,75,.16) 16px 24px)}
+.tower.three{gap:clamp(12px,3vw,40px)}
+.tower.three .tcol{width:clamp(78px,12vw,128px)}
+.tower.three .tcol .v{font-size:clamp(16px,1.9vw,24px)}
+.ring .tk2{stroke:var(--ink);stroke-width:3;stroke-dasharray:3 2}
+.brow.st .bh .A{fill:#fff;stroke:var(--ink);stroke-width:3;stroke-dasharray:4 3}
+.step .col .u2{position:absolute;left:0;right:0;height:0;border-top:4px dotted #fff;bottom:var(--u2)}
+.pill[disabled]{opacity:.6;cursor:progress}
+@media (max-width:820px){.pill{padding:7px 10px;font-size:14px}.top{gap:6px}}
+
 /* Homie */
 #homie{position:fixed;bottom:14px;left:14px;width:128px;z-index:70;transition:left .9s cubic-bezier(.5,0,.2,1);pointer-events:none}
 #homie.off,#ptr.off{display:none}
@@ -254,6 +267,7 @@ button{font:inherit;color:inherit}
     <input id="q" type="search" placeholder="Search any U.S. town or city" autocomplete="off" aria-label="Search for a place">
     <ul id="sugg" role="listbox"></ul>
   </div>
+  <button class="pill" id="stateToggle" title="Also compare this place with its state">State comparison: off</button>
   <button class="pill" id="homieToggle" title="Show or hide Homie">Homie: on</button>
 </header>
 
@@ -387,7 +401,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   };
 
   /* ---------- state ---------- */
-  var S = { items: null, pl: null, us: null, own: null, name: "", R: {}, SAY: {}, facts: [], img: null, geoid: null, loadId: 0, view: null };
+  var S = { showState: safeGet("kyc_state") === "on", st: null, stateName: "", fips: null, items: null, pl: null, us: null, own: null, name: "", R: {}, SAY: {}, facts: [], img: null, geoid: null, loadId: 0, view: null };
   var modules = {};
 
   /* ====================================================================
@@ -438,6 +452,10 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     Object.keys(p.variables).forEach(function (id) { if (/^S2501_C0[13]_\d{3}E$/.test(id)) vars[id] = { label: p.variables[id].label }; });
     try { localStorage.setItem(ck, JSON.stringify(vars)); } catch (e) {}
     return vars;
+  }
+  async function loadState(fips) {
+    var r = await Promise.all([groupRows("for=state:" + fips), ownData("for=state:" + fips, "kyc_own_st_" + fips).catch(function () { return null; })]);
+    S.st = { rows: r[0], ownRow: r[1], fips: fips };
   }
   async function loadOwnership(place, state) {
     try {
@@ -510,15 +528,18 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     return '<div class="viz vz-' + cls + '" data-hid="' + id + '" role="img" aria-label="' + esc(label) + '">' + inner + '</div>';
   }
 
-  // 100 people, here vs U.S.
+  // 100 people, here vs U.S. (vs state)
   function peopleGrid(n, name, cls) {
     var s = '<div class="cg ' + cls + '"><div class="lab"><b>' + esc(name) + '</b>' + n + ' of every 100</div><div class="dots">';
     for (var i = 0; i < 100; i++) s += '<i class="' + (i < n ? "on" : "") + '" style="--i:' + i + '"></i>';
     return s + '</div></div>';
   }
+  function hasSt(c) { return S.showState && c.st != null && S.stateName; }
+  function n100(v) { return Math.max(v > 0 ? 1 : 0, Math.round(v)); }
   VIZ.crowd = function (r) {
-    var c = r.c, n1 = Math.max(c.p > 0 ? 1 : 0, Math.round(c.p)), n2 = Math.max(c.pus > 0 ? 1 : 0, Math.round(c.pus));
-    return vizWrap(r.id, "crowd", '<div class="crowd">' + peopleGrid(n1, S.name, "here") + peopleGrid(n2, "U.S.", "us") + '</div>', r.say.main);
+    var c = r.c, st = hasSt(c);
+    return vizWrap(r.id, "crowd", '<div class="crowd' + (st ? " three" : "") + '">' + peopleGrid(n100(c.p), S.name, "here") + peopleGrid(n100(c.pus), "U.S.", "us") +
+      (st ? peopleGrid(n100(c.st), S.stateName, "st") : "") + '</div>', r.say.main);
   };
 
   // rows of 10 houses, each filled by its share
@@ -531,37 +552,46 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     return s + '</div></div>';
   }
   VIZ.houses = function (r) {
-    return vizWrap(r.id, "houses", '<div class="hrows">' + houseRow(r.c.p, S.name, "here") + houseRow(r.c.pus, "U.S.", "us") + '</div>', r.say.main);
+    var c = r.c;
+    return vizWrap(r.id, "houses", '<div class="hrows">' + houseRow(c.p, S.name, "here") + houseRow(c.pus, "U.S.", "us") + (hasSt(c) ? houseRow(c.st, S.stateName, "st") : "") + '</div>', r.say.main);
   };
 
   // dollars as buildings
   VIZ.tower = function (r) {
-    var c = r.c, max = Math.max(c.p, c.pus) || 1;
+    var c = r.c, st = hasSt(c), max = Math.max(c.p, c.pus, st ? c.st : 0) || 1;
     var col = function (v, name, cls) { return '<div class="tcol ' + cls + '" style="--h:' + Math.max(6, v / max * 82) + '%"><div class="v">' + esc(K.fmt(c, v)) + '</div><div class="b"></div><div class="n">' + esc(name) + '</div></div>'; };
-    return vizWrap(r.id, "tower", '<div class="tower">' + col(c.p, S.name, "here") + col(c.pus, "U.S.", "us") + '</div>', r.say.main);
+    return vizWrap(r.id, "tower", '<div class="tower' + (st ? " three" : "") + '">' + col(c.p, S.name, "here") + col(c.pus, "U.S.", "us") + (st ? col(c.st, S.stateName, "st") : "") + '</div>', r.say.main);
   };
 
-  // a scale with two pins
+  // a scale with pins
   VIZ.ruler = function (r) {
-    var c = r.c, max = Math.max(c.p, c.pus) * 1.4, pos = function (v) { return clamp(v / max * 100, 6, 94); };
+    var c = r.c, st = hasSt(c), max = Math.max(c.p, c.pus, st ? c.st : 0) * 1.4, pos = function (v) { return clamp(v / max * 100, 6, 94); };
+    var pins = [{ cls: "here", v: c.p, n: S.name, lane: "t" }, { cls: "us", v: c.pus, n: "U.S.", lane: "b" }];
+    if (st) { var dt = Math.abs(pos(c.st) - pos(c.p)), db = Math.abs(pos(c.st) - pos(c.pus)); pins.push({ cls: "st", v: c.st, n: S.stateName, lane: dt > db ? "t" : "b" }); }
+    ["t", "b"].forEach(function (l) {
+      var ps = pins.filter(function (p) { return p.lane === l; }).sort(function (a, b) { return pos(a.v) - pos(b.v); });
+      if (ps.length === 2 && pos(ps[1].v) - pos(ps[0].v) < 16) { ps[0].sh = -46; ps[1].sh = 46; }
+    });
     var inner = '<div class="ruler" style="--w:' + pos(c.p) + '%"><div class="line"></div><div class="fill"></div>' +
-      '<div class="pin here" style="left:' + pos(c.p) + '%"><b>' + esc(K.fmt(c, c.p)) + '</b>' + esc(S.name) + '<i></i></div>' +
-      '<div class="pin us" style="left:' + pos(c.pus) + '%"><b>' + esc(K.fmt(c, c.pus)) + '</b>U.S.<i></i></div></div>';
+      pins.map(function (p) { return '<div class="pin ' + (p.lane === "t" ? "top" : "bot") + ' ' + p.cls + '" style="left:' + pos(p.v) + '%"><span class="lbl" style="--sh:' + (p.sh || 0) + 'px"><b>' + esc(K.fmt(c, p.v)) + '</b>' + esc(p.n) + '</span><i></i></div>'; }).join("") + '</div>';
     return vizWrap(r.id, "ruler", inner, r.say.main);
   };
 
-  // a ring with a tick for the U.S.
+  // a ring with a tick for the U.S. (and a dashed tick for the state)
   VIZ.ring = function (r) {
-    var c = r.c, p = clamp(c.p, 0, 100), ang = clamp(c.pus, 0, 100) / 100 * 2 * Math.PI;
-    var x1 = 60 + 46 * Math.cos(ang), y1 = 60 + 46 * Math.sin(ang), x2 = 60 + 66 * Math.cos(ang), y2 = 60 + 66 * Math.sin(ang);
+    var c = r.c, p = clamp(c.p, 0, 100), st = hasSt(c);
+    function tick(v, cls) {
+      var a = clamp(v, 0, 100) / 100 * 2 * Math.PI;
+      return '<line class="' + cls + '" x1="' + (60 + 46 * Math.cos(a)).toFixed(1) + '" y1="' + (60 + 46 * Math.sin(a)).toFixed(1) + '" x2="' + (60 + 66 * Math.cos(a)).toFixed(1) + '" y2="' + (60 + 66 * Math.sin(a)).toFixed(1) + '"/>';
+    }
+    var cap = 'Solid tick: U.S. figure, ' + K.fmt(c, c.pus) + (st ? '. Dashed tick: ' + S.stateName + ', ' + K.fmt(c, c.st) : '');
     var inner = '<div class="ringwrap"><div class="ring"><svg viewBox="0 0 120 120"><circle class="tr" cx="60" cy="60" r="52" pathLength="100"/>' +
-      '<circle class="ar" cx="60" cy="60" r="52" pathLength="100" style="--p:' + p.toFixed(1) + '"/>' +
-      '<line class="tk" x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '"/></svg>' +
-      '<div class="mid">' + esc(K.fmt(c, c.p)) + '</div></div><div class="ring-cap">The tick marks the U.S. figure: ' + esc(K.fmt(c, c.pus)) + '</div></div>';
+      '<circle class="ar" cx="60" cy="60" r="52" pathLength="100" style="--p:' + p.toFixed(1) + '"/>' + tick(c.pus, "tk") + (st ? tick(c.st, "tk2") : "") + '</svg>' +
+      '<div class="mid">' + esc(K.fmt(c, c.p)) + '</div></div><div class="ring-cap">' + esc(cap) + '</div></div>';
     return vizWrap(r.id, "ring", inner, r.say.main);
   };
 
-  // ratio as two stacks of houses
+  // ratio as stacks of houses
   VIZ.blocks = function (r) {
     var c = r.c;
     var row = function (ratio, name, cls) {
@@ -570,7 +600,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       s += '<svg class="B" viewBox="0 0 40 40" style="--i:' + n + '"><use href="#i-house"/></svg></div></div>';
       return s;
     };
-    var inner = '<div class="blocks">' + row(c.p, S.name, "here") + row(c.pus, "U.S.", "us") +
+    var inner = '<div class="blocks">' + row(c.p, S.name, "here") + row(c.pus, "U.S.", "us") + (hasSt(c) ? row(c.st, S.stateName, "st") : "") +
       '<div class="key"><span>Owned by a woman, no spouse present</span><span class="b">Owned by a man, no spouse present</span></div></div>';
     return vizWrap(r.id, "blocks", inner, r.say.main);
   };
@@ -584,20 +614,23 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     S.SAY[id] = r.say.main;
     return d;
   }
+  var SC = {
+    yellow: { bg: "#FFD23F", acc: "#1E1B4B" }, mint: { bg: "#8FE3C8", acc: "#0B6E55" }, lilac: { bg: "#C9B8FF", acc: "#4B2FBF" },
+    tang: { bg: "#FFB35C", acc: "#B5400A" }, pink: { bg: "#FFB8D2", acc: "#A31858" }, leaf: { bg: "#B6E36B", acc: "#2D6A1E" }, teal: { bg: "#6FD6CB", acc: "#0A5560" }
+  };
   function scene(key, sign) {
     var c = SC[key], s = el("section", "scene");
     s.style.setProperty("--bg", c.bg); s.style.setProperty("--acc", c.acc);
     if (sign) s.appendChild(el("div", "sign", esc(sign)));
     return s;
   }
-  var SC = {
-    yellow: { bg: "#FFD23F", acc: "#1E1B4B" }, mint: { bg: "#8FE3C8", acc: "#0B6E55" }, lilac: { bg: "#C9B8FF", acc: "#4B2FBF" },
-    tang: { bg: "#FFB35C", acc: "#B5400A" }, pink: { bg: "#FFB8D2", acc: "#A31858" }, leaf: { bg: "#B6E36B", acc: "#2D6A1E" }, teal: { bg: "#6FD6CB", acc: "#0A5560" }
-  };
+  // How far this place sits from the U.S. figure, in statistical terms (bigger = more different).
+  function rank(r) { return r.spec.custom === "mix" ? r.c.rel * 20 : Math.abs(r.c.z || 0); }
+  function byRank(a, b) { return rank(b) - rank(a); }
 
-  // Commute modes as one road, with a sentence per lane
+  // Commute modes as one road, with a sentence per lane (most different lane first)
   function roadBlock(ids) {
-    var rs = ids.map(function (i) { return S.R[i]; }).filter(Boolean); if (!rs.length) return null;
+    var rs = ids.map(function (i) { return S.R[i]; }).filter(Boolean).sort(byRank); if (!rs.length) return null;
     var tot = rs.reduce(function (a, r) { return a + r.c.p; }, 0) || 1;
     var d = el("div", "composite");
     var segs = rs.map(function (r) { return '<span style="--w:' + (r.c.p / tot * 100).toFixed(1) + '%" title="' + esc(r.spec.pred) + '">' + r.spec.em + '</span>'; }).join("");
@@ -609,33 +642,52 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     return d;
   }
 
-  // Education as stairs, with a sentence per step
+  // Education as stairs, with a sentence per step (kept in step order so it reads as a staircase)
   function stairsBlock(ids) {
     var rs = ids.map(function (i) { return S.R[i]; }).filter(Boolean); if (!rs.length) return null;
-    var d = el("div", "composite");
+    var d = el("div", "composite"), anySt = false;
     var steps = rs.map(function (r) {
       S.SAY[r.id] = r.say.main;
-      return '<div class="step" data-hid="' + r.id + '"><div class="col" style="--h:' + clamp(r.c.p, 2, 100) + '%;--u:' + clamp(r.c.pus, 0, 100) + '%"><div class="f"></div><div class="u"></div><div class="pc">' + esc(K.fmt(r.c, r.c.p)) + '</div></div>' +
+      var st = hasSt(r.c); anySt = anySt || st;
+      return '<div class="step" data-hid="' + r.id + '"><div class="col" style="--h:' + clamp(r.c.p, 2, 100) + '%;--u:' + clamp(r.c.pus, 0, 100) + '%' + (st ? ';--u2:' + clamp(r.c.st, 0, 100) + '%' : '') + '"><div class="f"></div><div class="u"></div>' + (st ? '<div class="u2"></div>' : '') + '<div class="pc">' + esc(K.fmt(r.c, r.c.p)) + '</div></div>' +
         '<p class="main">' + esc(r.say.main) + '</p><p class="cmp">' + esc(r.say.cmp) + '</p></div>';
     }).join("");
-    d.innerHTML = '<h3>The staircase of diplomas in ' + esc(S.name) + '</h3><div class="stairs">' + steps + '</div><p class="legend">The dashed line marks the U.S. figure for each step.</p>';
+    d.innerHTML = '<h3>The staircase of diplomas in ' + esc(S.name) + '</h3><div class="stairs">' + steps + '</div><p class="legend">The dashed line marks the U.S. figure for each step.' + (anySt ? ' The white dotted line marks ' + esc(S.stateName) + '.' : '') + '</p>';
     return d;
   }
 
   /* ====================================================================
    * Build the story
    * ==================================================================== */
+  function calcInd(s, ref, refOwn) {
+    var own = S.own;
+    if (s.custom === "fm") return own && refOwn ? K.femaleMaleOwnerRatio(own.rows, own.pl, refOwn) : null;
+    if (s.custom === "mix") return ref ? K.diversityCompare(S.items, S.pl, ref) : null;
+    if (s.own) { var row = own && refOwn && K.findOwnRow(own.rows, s.own); return row ? K.compareOwnRate(row, own.pl, refOwn) : null; }
+    var it = K.findItem(S.items, s.find); return it && ref ? K.compare(it, S.pl, ref) : null;
+  }
+
+  // One neutral sentence comparing the place with its state
+  function stateLine(r) {
+    var c = r.c, cs = c.cs, SN = S.stateName, P = S.name;
+    if (!cs || c.st == null) return "";
+    var gap, higher;
+    if (r.spec.custom === "mix") { gap = Math.abs(c.p - c.st) >= 3; higher = c.p > c.st; }
+    else { gap = cs.sig && (cs.ratio >= 1.15 || cs.ratio <= 0.87); higher = cs.ratio > 1; }
+    var val = r.spec.custom === "fm" ? "about " + K.trimNum(c.st) + " to 1" : r.spec.custom === "mix" ? "about " + Math.round(c.st) + " in 100" : K.fmt(c, c.st);
+    return "In " + SN + " the figure is " + val + ", so " + P + " is " + (gap ? (higher ? "higher than" : "lower than") : "about the same as") + " " + SN + ".";
+  }
+
   function resolveAll() {
     S.R = {};
-    var own = S.own;
+    var own = S.own, useSt = S.showState && S.st;
     Object.keys(IND).forEach(function (id) {
-      var s = IND[id], c = null;
-      if (s.custom === "fm") c = own ? K.femaleMaleOwnerRatio(own.rows, own.pl, own.us) : null;
-      else if (s.custom === "mix") c = K.diversityCompare(S.items, S.pl, S.us);
-      else if (s.own) { var row = own && K.findOwnRow(own.rows, s.own); c = row ? K.compareOwnRate(row, own.pl, own.us) : null; }
-      else { var it = K.findItem(S.items, s.find); c = it ? K.compare(it, S.pl, S.us) : null; }
+      var s = IND[id], c = calcInd(s, S.us, own && own.us);
       if (!c) return;
-      S.R[id] = { id: id, c: c, spec: s, say: K.sentence(c, s, S.name) };
+      if (useSt) { var cs = calcInd(s, S.st.rows, S.st.ownRow); c.cs = cs; c.st = cs ? cs.pus : null; }
+      var r = { id: id, c: c, spec: s, say: K.sentence(c, s, S.name) };
+      if (useSt && c.st != null) { var sl = stateLine(r); if (sl) r.say = { main: r.say.main, cmp: r.say.cmp + " " + sl }; }
+      S.R[id] = r;
     });
   }
 
@@ -645,59 +697,20 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     var out = [], seen = {};
     function take(list) { list.forEach(function (r) { if (out.length < 3 && !seen[r.spec.grp]) { seen[r.spec.grp] = 1; out.push(r); } }); }
     take(ok);
-    if (out.length < 3) take(all.filter(function (r) { return r.c.sig && out.indexOf(r) < 0; }).sort(function (a, b) { return Math.abs(b.c.z) - Math.abs(a.c.z); }));
+    if (out.length < 3) take(all.filter(function (r) { return r.c.sig && out.indexOf(r) < 0; }).sort(byRank));
     return out;
   }
 
   function buildStory() {
     var story = $("#story"); story.innerHTML = ""; S.SAY = {};
     resolveAll();
-    var P = S.name, flip = false, order = ["mint", "lilac", "tang"];
+    var P = S.name, used = {}, flip = false, prev = "pink", ci = 0, CYCLE = ["teal", "yellow", "leaf", "lilac", "tang", "mint", "pink"];
+    function pickColor() { var k; do { k = CYCLE[ci++ % CYCLE.length]; } while (k === prev); prev = k; return k; }
 
-    // Plot twists: the three biggest real differences from the U.S., one per screen
-    var twists = pickTwists(), used = {};
-    twists.forEach(function (r) { used[r.id] = 1; });
-    twists.forEach(function (r, i) {
-      var sc = scene(order[i], i === 0 ? "What sets " + P + " apart" : null);
-      var spec = r.spec, vz = spec.viz, original = spec.viz;
-      var b = (function () {
-        var rr = Object.assign({}, r, { spec: Object.assign({}, spec, { viz: (vz === "road" || vz === "stairs" || vz === "ring") ? "crowd" : vz }) });
-        S.R[r.id] = rr; var d = beat(r.id, i % 2 === 1, true); S.R[r.id] = r; return d;
-      })();
-      if (b) { sc.appendChild(b); story.appendChild(sc); }
-    });
-
-    function addScene(key, sign, ids, special) {
-      var sc = scene(key, sign), n = 0;
-      ids.forEach(function (id) { if (used[id]) return; var b = beat(id, flip); if (b) { sc.appendChild(b); flip = !flip; n++; } });
-      if (special) { var x = special(sc); if (x) n++; }
-      if (n) story.appendChild(sc);
-    }
-    addScene("teal", "Who lives in " + P, ["medAge", "under18", "age65"]);
-    addScene("pink", "Backgrounds and languages", ["mix", "hisp", "foreign", "lang"]);
-    addScene("yellow", "Under each roof", ["avgHH", "alone", "kids", "married"]);
-    addScene("leaf", "The homes", ["own", "value", "rentVal", "vacant", "singleFam", "noCar"]);
-
-    // Who owns the homes (S2501): the ratio first, then four rings in a grid
-    (function () {
-      var sc = scene("lilac", "Who owns the homes"), n = 0; used.ownFM = used.ownFM || 0;
-      var b = beat("ownFM", false); if (b) { sc.appendChild(b); n++; }
-      var cells = ["ownF", "ownM", "own1p", "ownMC"].map(function (id) {
-        var r = S.R[id]; if (!r) return "";
-        S.SAY[id] = r.say.main;
-        return '<div class="ringcell">' + VIZ.ring(r) + '<div><p class="main">' + esc(r.say.main) + '</p><p class="cmp">' + esc(r.say.cmp) + '</p></div></div>';
-      }).join("");
-      if (cells) { var g = el("div", "ringgrid", cells); sc.appendChild(g); n++; }
-      if (n) story.appendChild(sc);
-    })();
-
-    addScene("tang", "Work and money", ["income", "perCap", "poverty", "commute"], function (sc) { var x = roadBlock(["drive", "wfh", "transit", "walk"]); if (x) sc.appendChild(x); return x; });
-    addScene("mint", "Learning", [], function (sc) { var x = stairsBlock(["hs", "bach", "grad"]); if (x) sc.appendChild(x); return x; });
-
-    // Local trivia as postcards
+    // 1. Local stories come first, right after the map
     if (S.facts.length) {
-      var sc = scene("pink", null);
-      sc.appendChild(el("h2", "cards-title", "A few stories from " + esc(P)));
+      var ss = scene("pink", null);
+      ss.appendChild(el("h2", "cards-title", "A few stories from " + esc(P)));
       var wrap = el("div", "cards");
       S.facts.slice(0, 6).forEach(function (f, i) {
         var id = "fact" + i, card = el("div", "pc");
@@ -706,8 +719,54 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
         wrap.appendChild(card);
         S.SAY[id] = QUIPS[i % QUIPS.length];
       });
-      sc.appendChild(wrap); story.appendChild(sc);
+      ss.appendChild(wrap); story.appendChild(ss);
     }
+
+    // 2. Plot twists: the three biggest real differences from the U.S., one per screen
+    var twists = pickTwists();
+    twists.forEach(function (r) { used[r.id] = 1; });
+    twists.forEach(function (r, i) {
+      var sc = scene(pickColor(), i === 0 ? "What sets " + P + " apart" : null), b = beat(r.id, i % 2 === 1, true);
+      if (b) { sc.appendChild(b); story.appendChild(sc); }
+    });
+
+    // 3. Sections. Inside each, the most different facts come first; the sections themselves are ordered the same way.
+    var DEFS = [
+      { sign: "Who lives in " + P, ids: ["medAge", "under18", "age65"] },
+      { sign: "Backgrounds and languages", ids: ["mix", "hisp", "foreign", "lang"] },
+      { sign: "Under each roof", ids: ["avgHH", "alone", "kids", "married"] },
+      { sign: "The homes", ids: ["own", "value", "rentVal", "vacant", "singleFam", "noCar"] },
+      { sign: "Who owns the homes", ids: ["ownFM"], rings: ["ownF", "ownM", "own1p", "ownMC"] },
+      { sign: "Work and money", ids: ["income", "perCap", "poverty", "commute"], road: ["drive", "wfh", "transit", "walk"] },
+      { sign: "Learning", stairs: ["hs", "bach", "grad"] }
+    ];
+    var secs = DEFS.map(function (d) {
+      var units = [];
+      (d.ids || []).forEach(function (id) {
+        var r = S.R[id]; if (!r || used[id]) return;
+        units.push({ z: rank(r), build: function (sc) { var b = beat(id, flip); if (b) { sc.appendChild(b); flip = !flip; } } });
+      });
+      function group(ids, zfun, make) {
+        var rs = ids.map(function (i) { return S.R[i]; }).filter(Boolean); if (!rs.length) return;
+        units.push({ z: Math.max.apply(null, rs.map(rank)), build: function (sc) { var x = make(); if (x) sc.appendChild(x); } });
+      }
+      if (d.rings) group(d.rings, null, function () {
+        var cells = d.rings.map(function (i) { return S.R[i]; }).filter(Boolean).sort(byRank).map(function (r) {
+          S.SAY[r.id] = r.say.main;
+          return '<div class="ringcell">' + VIZ.ring(r) + '<div><p class="main">' + esc(r.say.main) + '</p><p class="cmp">' + esc(r.say.cmp) + '</p></div></div>';
+        }).join("");
+        return el("div", "ringgrid", cells);
+      });
+      if (d.road) group(d.road, null, function () { return roadBlock(d.road); });
+      if (d.stairs) group(d.stairs, null, function () { return stairsBlock(d.stairs); });
+      units.sort(function (a, b) { return b.z - a.z; });
+      return { sign: d.sign, units: units, z: units.length ? units[0].z : -1 };
+    }).filter(function (s) { return s.units.length; }).sort(function (a, b) { return b.z - a.z; });
+    secs.forEach(function (s) {
+      var sc = scene(pickColor(), s.sign);
+      s.units.forEach(function (u) { u.build(sc); });
+      story.appendChild(sc);
+    });
 
     // Next stop
     var end = scene("yellow", null);
@@ -715,8 +774,9 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     e.innerHTML = '<h2>Pick another place.</h2><input class="big" id="q2" type="search" placeholder="Type a town or city" autocomplete="off" aria-label="Search for another place"><div class="chips" id="chips"></div>';
     end.appendChild(e);
     var foot = el("div", "foot");
-    foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
-      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501, compared with the United States overall. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Basemap: Esri / OpenStreetMap contributors.</p>';
+    foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
+      '<p>Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.</p>' +
+      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Basemap: Esri / OpenStreetMap contributors.</p>';
     end.appendChild(foot);
     story.appendChild(end);
     var chips = $("#chips", end);
@@ -819,6 +879,20 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   window.addEventListener("resize", function () { if (activeEl) setActive(activeEl); sched(); });
   setHomieOn(homieOn);
 
+  var stBtn = $("#stateToggle");
+  function updateStBtn() { stBtn.textContent = "State comparison: " + (S.showState ? "on" : "off"); stBtn.setAttribute("aria-pressed", S.showState ? "true" : "false"); }
+  stBtn.addEventListener("click", async function () {
+    S.showState = !S.showState; safeSet("kyc_state", S.showState ? "on" : "off"); updateStBtn();
+    if (S.showState && !S.st && S.fips) {
+      stBtn.disabled = true;
+      try { await loadState(S.fips); }
+      catch (e) { S.showState = false; safeSet("kyc_state", "off"); updateStBtn(); showBubble("Couldn't load the state numbers. " + e.message); }
+      stBtn.disabled = false;
+    }
+    if (S.items) { var y = window.scrollY; buildStory(); window.scrollTo(0, y); sched(); }
+  });
+  updateStBtn();
+
   /* ====================================================================
    * Search and navigation
    * ==================================================================== */
@@ -876,7 +950,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
 
   async function loadPlace(feature) {
     var myLoad = ++S.loadId, a = feature.attributes;
-    S.geoid = a.GEOID; S.own = null; S.facts = []; S.img = null; S.wikiUrl = null;
+    S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.img = null; S.wikiUrl = null;
     history.replaceState(null, "", "?place=" + a.GEOID);
     $("#loading").classList.remove("gone");
     $("#placeName").textContent = a.BASENAME || a.NAME;
@@ -895,8 +969,9 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       S.items = K.buildItems(res[0]); S.us = res[1]; S.pl = res[2]; S.own = res[3];
       var nm = K.splitCensusName(S.pl.NAME);
       $("#stateName").textContent = nm.state;
-      S.name = a.BASENAME || nm.place;
+      S.name = a.BASENAME || nm.place; S.stateName = nm.state;
       $("#placeName").textContent = S.name;
+      if (S.showState) { try { await loadState(a.STATE); } catch (e) { console.warn("State comparison unavailable:", e.message); } if (myLoad !== S.loadId) return; }
       wikiP = wikiFacts(S.name + ", " + nm.state, center.latitude, center.longitude, S.name);
     } catch (e) { console.error(e); showError(e.message); return; }
 
