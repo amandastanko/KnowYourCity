@@ -613,6 +613,9 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     });
   }
   // Free-licensed photos taken near the place, from Wikimedia Commons (no key needed). Keeps real photos only, with credits.
+  // Only landscapes and buildings: a photo must look like one (by its title, description or Commons categories) and must not look like people, animals, plants, food, or events.
+  var PHOTO_WANT = /\b(building|buildings|architecture|architectural|landscape|skyline|downtown|cityscape|streetscape|street|avenue|boulevard|historic|heritage|landmark|church|cathedral|chapel|temple|mosque|synagogue|courthouse|city hall|town hall|library|museum|school|university|college|campus|hospital|station|depot|bridge|tower|monument|memorial|statue|fountain|plaza|square|park|garden|lake|river|creek|canal|beach|coast|mountain|mountains|hill|hills|butte|desert|canyon|valley|forest|trail|sunset|sunrise|panorama|aerial|view|vista|scenery|house|houses|mansion|home|residence|hotel|theater|theatre|stadium|arena|mall|brewery|barn|farm|orchard|grove|citrus|lighthouse|pier|harbor|downtown|neighborhood|district|skyscraper|capitol|fort|mission|cemetery|golf course|dam|reservoir|observatory)\b/i;
+  var PHOTO_AVOID = /\b(concert|rapper|rap|hip hop|singer|musician|band|dj|performing|performance|festival|portrait|people|person|man|woman|men|women|boy|girl|child|children|crowd|audience|fans|selfie|wedding|party|team|players?|athlete|game|race|protest|rally|politician|candidate|senator|governor|mayor|actor|actress|artist|plant|plants|flower|flowers|leaf|leaves|seedling|cilantro|herb|vegetable|fruit|food|meal|dish|drink|beer|animal|animals|bird|birds|duck|ducks|cat|dog|insect|bug|butterfly|bee|lizard|snake|fish|horse|car|cars|truck|bus|motorcycle|bike|train|aircraft|airplane|plane|helicopter|vehicle|product|logo|album|stage|microphone|costume|cosplay|art|painting|sculpture|exhibit|sign|closeup|close-up|macro|hip-hop|rappers|concerts|musicians|singers|bands|musical|music|live music|nightlife|club|nightclub|plantae|plantarum|coriandrum|cuisine|restaurant food)s?\b/i;
   var PHOTO_SKIP = /\b(map|maps|logo|flag|seal|coat of arms|diagram|locator|plan|chart|poster|scan|sign|signage|plaque|interior|screenshot|banner|icon|diploma|certificate)\b/i;
   var OK_LICENSE = /^(CC[ -]BY(-SA)?( |$)|CC0|Public domain|PD)/i;
   function plainText(html) { var d = document.createElement("div"); d.innerHTML = html || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); }
@@ -622,7 +625,9 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     var urls = [
       base + "&generator=geosearch&ggsnamespace=6&ggsradius=10000&ggslimit=100&ggscoord=" + lat + "%7C" + lon,
       base + "&generator=categorymembers&gcmtype=file&gcmlimit=100&gcmtitle=" + encodeURIComponent("Category:" + place + ", " + state),
-      base + "&generator=search&gsrnamespace=6&gsrlimit=60&gsrsearch=" + encodeURIComponent(place + " " + state + " filetype:bitmap")
+      base + "&generator=search&gsrnamespace=6&gsrlimit=60&gsrsearch=" + encodeURIComponent(place + " " + state + " filetype:bitmap"),
+      base + "&generator=search&gsrnamespace=6&gsrlimit=50&gsrsearch=" + encodeURIComponent(place + " " + state + " downtown OR historic OR building OR skyline filetype:bitmap"),
+      base + "&generator=search&gsrnamespace=6&gsrlimit=50&gsrsearch=" + encodeURIComponent(place + " " + state + " park OR lake OR mountain OR landscape OR aerial filetype:bitmap")
     ];
     var results = await Promise.all(urls.map(function (u) { return getJSON(u).catch(function (e) { console.warn("Photo search failed:", e.message); return {}; }); }));
     var cands = [];
@@ -639,6 +644,9 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       if (!OK_LICENSE.test(lic) || /NC|ND/i.test(lic)) return;
       var title = plainText(m.ObjectName && m.ObjectName.value) || pg.title.replace(/^File:/, "").replace(/\.[a-z]+$/i, "").replace(/_/g, " ");
       var desc = plainText(m.ImageDescription && m.ImageDescription.value);
+      var cats = plainText(m.Categories && m.Categories.value).replace(/\|/g, " ; ");
+      var all = title + " ; " + desc + " ; " + cats;
+      if (!PHOTO_WANT.test(all) || PHOTO_AVOID.test(title + " ; " + cats) || PHOTO_AVOID.test(desc.slice(0, 160))) return;
       if (PHOTO_SKIP.test(title) || !K.isNeutralText(title) || !K.isNeutralText(desc)) return;
       if (/^(IMG|DSC|P)[_ -]?\d+/i.test(title) && !desc) return;
       var author = plainText(m.Artist && m.Artist.value).slice(0, 48) || "Unknown author";
