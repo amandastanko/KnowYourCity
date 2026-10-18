@@ -226,6 +226,19 @@ button{font:inherit;color:inherit}
 .wxday small{font-size:13px;line-height:1.25}
 .wxsrc{margin-top:14px;font-size:14px}
 .wxsrc a{text-decoration:underline}
+.poiwrap h3{font:800 clamp(22px,2.6vw,32px) var(--f-display);margin:26px 0 12px}
+.poicard{gap:8px}
+.poicard h4{margin:0;font:800 20px/1.15 var(--f-display)}
+.poicard .alt{margin:0;font-size:14px;line-height:1.35}
+.poicard dl{margin:0;display:grid;gap:4px;font-size:15px}
+.poicard dt{font-weight:700;display:inline}
+.poicard dd{display:inline;margin:0}
+.poicard a{text-decoration:underline;font-weight:700;color:var(--ink)}
+.poicard a:focus-visible,.poipop a:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.wc{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:700}
+.wc svg{flex:none}
+.poipop{font-size:14px;line-height:1.4;display:grid;gap:4px}
+.poipop a{text-decoration:underline;font-weight:700}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
 .foot{max-width:1000px;margin:6vh auto 0;font-size:15px}
 .foot p{margin:0 0 .8em;max-width:75ch}
@@ -435,7 +448,7 @@ i.sw{border-width:3px}
 //   id:         the web map's item ID (share the map publicly), or "" to use a plain basemap
 //   layerTitles: titles of the Census place layers in that web map ([] = every feature layer). Each gets the same filter.
 //   expression: definition query; {GEOID} {STATE} {PLACE} {NAME} are replaced for each place
-var WEBMAP = { id: "b8cf1cda3b8a478386ac03a1c0a3adcb", layerTitles: ["Census Designated Place", "Incorporated Place", "Consolidated City"], expression: "GEOID = '{GEOID}'" };
+var WEBMAP = { id: "b8cf1cda3b8a478386ac03a1c0a3adcb", layerTitles: ["Census Designated Place", "Incorporated Place", "Consolidated City"], poiTitle: "OpenStreetMap POIs for North America", expression: "GEOID = '{GEOID}'" };
 var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "AAPTaWduh3eXELl158kRP-_vyBA..8xaoKh-46KJCfHz90o-Y0aI17Tb8I8IBhRjko8G_mA7-7DjCsmDgISPtuoYHpsgVTDGecyPH7BOZKoeEGuX6BnkztKkBovzzu-pSkuhDP6DmrR1TbSnlyUtLsP8_sQef1QvN9CPAVxBYL5bseqICAS3cOq5GBGhje56t5nIEd7dQ73Q-BZcaCFYNqz_uS697ncoJ9Pxpla0hPLPxZYBZikghB3i7z6PrxFS039_jKFabqwF974_DXrQ.AT1_lxq1zj7D" };
 
 /* ---------- Where to find events, place by place ----------
@@ -1076,6 +1089,120 @@ var EVENT_SOURCES = [
     if (anchor) anchor.insertAdjacentElement("afterend", sc); else story.insertBefore(sc, story.children[2] || null);
   }
 
+  // ---------- Places to see (OpenStreetMap points of interest) ----------
+  var POI = { url: "https://services6.arcgis.com/Do88DoK2xjTUCXd1/ArcGIS/rest/services/OSM_NA_POIs/FeatureServer/0",
+    fields: "name,name_en,name_es,name_fr,tourism,historic,emergency,amenity,healthcare,opening_hours,parking,website,wheelchair,addr_housenumber,addr_street,addr_city" };
+  var TOUR = { attraction: ["Attraction", 5], museum: ["Museum", 5], zoo: ["Zoo", 5], theme_park: ["Theme park", 5], aquarium: ["Aquarium", 5], viewpoint: ["Viewpoint", 4], gallery: ["Gallery", 3], artwork: ["Public art", 2] };
+  var HIST = { castle: ["Castle", 5], monument: ["Monument", 4], fort: ["Fort", 4], memorial: ["Memorial", 3], building: ["Historic building", 3], ruins: ["Ruins", 3], archaeological_site: ["Archaeological site", 4], ship: ["Historic ship", 3], "yes": ["Historic site", 2] };
+  var HIST_SKIP = ["no", "boundary_stone", "milestone", "survey_point", "wayside_cross", "wayside_shrine", "charcoal_pile"];
+  var EMER = { fire_station: ["Fire station", 2], ambulance_station: ["Ambulance station", 3], coast_guard: ["Coast Guard", 4], mountain_rescue: ["Mountain rescue", 5], lifeguard: ["Lifeguard", 6], disaster_response: ["Disaster response", 7], assembly_point: ["Emergency assembly point", 8], shelter: ["Emergency shelter", 9], first_aid: ["First aid", 10] };
+  var AMEN = { hospital: ["Hospital", 0], police: ["Police", 1], fire_station: ["Fire station", 2] };
+  function sqlList(o) { return Object.keys(o).map(function (k) { return "'" + k + "'"; }).join(","); }
+  var POI_SEE_WHERE = "name IS NOT NULL AND (tourism IN (" + sqlList(TOUR) + ") OR (historic IS NOT NULL AND historic NOT IN (" + HIST_SKIP.map(function (k) { return "'" + k + "'"; }).join(",") + ")))";
+  var POI_SAFE_WHERE = "name IS NOT NULL AND (emergency IN (" + sqlList(EMER) + ") OR amenity IN (" + sqlList(AMEN) + "))";
+  var POI_WHERE = "(" + POI_SEE_WHERE + ") OR (" + POI_SAFE_WHERE + ")";
+  var WC_GLYPH = '<circle cx="11" cy="4" r="1.7" fill="#1E1B4B"/><path d="M11 7.5v6h5l2.5 5"/><path d="M11 10.5h5"/><path d="M8.2 12.8A5 5 0 1 0 15.5 18.2"/>';
+  var WC_YES = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><g fill="none" stroke="#1E1B4B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + WC_GLYPH + '</g></svg>';
+  var WC_NO = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><g fill="none" stroke="#1E1B4B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(4.6 4.6) scale(.62)">' + WC_GLYPH + '</g><circle cx="12" cy="12" r="10.8" fill="none" stroke="#000" stroke-width="1.8"/><path d="M4.4 4.4 19.6 19.6" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>';
+  function poiName(a) { return a.name_en || a.name || "Unnamed place"; }
+  function safeUrl(u) {
+    u = String(u || "").split(";")[0].trim(); if (!u) return "";
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u.replace(/^\/+/, "");
+    try { var x = new URL(u); return /^https?:$/.test(x.protocol) && x.hostname.indexOf(".") > 0 ? x.href : ""; } catch (e) { return ""; }
+  }
+  function niceHours(s) {
+    s = String(s || "").trim(); if (!s) return ""; if (s === "24/7") return "Open 24 hours, every day";
+    var d = { Mo: "Mon", Tu: "Tue", We: "Wed", Th: "Thu", Fr: "Fri", Sa: "Sat", Su: "Sun", PH: "holidays" };
+    return s.replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su|PH)\b/g, function (m) { return d[m]; }).replace(/\boff\b/g, "closed").replace(/\s*;\s*/g, "; ");
+  }
+  function niceParking(s) {
+    s = String(s || "").trim().toLowerCase(); if (!s) return "";
+    var m = { surface: "Surface lot", "multi-storey": "Parking garage", underground: "Underground garage", street_side: "Street parking", lane: "Street parking", yes: "Parking available", no: "No parking", rooftop: "Rooftop parking", carport: "Carport", garage_boxes: "Garage boxes" };
+    return m[s] || (s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, " "));
+  }
+  function poiKind(a) {
+    var t = TOUR[a.tourism], hs = a.historic && HIST_SKIP.indexOf(a.historic) < 0 ? (HIST[a.historic] || ["Historic site", 1]) : null;
+    if (t) return { group: "see", label: t[0], w: t[1] + (hs ? 1 : 0) };
+    if (hs) return { group: "see", label: hs[0], w: hs[1] };
+    var e = EMER[a.emergency] || AMEN[a.amenity] || (a.healthcare === "hospital" ? AMEN.hospital : null);
+    return e ? { group: "safe", label: e[0], w: e[1] } : null;
+  }
+  function wheelchairHTML(v) {
+    v = String(v || "").toLowerCase();
+    if (v === "yes" || v === "designated") return '<span class="wc">' + WC_YES + '<span>Wheelchair accessible</span></span>';
+    if (v === "limited") return '<span class="wc">' + WC_YES + '<span>Partly wheelchair accessible</span></span>';
+    if (v === "no") return '<span class="wc">' + WC_NO + '<span>Not wheelchair accessible</span></span>';
+    return "";
+  }
+  // One place's details. Used in the map popup and in the page list, so both say the same things.
+  function poiDetailsHTML(a, withName) {
+    var k = poiKind(a), nm = poiName(a), out = "", also = [];
+    if (a.name && a.name_en && a.name !== a.name_en) also.push('<span>' + esc(a.name) + '</span>');
+    if (a.name_es && a.name_es !== nm && a.name_es !== a.name) also.push('<span lang="es">' + esc(a.name_es) + ' (Spanish)</span>');
+    if (a.name_fr && a.name_fr !== nm && a.name_fr !== a.name) also.push('<span lang="fr">' + esc(a.name_fr) + ' (French)</span>');
+    if (withName) out += '<h4>' + esc(nm) + '</h4>';
+    if (k) out += '<span class="evtag">' + esc(k.label) + '</span>';
+    if (also.length) out += '<p class="alt">Also called: ' + also.join(", ") + '</p>';
+    var addr = [[a.addr_housenumber, a.addr_street].filter(Boolean).join(" "), a.addr_city].filter(Boolean).join(", ");
+    var rows = [];
+    if (addr) rows.push("<div><dt>Address: </dt><dd>" + esc(addr) + "</dd></div>");
+    if (a.opening_hours) rows.push("<div><dt>Hours: </dt><dd>" + esc(niceHours(a.opening_hours)) + "</dd></div>");
+    if (a.parking) rows.push("<div><dt>Parking: </dt><dd>" + esc(niceParking(a.parking)) + "</dd></div>");
+    if (rows.length) out += "<dl>" + rows.join("") + "</dl>";
+    var wc = wheelchairHTML(a.wheelchair); if (wc) out += wc;
+    var url = safeUrl(a.website);
+    if (url) out += '<a href="' + esc(url) + '" target="_blank" rel="noopener">Website for ' + esc(nm) + ' (opens in a new tab)</a>';
+    return out;
+  }
+  function inRings(lon, lat, rings) {
+    var inside = false;
+    rings.forEach(function (r) { for (var i = 0, j = r.length - 1; i < r.length; j = i++) { var xi = r[i][0], yi = r[i][1], xj = r[j][0], yj = r[j][1]; if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside; } });
+    return inside;
+  }
+  // Show the points of interest layer in the web map, filtered to this place, with accessible popups.
+  async function applyPoiLayer() {
+    var v = S.view; if (!v || !S.webmap) return;
+    try {
+      await v.when();
+      var l = v.map.allLayers.find(function (x) { return x.title === WEBMAP.poiTitle; }); if (!l) return;
+      await l.load();
+      l.definitionExpression = POI_WHERE; l.minScale = 0; l.popupEnabled = true;
+      l.popupTemplate = { title: function (f) { return poiName(f.graphic.attributes); }, content: function (f) { var d = document.createElement("div"); d.className = "poipop"; d.innerHTML = poiDetailsHTML(f.graphic.attributes, false); return d; } };
+      var lv = await v.whenLayerView(l);
+      lv.filter = S.pendingPoly ? { geometry: S.pendingPoly, spatialRelationship: "intersects" } : null;
+      l.visible = true;
+    } catch (e) { console.info("Points of interest layer not applied:", e.message); }
+  }
+  async function loadPois(myLoad) {
+    var rg = S.rings; if (!rg) return;
+    var xs = [], ys = []; rg.forEach(function (r) { r.forEach(function (c) { xs.push(c[0]); ys.push(c[1]); }); });
+    var env = [Math.min.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, xs), Math.max.apply(null, ys)].join(",");
+    function q(where) {
+      return getJSON(POI.url + "/query?f=json&where=" + encodeURIComponent(where) + "&geometry=" + encodeURIComponent(env) + "&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=" + POI.fields + "&returnGeometry=true&outSR=4326&resultRecordCount=2000")
+        .then(function (j) { if (j.error) throw new Error(j.error.message || "points of interest query failed"); return (j.features || []).filter(function (f) { return f.geometry && inRings(f.geometry.x, f.geometry.y, rg); }).map(function (f) { return f.attributes; }); });
+    }
+    var res;
+    try { res = await Promise.all([q(POI_SEE_WHERE), q(POI_SAFE_WHERE)]); } catch (e) { console.info("Points of interest unavailable:", e.message); return; }
+    if (myLoad !== S.loadId) return;
+    function uniq(list) { var seen = {}; return list.filter(function (a) { var k = String(poiName(a)).toLowerCase(); if (seen[k]) return false; seen[k] = 1; return true; }); }
+    var see = uniq(res[0].filter(function (a) { var k = poiKind(a); return k && k.group === "see"; }).sort(function (x, y) {
+      function sc(a) { return poiKind(a).w + (safeUrl(a.website) ? 1.5 : 0) + (a.opening_hours ? 1 : 0) + (a.wheelchair ? .5 : 0) + (a.name_en || a.name_es || a.name_fr ? .5 : 0); }
+      return sc(y) - sc(x) || String(poiName(x)).localeCompare(poiName(y));
+    })).slice(0, 10);
+    var perLabel = {}, safe = uniq(res[1].filter(function (a) { var k = poiKind(a); return k && k.group === "safe"; }).sort(function (x, y) { return poiKind(x).w - poiKind(y).w || String(poiName(x)).localeCompare(poiName(y)); }))
+      .filter(function (a) { var l = poiKind(a).label; perLabel[l] = (perLabel[l] || 0) + 1; return perLabel[l] <= 3; }).slice(0, 9);
+    if (!see.length && !safe.length) return;
+    var P = S.name, story = $("#story"), sc = scene("mint", "Places in " + P), w = el("div", "evwrap poiwrap"); w.setAttribute("data-hid", "pois");
+    function cards(list) { return '<div class="evgrid">' + list.map(function (a) { return '<article class="evcard poicard">' + poiDetailsHTML(a, true) + '</article>'; }).join("") + '</div>'; }
+    w.innerHTML = '<h2>Places to see.</h2><p class="evnote">Landmarks, museums and historic sites in ' + esc(P) + ', plus emergency services. The list comes from OpenStreetMap volunteers, so it may be incomplete. Each place shows its hours, parking and wheelchair access when that is known.</p>' +
+      (see.length ? '<h3>Landmarks and history</h3>' + cards(see) : '') + (safe.length ? '<h3>Emergency and safety</h3>' + cards(safe) : '');
+    sc.appendChild(w);
+    var ev = story.querySelector('[data-hid="events"]'); ev = ev && ev.closest(".scene");
+    var nxt = ev && ev.nextElementSibling, after = nxt && nxt.querySelector('[data-hid="weather"]') ? nxt : ev;
+    if (after) after.insertAdjacentElement("afterend", sc); else story.insertBefore(sc, story.children[2] || null);
+    S.SAY.pois = "Here are some places worth a visit in " + P + ", and where to find emergency services.";
+  }
+
   function buildStory() {
     var story = $("#story"); story.innerHTML = ""; S.SAY = {};
     resolveAll();
@@ -1235,7 +1362,7 @@ var EVENT_SOURCES = [
     var foot = el("div", "foot");
     foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
       '<p>Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.</p>' +
-      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
+      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>. Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
     end.appendChild(foot);
     story.appendChild(end);
     var chips = $("#chips", end);
@@ -1478,6 +1605,7 @@ var EVENT_SOURCES = [
   async function applyPlaceToMap() {
     var v = S.view, a = S.curAttrs; if (!v || !a) return;
     if (S.webmap) {
+      applyPoiLayer();
       var layers = [];
       try {
         await v.when();
@@ -1522,7 +1650,7 @@ var EVENT_SOURCES = [
     S.pendingPoly = poly; S.curAttrs = a; applyPlaceToMap();
     var xs = [], ys = []; rg.forEach(function (r) { r.forEach(function (c) { xs.push(c[0]); ys.push(c[1]); }); });
     var center = { longitude: (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, latitude: (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2 };
-    S.center = center;
+    S.center = center; S.rings = rg;
 
     if (!CFG.CENSUS_KEY) { showError("This app needs a free Census API key. Paste it into HARDCODED.census at the top of the script in index.html."); return; }
     try {
@@ -1548,7 +1676,7 @@ var EVENT_SOURCES = [
     } catch (e) {}
     S.facts = facts;
     buildStory();
-    loadWeather(center, myLoad);
+    loadWeather(center, myLoad); loadPois(myLoad);
     $("#loading").classList.add("gone");
     setTimeout(function () { sched(); }, 200);
   }
