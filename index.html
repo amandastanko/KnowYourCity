@@ -1232,12 +1232,14 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       return getJSON(TIGER + "/" + id + "/query?where=" + encodeURIComponent(where) + "&outFields=GEOID,BASENAME,NAME,STATE,PLACE&returnGeometry=false&resultRecordCount=25&f=json")
         .then(function (j) { if (j.error) throw new Error(j.error.message || "TIGERweb search error"); return (j.features || []).map(function (f) { return { geoid: f.attributes.GEOID, base: f.attributes.BASENAME, state: f.attributes.STATE, kind: layerKinds[id] || "" }; }); });
     }));
-    var out = [].concat.apply([], lists), qlow = name.toLowerCase();
+    var seenG = {}, out = [].concat.apply([], lists).filter(function (r) { var k = r.geoid || (r.base + "|" + r.state); if (seenG[k]) return false; seenG[k] = 1; return true; }), qlow = name.toLowerCase();
     out.sort(function (a, b) {
       var ea = a.base.toLowerCase() === qlow ? 0 : 1, eb = b.base.toLowerCase() === qlow ? 0 : 1;
       return ea - eb || a.base.localeCompare(b.base) || (STATES[a.state] ? STATES[a.state][0] : "").localeCompare(STATES[b.state] ? STATES[b.state][0] : "");
     });
-    return out.slice(0, 8).map(function (r) { var st = STATES[r.state]; return { geoid: r.geoid, name: r.base + (st ? ", " + st[0] : "") + r.kind }; });
+    var seenN = {};
+    return out.map(function (r) { var st = STATES[r.state]; return { geoid: r.geoid, name: r.base + (st ? ", " + st[0] : "") + r.kind }; })
+      .filter(function (r) { var k = r.name.toLowerCase(); if (seenN[k]) return false; seenN[k] = 1; return true; }).slice(0, 8);
   }
 
   var suggTimer = null, suggData = [], suggActive = -1, suggSeq = 0, sugg = $("#sugg");
