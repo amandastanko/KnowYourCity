@@ -516,11 +516,13 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     } catch (e) { console.warn("S2501 ownership data unavailable:", e.message); return null; }
   }
 
-  var layerIds = null;
+  var layerIds = null, layerKinds = {};
   async function placeLayerIds() {
     if (layerIds) return layerIds;
     var j = await getJSON(TIGER + "?f=json");
-    layerIds = j.layers.filter(function (l) { return /^(incorporated places|census designated places)$/i.test(l.name); }).map(function (l) { return l.id; });
+    var ls = j.layers.filter(function (l) { return /^(incorporated places|census designated places)$/i.test(l.name); });
+    ls.forEach(function (l) { layerKinds[l.id] = /census designated/i.test(l.name) ? " (census-designated place)" : ""; });
+    layerIds = ls.map(function (l) { return l.id; });
     if (!layerIds.length) throw new Error("Couldn't find Census place layers in TIGERweb");
     return layerIds;
   }
@@ -1005,29 +1007,99 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   /* ====================================================================
    * Search and navigation
    * ==================================================================== */
-  var suggTimer = null, suggData = [], sugg = $("#sugg");
+  var STATES = { "01": ["Alabama", "AL"], "02": ["Alaska", "AK"], "04": ["Arizona", "AZ"], "05": ["Arkansas", "AR"], "06": ["California", "CA"], "08": ["Colorado", "CO"], "09": ["Connecticut", "CT"], "10": ["Delaware", "DE"], "11": ["District of Columbia", "DC"], "12": ["Florida", "FL"], "13": ["Georgia", "GA"], "15": ["Hawaii", "HI"], "16": ["Idaho", "ID"], "17": ["Illinois", "IL"], "18": ["Indiana", "IN"], "19": ["Iowa", "IA"], "20": ["Kansas", "KS"], "21": ["Kentucky", "KY"], "22": ["Louisiana", "LA"], "23": ["Maine", "ME"], "24": ["Maryland", "MD"], "25": ["Massachusetts", "MA"], "26": ["Michigan", "MI"], "27": ["Minnesota", "MN"], "28": ["Mississippi", "MS"], "29": ["Missouri", "MO"], "30": ["Montana", "MT"], "31": ["Nebraska", "NE"], "32": ["Nevada", "NV"], "33": ["New Hampshire", "NH"], "34": ["New Jersey", "NJ"], "35": ["New Mexico", "NM"], "36": ["New York", "NY"], "37": ["North Carolina", "NC"], "38": ["North Dakota", "ND"], "39": ["Ohio", "OH"], "40": ["Oklahoma", "OK"], "41": ["Oregon", "OR"], "42": ["Pennsylvania", "PA"], "44": ["Rhode Island", "RI"], "45": ["South Carolina", "SC"], "46": ["South Dakota", "SD"], "47": ["Tennessee", "TN"], "48": ["Texas", "TX"], "49": ["Utah", "UT"], "50": ["Vermont", "VT"], "51": ["Virginia", "VA"], "53": ["Washington", "WA"], "54": ["West Virginia", "WV"], "55": ["Wisconsin", "WI"], "56": ["Wyoming", "WY"], "72": ["Puerto Rico", "PR"] };
+  function stateFips(txt) {
+    var t = txt.trim().toLowerCase().replace(/\./g, ""); if (!t) return null;
+    for (var f in STATES) if (STATES[f][0].toLowerCase() === t || STATES[f][1].toLowerCase() === t) return f;
+    return null;
+  }
+  // "Garden City, Michigan" / "garden city mi" / "Garden City" -> { name, fips }
+  function parseQuery(q) {
+    q = q.trim().replace(/\s+/g, " ");
+    var c = q.indexOf(",");
+    if (c > -1) { var f = stateFips(q.slice(c + 1)); return { name: q.slice(0, c).trim(), fips: f }; }
+    var toks = q.split(" ");
+    for (var k = Math.min(3, toks.length - 1); k >= 1; k--) {
+      var f2 = stateFips(toks.slice(-k).join(" "));
+      if (f2) return { name: toks.slice(0, -k).join(" "), fips: f2 };
+    }
+    return { name: q, fips: null };
+  }
+
+  // Look the name up directly among Census Places (no geocoder needed), so every "Garden City" is listed with its state
+  async function searchPlaces(q) {
+    var pq = parseQuery(q), name = pq.name.replace(/[%_\\']/g, " ").trim().toUpperCase();
+    if (name.length < 2) return [];
+    var where = "UPPER(BASENAME) LIKE '" + name + "%'" + (pq.fips ? " AND STATE='" + pq.fips + "'" : "");
+    var ids = await placeLayerIds();
+    var lists = await Promise.all(ids.map(function (id, n) {
+      return getJSON(TIGER + "/" + id + "/query?where=" + encodeURIComponent(where) + "&outFields=GEOID,BASENAME,NAME,STATE,PLACE&returnGeometry=false&resultRecordCount=25&f=json")
+        .then(function (j) { if (j.error) throw new Error(j.error.message || "TIGERweb search error"); return (j.features || []).map(function (f) { return { geoid: f.attributes.GEOID, base: f.attributes.BASENAME, state: f.attributes.STATE, kind: layerKinds[id] || "" }; }); });
+    }));
+    var out = [].concat.apply([], lists), qlow = name.toLowerCase();
+    out.sort(function (a, b) {
+      var ea = a.base.toLowerCase() === qlow ? 0 : 1, eb = b.base.toLowerCase() === qlow ? 0 : 1;
+      return ea - eb || a.base.localeCompare(b.base) || (STATES[a.state] ? STATES[a.state][0] : "").localeCompare(STATES[b.state] ? STATES[b.state][0] : "");
+    });
+    return out.slice(0, 8).map(function (r) { var st = STATES[r.state]; return { geoid: r.geoid, name: r.base + (st ? ", " + st[0] : "") + r.kind }; });
+  }
+
+  var suggTimer = null, suggData = [], suggActive = -1, suggSeq = 0, sugg = $("#sugg");
+  function renderSugg(items, msg, input) {
+    sugg.innerHTML = ""; suggActive = -1;
+    if (!items.length) { sugg.appendChild(el("li", null, esc(msg))).style.cursor = "default"; }
+    items.forEach(function (s, i) { var li = el("li", null, esc(s.name)); li.setAttribute("role", "option"); li.onclick = function () { pick(i, input); }; sugg.appendChild(li); });
+    if (input.id === "q2") { var r = input.getBoundingClientRect(); sugg.style.position = "fixed"; sugg.style.left = r.left + "px"; sugg.style.top = (r.bottom + 6) + "px"; sugg.style.width = r.width + "px"; sugg.style.right = "auto"; }
+    else { sugg.style.position = ""; sugg.style.left = ""; sugg.style.top = ""; sugg.style.width = ""; sugg.style.right = ""; }
+    sugg.style.display = "block";
+  }
+  function markActive() { $$("li", sugg).forEach(function (li, i) { li.style.background = i === suggActive ? "#FFE98F" : ""; }); }
   function wireSearch(input) {
-    var local = input.id === "q2";
     input.addEventListener("input", function () {
       clearTimeout(suggTimer);
       var v = input.value.trim();
-      if (v.length < 3) { sugg.style.display = "none"; return; }
+      if (v.length < 2) { sugg.style.display = "none"; return; }
+      var seq = ++suggSeq;
       suggTimer = setTimeout(async function () {
-        try {
-          suggData = await geocode(v);
-          sugg.innerHTML = "";
-          suggData.forEach(function (s, i) { var li = el("li", null, esc(s.name)); li.onclick = function () { pick(i, input); }; sugg.appendChild(li); });
-          if (local) { var r = input.getBoundingClientRect(); sugg.style.position = "fixed"; sugg.style.left = r.left + "px"; sugg.style.top = (r.bottom + 6) + "px"; sugg.style.width = r.width + "px"; sugg.style.right = "auto"; }
-          else { sugg.style.position = ""; sugg.style.left = ""; sugg.style.top = ""; sugg.style.width = ""; sugg.style.right = ""; }
-          sugg.style.display = suggData.length ? "block" : "none";
-        } catch (e) { sugg.style.display = "none"; }
-      }, 350);
+        var res = [], err = null;
+        try { res = await searchPlaces(v); } catch (e) { err = e; console.warn("Place search failed:", e); }
+        if (!res.length) { try { res = (await geocode(v)).map(function (g) { return { lon: g.lon, lat: g.lat, name: g.name }; }); } catch (e) { console.warn("Geocoder fallback failed:", e); } }
+        if (seq !== suggSeq) return;
+        suggData = res;
+        renderSugg(res, err ? "Search isn't available right now. Check your connection and try again." : "No Census places match that. Try the city name, then a comma and the state.", input);
+      }, 250);
     });
-    input.addEventListener("keydown", function (e) { if (e.key === "Enter" && suggData.length) { e.preventDefault(); pick(0, input); } });
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (!suggData.length || sugg.style.display === "none") return;
+        e.preventDefault(); suggActive = (suggActive + (e.key === "ArrowDown" ? 1 : -1) + suggData.length) % suggData.length; markActive();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (suggData.length && sugg.style.display !== "none") pick(suggActive > -1 ? suggActive : 0, input);
+      } else if (e.key === "Escape") sugg.style.display = "none";
+    });
   }
   document.addEventListener("click", function (e) { if (!e.target.closest(".search") && !e.target.closest("#sugg") && !e.target.closest("#q2")) sugg.style.display = "none"; });
-  function pick(i, input) { var s = suggData[i]; sugg.style.display = "none"; input.value = ""; selectByPoint(s.lon, s.lat); }
-  async function goTo(name) { try { var r = await geocode(name); if (r.length) selectByPoint(r[0].lon, r[0].lat); } catch (e) { showError("Couldn't search for " + name + ". " + e.message); } }
+  async function pick(i, input) {
+    var s = suggData[i]; if (!s) return;
+    sugg.style.display = "none"; input.value = "";
+    if (s.geoid) await selectByGeoid(s.geoid); else selectByPoint(s.lon, s.lat);
+  }
+  async function goTo(name) {
+    try {
+      var r = await searchPlaces(name);
+      if (r.length) return selectByGeoid(r[0].geoid);
+      var g = await geocode(name); if (g.length) selectByPoint(g[0].lon, g[0].lat);
+    } catch (e) { showError("Couldn't search for " + name + ". " + e.message); }
+  }
+  async function selectByGeoid(geoid) {
+    try {
+      var f = await lookupByGeoid(geoid);
+      if (!f) { showBubble("Hmm, I couldn't find that place's boundary."); return; }
+      window.scrollTo({ top: 0 });
+      loadPlace(f);
+    } catch (e) { showError("Couldn't look up that place. " + e.message); }
+  }
   async function selectByPoint(lon, lat) {
     try {
       var f = await lookupByPoint(lon, lat);
