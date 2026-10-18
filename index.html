@@ -197,6 +197,48 @@ button{font:inherit;color:inherit}
 .err h2{font:800 32px var(--f-display);margin:0 0 8px}
 
 
+
+/* bars */
+.bars{max-width:1000px;margin:0 auto;padding:6vh 0}
+.bars h3{font:800 clamp(28px,4vw,52px)/1.05 var(--f-display);letter-spacing:-.025em;margin:0 0 1em;max-width:22ch}
+.bar-rows{display:grid;gap:44px}
+.brow2{padding:8px;border-radius:16px}
+.brow2 .main{font:800 clamp(20px,2.4vw,30px)/1.12 var(--f-display);margin:0 0 12px;letter-spacing:-.015em;max-width:34ch}
+.brow2 .lab{font-weight:700;font-size:15px;margin-bottom:6px}
+.brow2 .cmp{margin:12px 0 0;font-size:16px;max-width:62ch}
+.bar{position:relative;height:50px;border-radius:12px;background:var(--track)}
+.bar .f{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:12px;background:var(--acc);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.in .bar .f{width:var(--w)}
+.bar .f b{position:absolute;right:14px;top:50%;translate:0 -50%;color:#fff;font:800 22px var(--f-display);white-space:nowrap}
+.bar .f.sh b{right:auto;left:calc(100% + 10px);color:var(--ink)}
+.bar .t{position:absolute;top:-9px;bottom:-9px;width:0;border-left:5px solid var(--ink);z-index:2}
+.bar .t.st{border-left:5px dotted #fff}
+.legend2{font-size:15px;font-weight:700;margin:22px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.legend2 .k{display:inline-block;height:20px;border-left:5px solid var(--ink)}
+.legend2 .k.st{border-left:5px dotted var(--ink);margin-left:14px}
+/* duel */
+.viz.vz-duel{max-width:640px}
+.duelbox{display:grid;gap:22px}
+.dgrp .dnum{font:800 clamp(44px,6.5vw,84px)/.95 var(--f-display);letter-spacing:-.04em}
+.dgrp .dlab{font-weight:700;font-size:16px;margin:2px 0 8px;max-width:38ch}
+.dh{display:flex;flex-wrap:wrap;gap:4px}
+.dh .hs1{width:clamp(24px,3.3vw,36px);flex:none}
+.dh.m .hs1 .fg{fill:#fff;stroke:var(--ink);stroke-width:2.5}
+.dh.w .hs1 .fg{fill:var(--acc)}
+.dunit{font-size:14px;font-weight:700;margin:-8px 0 0;opacity:.8}
+.norm{position:relative;--lw:92px;--bw:calc(100% - var(--lw));background:rgba(255,255,255,.55);border-radius:18px;padding:16px;display:grid;gap:10px}
+.norm .nt{margin:0 0 4px;font-weight:700;font-size:16px}
+.nr{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.nr .nl{font-weight:700;font-size:15px;min-width:76px}
+.nb{position:relative;height:34px;border-radius:9px;background:var(--track)}
+.nf{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:9px;background:var(--acc);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.nr.us .nf{background:var(--us)}
+.nr.st .nf{background:#fff;border:3px solid var(--ink)}
+.in .nf{width:var(--w)}
+.nf b{position:absolute;right:10px;top:50%;translate:0 -50%;color:#fff;font:800 18px var(--f-display)}
+.nr.st .nf b{color:var(--ink)}
+.norm .refline{display:none}
+
 /* state comparison */
 .cg.st .dots i.on{--c:#fff}
 .crowd.three .dots{width:clamp(96px,14vw,160px)}
@@ -364,7 +406,9 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
                main: function (c, P) { return "The average household in " + P + " has " + K.fmt(c, c.p) + " people."; }, usWord: "The U.S. average" },
     alone:   { scene: "households", find: ["householder living alone"], viz: "houses", grp: "alone", subj: "households in {P}", pred: "are one person living alone" },
     kids:    { scene: "households", find: ["households with one or more people under 18"], viz: "houses", grp: "kids", subj: "households in {P}", pred: "include at least one child under 18" },
-    married: { scene: "households", find: ["married-couple household"], viz: "houses", grp: "married", subj: "households in {P}", pred: "are married couples" },
+    married: { scene: "households", find: ["households by type", "married-couple"], viz: "bars", grp: "hhtype", short: "Married-couple households", subj: "households in {P}", pred: "are married couples" },
+    hhFemale:{ scene: "households", find: ["households by type", "female householder, no spouse"], viz: "bars", grp: "hhtype", short: "Female householder, no spouse or partner present", subj: "households in {P}", pred: "are family households headed by a woman with no spouse or partner present" },
+    hhMale:  { scene: "households", find: ["households by type", "male householder, no spouse"], viz: "bars", grp: "hhtype", short: "Male householder, no spouse or partner present", subj: "households in {P}", pred: "are family households headed by a man with no spouse or partner present" },
     // homes
     own:     { scene: "homes", find: ["housing tenure", "owner-occupied"], viz: "houses", grp: "tenure", subj: "occupied homes in {P}", pred: "are lived in by their owners" },
     value:   { scene: "homes", find: ["value", "median (dollars)"], viz: "tower", grp: "value",
@@ -375,13 +419,16 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     singleFam: { scene: "homes", find: ["units in structure", "1-unit, detached"], viz: "houses", grp: "structure", subj: "homes in {P}", pred: "are detached single-family houses" },
     noCar:   { scene: "homes", find: ["vehicles available", "no vehicles available"], viz: "houses", grp: "cars", subj: "households in {P}", pred: "have no vehicle available" },
     // who owns the homes (Census table S2501)
-    ownFM:   { scene: "owners", custom: "fm", viz: "blocks", grp: "owners",
-               main: function (c, P) { return "Among family households with no spouse present, " + P + " has about " + K.trimNum(c.p) + " owner-households headed by a woman for every 1 headed by a man."; },
+    ownFM:   { scene: "owners", custom: "fm", viz: "duel", grp: "owners",
+               main: function (c, P) {
+                 if (c.nW != null && c.nM != null) return "In " + P + ", about " + K.approxCount(c.nW) + " homeowner households are headed by a woman with no spouse present, and about " + K.approxCount(c.nM) + " by a man.";
+                 return "Among family households with no spouse present, " + P + " has about " + K.trimNum(c.p) + " owner-households headed by a woman for every 1 headed by a man.";
+               },
                cmp: function (c, P) { return "Nationwide the ratio is about " + K.trimNum(c.pus) + " to 1, so the gap in " + P + " is " + (c.sig ? (c.p > c.pus ? "wider" : "narrower") : "about the same") + "."; } },
-    ownF:    { scene: "owners", own: "female householder, no spouse", viz: "ring", grp: "ownrate", subj: "households headed by a woman with no spouse present in {P}", pred: "are owned by the people who live there" },
-    ownM:    { scene: "owners", own: "male householder, no spouse", viz: "ring", grp: "ownrate", subj: "households headed by a man with no spouse present in {P}", pred: "are owned by the people who live there" },
-    own1p:   { scene: "owners", own: "1-person household", viz: "ring", grp: "ownrate", subj: "one-person households in {P}", pred: "are owned by the person who lives there" },
-    ownMC:   { scene: "owners", own: "married-couple family", viz: "ring", grp: "ownrate", subj: "married-couple households in {P}", pred: "are owned by the couple who lives there" },
+    ownF:    { scene: "owners", own: "female householder, no spouse", viz: "bars", grp: "ownrate", short: "Households headed by a woman, no spouse present", subj: "households headed by a woman with no spouse present in {P}", pred: "are owned by the people who live there" },
+    ownM:    { scene: "owners", own: "male householder, no spouse", viz: "bars", grp: "ownrate", short: "Households headed by a man, no spouse present", subj: "households headed by a man with no spouse present in {P}", pred: "are owned by the people who live there" },
+    own1p:   { scene: "owners", own: "1-person household", viz: "bars", grp: "ownrate", short: "One-person households", subj: "one-person households in {P}", pred: "are owned by the person who lives there" },
+    ownMC:   { scene: "owners", own: "married-couple family", viz: "bars", grp: "ownrate", short: "Married-couple households", subj: "married-couple households in {P}", pred: "are owned by the couple who lives there" },
     // work and money
     income:  { scene: "work", find: ["median household income"], viz: "tower", grp: "income",
                main: function (c, P) { return "The typical (median) household in " + P + " brings in " + K.fmt(c, c.p) + " a year."; } },
@@ -401,6 +448,11 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   };
 
   /* ---------- state ---------- */
+  K.approxCount = function (n) {
+    n = Math.round(n); if (n < 20) return String(n);
+    var mag = Math.pow(10, String(n).length - 2);
+    return (Math.round(n / mag) * mag).toLocaleString("en-US");
+  };
   var S = { showState: safeGet("kyc_state") === "on", st: null, stateName: "", fips: null, items: null, pl: null, us: null, own: null, name: "", R: {}, SAY: {}, facts: [], img: null, geoid: null, loadId: 0, view: null };
   var modules = {};
 
@@ -591,6 +643,36 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     return vizWrap(r.id, "ring", inner, r.say.main);
   };
 
+  // Women-led vs men-led homeowners: real counts as rows of houses, then the ratio next to the U.S. and state
+  function niceUnit(max) {
+    var steps = [5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000];
+    for (var i = 0; i < steps.length; i++) if (max / steps[i] <= 24) return steps[i];
+    return 500000;
+  }
+  function houseIcons(n, unit, cls) {
+    var k = n / unit, full = Math.floor(k), s = '<div class="dh ' + cls + '">';
+    for (var i = 0; i < Math.ceil(k - 1e-9); i++) s += '<span class="hs1" style="--i:' + i + '"><svg class="bg" viewBox="0 0 40 40"><use href="#i-house"/></svg><svg class="fg" viewBox="0 0 40 40" style="--ff:' + (i < full ? 1 : (k - full).toFixed(2)) + '"><use href="#i-house"/></svg></span>';
+    return s + '</div>';
+  }
+  VIZ.duel = function (r) {
+    var c = r.c;
+    if (c.nW == null || c.nM == null) return VIZ.blocks(r);
+    var unit = niceUnit(Math.max(c.nW, c.nM)), st = hasSt(c), SN = S.stateName;
+    var norm = function (ratio, name, cls) { return { v: ratio * 100, name: name, cls: cls }; };
+    var rows = [norm(c.p, S.name, "here"), norm(c.pus, "U.S.", "us")]; if (st) rows.push(norm(c.st, SN, "st"));
+    var max = Math.max.apply(null, rows.map(function (x) { return x.v; })) * 1.12, ref = 100 / max * 100;
+    var strip = rows.map(function (x) {
+      return '<div class="nr ' + x.cls + '"><span class="nl">' + esc(x.name) + '</span><div class="nb"><div class="nf" style="--w:' + (x.v / max * 100).toFixed(1) + '%"><b>' + Math.round(x.v) + '</b></div></div></div>';
+    }).join("");
+    var inner = '<div class="duelbox">' +
+      '<div class="dgrp"><div class="dnum">' + esc(K.approxCount(c.nW)) + '</div><div class="dlab">homeowner households headed by a woman, no spouse present</div>' + houseIcons(c.nW, unit, "w") + '</div>' +
+      '<div class="dgrp"><div class="dnum">' + esc(K.approxCount(c.nM)) + '</div><div class="dlab">homeowner households headed by a man, no spouse present</div>' + houseIcons(c.nM, unit, "m") + '</div>' +
+      '<p class="dunit">Each house stands for ' + unit.toLocaleString("en-US") + ' households.</p>' +
+      '<div class="norm"><p class="nt">For every 100 homeowner households headed by a man with no spouse present, how many are headed by a woman?</p>' + strip +
+      '<div class="refline" style="left:calc(var(--lw) + ' + ref.toFixed(1) + '% * var(--bw))"></div></div></div>';
+    return vizWrap(r.id, "duel", inner, r.say.main);
+  };
+
   // ratio as stacks of houses
   VIZ.blocks = function (r) {
     var c = r.c;
@@ -628,6 +710,24 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   function rank(r) { return r.spec.custom === "mix" ? r.c.rel * 20 : Math.abs(r.c.z || 0); }
   function byRank(a, b) { return rank(b) - rank(a); }
 
+  // Horizontal bars with the U.S. (and state) as tick marks; one sentence per bar
+  function barsBlock(title, ids) {
+    var rs = ids.map(function (i) { return S.R[i]; }).filter(Boolean).sort(byRank); if (!rs.length) return null;
+    var anySt = rs.some(function (r) { return hasSt(r.c); });
+    var max = Math.max.apply(null, rs.map(function (r) { return Math.max(r.c.p, r.c.pus, hasSt(r.c) ? r.c.st : 0); })) * 1.12 || 1;
+    var rows = rs.map(function (r) {
+      var c = r.c, w = c.p / max * 100; S.SAY[r.id] = r.say.main;
+      return '<div class="brow2" data-hid="' + r.id + '"><p class="main">' + esc(r.say.main) + '</p>' +
+        '<div class="lab">' + esc(r.spec.short || "") + '</div>' +
+        '<div class="bar"><div class="f' + (w < 16 ? " sh" : "") + '" style="--w:' + w.toFixed(1) + '%"><b>' + esc(K.fmt(c, c.p)) + '</b></div>' +
+        '<i class="t us" style="left:' + (c.pus / max * 100).toFixed(1) + '%"></i>' + (hasSt(c) ? '<i class="t st" style="left:' + (c.st / max * 100).toFixed(1) + '%"></i>' : '') + '</div>' +
+        '<p class="cmp">' + esc(r.say.cmp) + '</p></div>';
+    }).join("");
+    var d = el("div", "bars");
+    d.innerHTML = '<h3>' + esc(title) + '</h3><div class="bar-rows">' + rows + '</div><p class="legend2"><span class="k us"></span>U.S. figure' + (anySt ? '<span class="k st"></span>' + esc(S.stateName) + ' figure' : '') + '</p>';
+    return d;
+  }
+
   // Commute modes as one road, with a sentence per lane (most different lane first)
   function roadBlock(ids) {
     var rs = ids.map(function (i) { return S.R[i]; }).filter(Boolean).sort(byRank); if (!rs.length) return null;
@@ -661,7 +761,14 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
    * ==================================================================== */
   function calcInd(s, ref, refOwn) {
     var own = S.own;
-    if (s.custom === "fm") return own && refOwn ? K.femaleMaleOwnerRatio(own.rows, own.pl, refOwn) : null;
+    if (s.custom === "fm") {
+      var fc = own && refOwn ? K.femaleMaleOwnerRatio(own.rows, own.pl, refOwn) : null;
+      if (fc && refOwn === own.us) {
+        var fr = K.findOwnRow(own.rows, "female householder, no spouse"), mr = K.findOwnRow(own.rows, "male householder, no spouse");
+        fc.nW = fr ? K.num(own.pl[fr.c3 + "E"]) : null; fc.nM = mr ? K.num(own.pl[mr.c3 + "E"]) : null;
+      }
+      return fc;
+    }
     if (s.custom === "mix") return ref ? K.diversityCompare(S.items, S.pl, ref) : null;
     if (s.own) { var row = own && refOwn && K.findOwnRow(own.rows, s.own); return row ? K.compareOwnRate(row, own.pl, refOwn) : null; }
     var it = K.findItem(S.items, s.find); return it && ref ? K.compare(it, S.pl, ref) : null;
@@ -692,7 +799,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   }
 
   function pickTwists() {
-    var all = Object.keys(S.R).map(function (k) { return S.R[k]; }).filter(function (r) { return r.spec.viz !== "road" && r.spec.viz !== "stairs" && r.spec.viz !== "ring"; });
+    var all = Object.keys(S.R).map(function (k) { return S.R[k]; }).filter(function (r) { return r.spec.viz !== "road" && r.spec.viz !== "stairs" && r.spec.viz !== "ring" && r.spec.viz !== "bars" && r.spec.viz !== "duel"; });
     var ok = all.filter(function (r) { return K.isStandoutEligible(r.c); }).sort(function (a, b) { return b.c.rel - a.c.rel; });
     var out = [], seen = {};
     function take(list) { list.forEach(function (r) { if (out.length < 3 && !seen[r.spec.grp]) { seen[r.spec.grp] = 1; out.push(r); } }); }
@@ -722,6 +829,14 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       ss.appendChild(wrap); story.appendChild(ss);
     }
 
+    // 1b. The women-led vs men-led homeownership finding gets its own screen when the gap is real
+    var fm = S.R.ownFM;
+    if (fm && fm.c.sig && fm.c.nW != null && (fm.c.rel >= 0.2 || fm.c.ratio >= 1.25 || fm.c.ratio <= 0.8)) {
+      used.ownFM = 1;
+      var fs = scene(pickColor(), "Who owns the homes"), fb = beat("ownFM", false, true);
+      if (fb) { fs.appendChild(fb); story.appendChild(fs); }
+    }
+
     // 2. Plot twists: the three biggest real differences from the U.S., one per screen
     var twists = pickTwists();
     twists.forEach(function (r) { used[r.id] = 1; });
@@ -734,9 +849,9 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     var DEFS = [
       { sign: "Who lives in " + P, ids: ["medAge", "under18", "age65"] },
       { sign: "Backgrounds and languages", ids: ["mix", "hisp", "foreign", "lang"] },
-      { sign: "Under each roof", ids: ["avgHH", "alone", "kids", "married"] },
+      { sign: "Under each roof", ids: ["avgHH", "alone", "kids"], bars: { title: "What kinds of households live in " + P, ids: ["married", "hhFemale", "hhMale"] } },
       { sign: "The homes", ids: ["own", "value", "rentVal", "vacant", "singleFam", "noCar"] },
-      { sign: "Who owns the homes", ids: ["ownFM"], rings: ["ownF", "ownM", "own1p", "ownMC"] },
+      { sign: "Who owns the homes", ids: ["ownFM"], bars: { title: "Who owns their home, by kind of household", ids: ["ownF", "ownM", "own1p", "ownMC"] } },
       { sign: "Work and money", ids: ["income", "perCap", "poverty", "commute"], road: ["drive", "wfh", "transit", "walk"] },
       { sign: "Learning", stairs: ["hs", "bach", "grad"] }
     ];
@@ -750,13 +865,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
         var rs = ids.map(function (i) { return S.R[i]; }).filter(Boolean); if (!rs.length) return;
         units.push({ z: Math.max.apply(null, rs.map(rank)), build: function (sc) { var x = make(); if (x) sc.appendChild(x); } });
       }
-      if (d.rings) group(d.rings, null, function () {
-        var cells = d.rings.map(function (i) { return S.R[i]; }).filter(Boolean).sort(byRank).map(function (r) {
-          S.SAY[r.id] = r.say.main;
-          return '<div class="ringcell">' + VIZ.ring(r) + '<div><p class="main">' + esc(r.say.main) + '</p><p class="cmp">' + esc(r.say.cmp) + '</p></div></div>';
-        }).join("");
-        return el("div", "ringgrid", cells);
-      });
+      if (d.bars) group(d.bars.ids, null, function () { return barsBlock(d.bars.title, d.bars.ids); });
       if (d.road) group(d.road, null, function () { return roadBlock(d.road); });
       if (d.stairs) group(d.stairs, null, function () { return stairsBlock(d.stairs); });
       units.sort(function (a, b) { return b.z - a.z; });
@@ -808,7 +917,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     revealIO = new IntersectionObserver(function (es) {
       es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); revealIO.unobserve(e.target); } });
     }, { threshold: 0.25 });
-    $$(".beat, .composite, .ringcell").forEach(function (n) { revealIO.observe(n); });
+    $$(".beat, .composite, .bars, .ringcell").forEach(function (n) { revealIO.observe(n); });
     TARGETS = $$("[data-hid]");
     activeEl = null; sched();
   }
