@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#FFD23F">
 <title>Know Your City</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-180.png" type="image/png" sizes="180x180">
+<link rel="apple-touch-icon" href="favicon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap" rel="stylesheet">
@@ -613,30 +616,37 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   var PHOTO_SKIP = /\b(map|maps|logo|flag|seal|coat of arms|diagram|locator|plan|chart|poster|scan|sign|signage|plaque|interior|screenshot|banner|icon|diploma|certificate)\b/i;
   var OK_LICENSE = /^(CC[ -]BY(-SA)?( |$)|CC0|Public domain|PD)/i;
   function plainText(html) { var d = document.createElement("div"); d.innerHTML = html || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); }
-  async function commonsPhotos(lat, lon, avoidUrl) {
-    var out = [];
-    try {
-      var j = await getJSON("https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsnamespace=6&ggscoord=" + lat + "%7C" + lon +
-        "&ggsradius=10000&ggslimit=100&prop=imageinfo&iiprop=url%7Cextmetadata%7Cmime%7Csize&iiurlwidth=640&format=json&origin=*");
+  async function commonsPhotos(lat, lon, place, state) {
+    var out = [], seen = {}, base = "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=url%7Cextmetadata%7Cmime%7Csize&iiurlwidth=640&format=json&origin=*";
+    // Three ways to find photos: taken near the place, filed in the place's Commons category, and matching its name. Merged and de-duplicated.
+    var urls = [
+      base + "&generator=geosearch&ggsnamespace=6&ggsradius=10000&ggslimit=100&ggscoord=" + lat + "%7C" + lon,
+      base + "&generator=categorymembers&gcmtype=file&gcmlimit=100&gcmtitle=" + encodeURIComponent("Category:" + place + ", " + state),
+      base + "&generator=search&gsrnamespace=6&gsrlimit=60&gsrsearch=" + encodeURIComponent(place + " " + state + " filetype:bitmap")
+    ];
+    var results = await Promise.all(urls.map(function (u) { return getJSON(u).catch(function (e) { console.warn("Photo search failed:", e.message); return {}; }); }));
+    var cands = [];
+    results.forEach(function (j, src) {
       var pages = (j.query && j.query.pages) || {};
-      Object.keys(pages).map(function (k) { return pages[k]; }).sort(function (a, b) { return (a.index || 0) - (b.index || 0); }).forEach(function (pg) {
-        var ii = pg.imageinfo && pg.imageinfo[0]; if (!ii || !ii.extmetadata) return;
-        if (ii.mime !== "image/jpeg" || ii.width < 900 || ii.height < 500) return;
-        var ratio = ii.width / ii.height; if (ratio < 1.15 || ratio > 2.1) return;
-        var m = ii.extmetadata, lic = plainText(m.LicenseShortName && m.LicenseShortName.value);
-        if (!OK_LICENSE.test(lic) || /NC|ND/i.test(lic)) return;
-        var title = plainText(m.ObjectName && m.ObjectName.value) || pg.title.replace(/^File:/, "").replace(/\.[a-z]+$/i, "").replace(/_/g, " ");
-        var desc = plainText(m.ImageDescription && m.ImageDescription.value);
-        if (PHOTO_SKIP.test(title) || !K.isNeutralText(title) || !K.isNeutralText(desc)) return;
-        if (/^(IMG|DSC|P)[_ -]?\d+/i.test(title) && !desc) return;
-        var url = ii.thumburl || ii.url; if (avoidUrl && ii.url === avoidUrl) return;
-        var author = plainText(m.Artist && m.Artist.value).slice(0, 48) || "Unknown author";
-        var key = title.toLowerCase().split(/\s+/).slice(0, 2).join(" ");
-        if (out.some(function (o) { return o.key === key; }) || out.filter(function (o) { return o.author === author; }).length >= 3) return;   // keep the set varied
-        out.push({ key: key, url: url, title: title.length > 90 ? title.slice(0, 88) + "…" : title, author: author, license: lic, page: ii.descriptionurl });
-      });
-    } catch (e) { console.warn("Photo search failed:", e.message); }
-    return out.slice(0, 12);
+      Object.keys(pages).forEach(function (k) { var pg = pages[k]; if (seen[pg.pageid || pg.title]) return; seen[pg.pageid || pg.title] = 1; cands.push({ pg: pg, src: src, idx: pg.index || 0 }); });
+    });
+    cands.sort(function (a, b) { return a.src - b.src || a.idx - b.idx; });
+    cands.forEach(function (cd) {
+      var pg = cd.pg, ii = pg.imageinfo && pg.imageinfo[0]; if (!ii || !ii.extmetadata) return;
+      if (ii.mime !== "image/jpeg" || ii.width < 800 || ii.height < 450) return;
+      var ratio = ii.width / ii.height; if (ratio < 1.1 || ratio > 2.3) return;
+      var m = ii.extmetadata, lic = plainText(m.LicenseShortName && m.LicenseShortName.value);
+      if (!OK_LICENSE.test(lic) || /NC|ND/i.test(lic)) return;
+      var title = plainText(m.ObjectName && m.ObjectName.value) || pg.title.replace(/^File:/, "").replace(/\.[a-z]+$/i, "").replace(/_/g, " ");
+      var desc = plainText(m.ImageDescription && m.ImageDescription.value);
+      if (PHOTO_SKIP.test(title) || !K.isNeutralText(title) || !K.isNeutralText(desc)) return;
+      if (/^(IMG|DSC|P)[_ -]?\d+/i.test(title) && !desc) return;
+      var author = plainText(m.Artist && m.Artist.value).slice(0, 48) || "Unknown author";
+      var key = title.toLowerCase().split(/\s+/).slice(0, 2).join(" ");
+      if (out.some(function (o) { return o.key === key; }) || out.filter(function (o) { return o.author === author; }).length >= 5) return;   // keep the set varied
+      out.push({ key: key, url: ii.thumburl || ii.url, title: title.length > 90 ? title.slice(0, 88) + "…" : title, author: author, license: lic, page: ii.descriptionurl });
+    });
+    return out.slice(0, 16);
   }
 
   async function wikiFacts(label, lat, lon, base) {
@@ -961,7 +971,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     if (S.facts.length || (S.photos && S.photos.length)) {
       var ss = scene("pink", null);
       ss.appendChild(el("h2", "cards-title", "Postcards from " + esc(P)));
-      var wrap = el("div", "cards"), facts = S.facts.slice(0, 5), photos = (S.photos || []).slice(0, 5), n = 0;
+      var wrap = el("div", "cards"), facts = S.facts.slice(0, 5), photos = (S.photos || []).slice(0, 4), n = 0;
       function addCard(html, id, quip, extra) {
         var card = el("div", "pc" + (extra ? " " + extra : "")); card.setAttribute("data-hid", id); card.innerHTML = html; wrap.appendChild(card); S.SAY[id] = quip;
       }
@@ -1052,10 +1062,10 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
 
     // Photo breaks: more nearby photos between the sections as you scroll
     (function () {
-      var extra = (S.photos || []).slice(5), bi = 0;
+      var extra = (S.photos || []).slice(4), bi = 0;
       if (!extra.length) return;
       [].slice.call(story.children).forEach(function (sc, i) {
-        if (i < 2 || (i - 2) % 2 !== 0 || bi >= extra.length) return;
+        if (i < 1 || (i - 1) % 2 !== 0 || bi >= extra.length) return;
         var ph = extra[bi], id = "break" + bi; bi++;
         var fig = el("figure", "photobreak"); fig.setAttribute("data-hid", id);
         fig.innerHTML = '<img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><figcaption><b>' + esc(ph.title) + '</b><span class="credit">Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a></span></figcaption>';
@@ -1366,7 +1376,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       S.name = a.BASENAME || nm.place; S.stateName = nm.state;
       $("#placeName").textContent = S.name;
 
-      wikiP = wikiFacts(S.name + ", " + nm.state, center.latitude, center.longitude, S.name); photoP = commonsPhotos(center.latitude, center.longitude);
+      wikiP = wikiFacts(S.name + ", " + nm.state, center.latitude, center.longitude, S.name); photoP = commonsPhotos(center.latitude, center.longitude, S.name, nm.state);
     } catch (e) { console.error(e); showError(e.message); return; }
 
     var w = await wikiP;
