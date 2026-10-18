@@ -654,7 +654,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       if (out.some(function (o) { return o.key === key; }) || out.filter(function (o) { return o.author === author; }).length >= 5) return;   // keep the set varied
       out.push({ key: key, url: ii.thumburl || ii.url, title: title.length > 90 ? title.slice(0, 88) + "…" : title, author: author, license: lic, page: ii.descriptionurl });
     });
-    return out.slice(0, 16);
+    return out.slice(0, 24);
   }
 
   async function wikiFacts(label, lat, lon, base) {
@@ -1072,9 +1072,14 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     (function () {
       var extra = (S.photos || []).slice(4), bi = 0;
       if (!extra.length) return;
-      [].slice.call(story.children).forEach(function (sc, i) {
-        if (i < 1 || (i - 1) % 2 !== 0 || bi >= extra.length) return;
-        var ph = extra[bi], id = "break" + bi; bi++;
+      // One photo after each scene (each scene is a chart or a group of them). With fewer photos than scenes, spread them evenly down the page.
+      var kids = [].slice.call(story.children), slots = kids.length - 2;   // skip the hero/map and the postcards at the top
+      if (slots < 1) return;
+      var n = Math.min(extra.length, slots), pick = {};
+      for (var k = 0; k < n; k++) pick[2 + Math.min(slots - 1, Math.floor((k + 0.5) * slots / n))] = k;
+      Object.keys(pick).forEach(function (idx) {
+        var sc = kids[+idx]; if (!sc) return;
+        var ph = extra[pick[idx]], id = "break" + pick[idx]; bi = pick[idx] + 1;
         var fig = el("figure", "photobreak"); fig.setAttribute("data-hid", id);
         fig.innerHTML = '<img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><figcaption><b>' + esc(ph.title) + '</b><span class="credit">Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a></span></figcaption>';
         S.SAY[id] = BREAK_QUIPS[(bi - 1) % BREAK_QUIPS.length].replace("{P}", P);
