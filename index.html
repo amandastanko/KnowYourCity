@@ -591,6 +591,21 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     return tigerQuery("geometry=" + encodeURIComponent(lon + "," + lat) + "&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&where=1%3D1");
   }
 
+  // Closest Census Place within ~25 miles of a point (for visitors standing outside any place boundary).
+  async function nearestPlace(lon, lat) {
+    var ids = await placeLayerIds(), best = null;
+    var lists = await Promise.all(ids.map(function (id) {
+      return getJSON(TIGER + "/" + id + "/query?geometry=" + encodeURIComponent(lon + "," + lat) + "&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=40000&units=esriSRUnit_Meter&where=1%3D1&outFields=GEOID,INTPTLAT,INTPTLON&returnGeometry=false&resultRecordCount=200&f=json")
+        .then(function (j) { return j.features || []; }).catch(function () { return []; });
+    }));
+    [].concat.apply([], lists).forEach(function (f) {
+      var a = f.attributes, la = parseFloat(a.INTPTLAT), lo = parseFloat(a.INTPTLON); if (isNaN(la) || isNaN(lo)) return;
+      var dx = (lo - lon) * Math.cos(lat * Math.PI / 180), dy = la - lat, d = dx * dx + dy * dy;
+      if (!best || d < best.d) best = { d: d, geoid: a.GEOID, miles: Math.sqrt(d) * 69 };
+    });
+    return best;
+  }
+
   async function geocode(q) {
     if (CFG.ARCGIS_KEY) {
       var j = await getJSON("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&maxLocations=8&countryCode=USA&outFields=Addr_type,City,Region,RegionAbbr&singleLine=" + encodeURIComponent(q) + "&token=" + encodeURIComponent(CFG.ARCGIS_KEY));
@@ -1298,6 +1313,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     } catch (e) { showError("Couldn't search for " + name + ". " + e.message); }
   }
   async function selectByGeoid(geoid) {
+    S.manual = true;
     try {
       var f = await lookupByGeoid(geoid);
       if (!f) { showBubble("Hmm, I couldn't find that place's boundary."); return; }
@@ -1306,6 +1322,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     } catch (e) { showError("Couldn't look up that place. " + e.message); }
   }
   async function selectByPoint(lon, lat) {
+    S.manual = true;
     try {
       var f = await lookupByPoint(lon, lat);
       if (!f) { showBubble("Hmm, that spot isn't inside a Census Place. Try a city, town or village."); return; }
@@ -1459,6 +1476,28 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       await loadPlace(f);
     } catch (e) { console.error(e); showError(e.message); }
     clearTimeout(wd);
+    // Then, unless a place was asked for in the link or already picked, offer the visitor's own place (the browser asks permission first).
+    if (!qs.get("place") && navigator.geolocation && !S.manual) {
+      navigator.geolocation.getCurrentPosition(async function (pos) {
+        try {
+          if (S.manual) return;
+          var lon = pos.coords.longitude, lat = pos.coords.latitude;
+          var inUS = lat >= 17 && lat <= 72 && (lon <= -64 || lon >= 170);
+          if (!inUS) { showBubble("Know Your City covers U.S. places. Here's " + S.name + ". Search for any U.S. town above."); return; }
+          var f2 = await lookupByPoint(lon, lat), near = null;
+          if (!f2) {
+            near = await nearestPlace(lon, lat);
+            if (near) f2 = await lookupByGeoid(near.geoid);
+          }
+          if (S.manual) return;
+          if (!f2) { showBubble("I couldn't find a Census Place near you. Here's " + S.name + ". Search for any U.S. town above."); return; }
+          if (S.geoid && f2.attributes.GEOID === S.geoid) return;
+          window.scrollTo({ top: 0 });
+          await loadPlace(f2);
+          showBubble(near ? "You're closest to " + S.name + ", about " + Math.max(1, Math.round(near.miles)) + " mile" + (Math.round(near.miles) > 1 ? "s" : "") + " away." : "Looks like you're in " + S.name + "! Here's your hometown.");
+        } catch (e) { console.warn("Location lookup failed:", e); }
+      }, function (err) { console.info("Location not shared (" + err.message + "). Staying with the default place."); }, { timeout: 10000, maximumAge: 600000 });
+    }
   })();
 })();
 </script>
