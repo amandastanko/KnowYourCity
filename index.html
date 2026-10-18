@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Know Your City</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://js.arcgis.com/4.33/esri/themes/light/main.css">
+<style>
+:root{
+  --cream:#FFF8EC; --paper:#FFFFFF; --ink:#1F2A44; --muted:#6B7590;
+  --coral:#FF6B57; --teal:#14A3A3; --sun:#FFC83D; --lav:#8B7CF6; --line:#EFE4D2;
+  --shadow:0 10px 30px rgba(31,42,68,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--cream);color:var(--ink);font:400 17px/1.5 "Nunito",system-ui,sans-serif}
+h1,h2,h3{font-family:"Fraunces",Georgia,serif;margin:0;line-height:1.05}
+a{color:var(--teal)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:rgba(255,248,236,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;gap:14px;align-items:center;padding:12px 20px}
+.brand{display:flex;align-items:center;gap:8px;font:800 22px "Fraunces",serif;white-space:nowrap}
+.brand svg{width:26px;height:26px}
+.search{position:relative;flex:1;max-width:520px;margin-left:auto}
+.search input{width:100%;padding:12px 18px;border-radius:999px;border:2px solid var(--line);background:#fff;font:700 16px "Nunito";color:var(--ink);outline:none}
+.search input:focus{border-color:var(--coral)}
+#sugg{position:absolute;left:0;right:0;top:calc(100% + 6px);margin:0;padding:6px;list-style:none;background:#fff;border-radius:18px;box-shadow:var(--shadow);border:1px solid var(--line);display:none}
+#sugg li{padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:700}
+#sugg li:hover,#sugg li.on{background:var(--cream)}
+.btn{border:0;border-radius:999px;padding:11px 18px;font:800 15px "Nunito";cursor:pointer;background:var(--ink);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line)}
+.btn.coral{background:var(--coral)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:28px;padding:36px 0 18px;align-items:stretch}
+.eyebrow{font:800 13px "Nunito";letter-spacing:.14em;text-transform:uppercase;color:var(--coral);margin:0 0 8px}
+.hero h1{font-size:clamp(44px,7vw,88px);font-weight:800;letter-spacing:-.02em}
+.hero .sub{color:var(--muted);font-weight:600;margin:14px 0 18px;max-width:34ch}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.chip{background:#fff;border:2px solid var(--line);border-radius:18px;padding:8px 14px}
+.chip b{display:block;font:800 22px "Fraunces",serif;line-height:1.1}
+.chip span{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.map-card{position:relative;border-radius:32px;overflow:hidden;border:4px solid #fff;box-shadow:var(--shadow);min-height:380px;background:#e9efe6}
+#viewDiv{position:absolute;inset:0}
+.map-card .photo{position:absolute;right:14px;bottom:14px;width:96px;height:96px;border-radius:22px;border:4px solid #fff;object-fit:cover;box-shadow:var(--shadow);display:none;z-index:5;transform:rotate(4deg)}
+.map-hint{position:absolute;left:14px;top:14px;z-index:5;background:#fff;border-radius:999px;padding:6px 12px;font:800 12px "Nunito";box-shadow:var(--shadow)}
+
+/* sections */
+section.block{padding:34px 0 8px}
+.block h2{font-size:clamp(30px,4.4vw,46px);font-weight:800}
+.block h2 em{font-style:normal;color:var(--coral)}
+.block .lede{color:var(--muted);font-weight:600;margin:8px 0 22px;max-width:60ch}
+.kicker{display:inline-flex;align-items:center;gap:8px;font:800 12px "Nunito";letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.kicker i{display:inline-block;width:10px;height:10px;border-radius:50%}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:16px}
+
+/* standout cards */
+.star{position:relative;background:#fff;border-radius:28px;padding:24px;box-shadow:var(--shadow);border:2px solid var(--line);overflow:hidden}
+.star::before{content:"";position:absolute;right:-40px;top:-40px;width:140px;height:140px;border-radius:50%;background:var(--accent,var(--coral));opacity:.14}
+.star .rank{font:800 13px "Nunito";color:var(--accent,var(--coral));letter-spacing:.1em;text-transform:uppercase}
+.star .big{font:800 clamp(44px,6vw,64px) "Fraunces",serif;line-height:1;margin:10px 0 4px;color:var(--accent,var(--coral))}
+.star h3{font-size:24px;margin-bottom:4px}
+.star .what{color:var(--muted);font-weight:600;font-size:15px;margin-bottom:14px}
+.star .sig{display:inline-block;margin-top:12px;font:800 12px "Nunito";padding:4px 10px;border-radius:999px;background:var(--cream);color:var(--ink)}
+
+/* tiles */
+.tile{background:#fff;border-radius:22px;padding:16px 18px;border:2px solid var(--line)}
+.tile-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.tile-title{font-weight:800;font-size:15px;line-height:1.25}
+.pill{flex:none;font:800 11px "Nunito";padding:4px 9px;border-radius:999px;background:var(--cream);color:var(--muted);white-space:nowrap}
+/* Direction is shown with an arrow, not a red/blue-style color pair, to keep the look politically neutral. */
+.tile.up .pill::before{content:"▲ "}
+.tile.down .pill::before{content:"▼ "}
+.tile.up .pill,.tile.down .pill{background:#EFE9F8;color:var(--ink)}
+.tile-val{font:800 34px "Fraunces",serif;margin:6px 0 8px}
+.tile-val small{font:700 13px "Nunito";color:var(--muted);margin-left:4px}
+.bars{display:grid;gap:6px}
+.bar{position:relative;height:12px;border-radius:99px;background:var(--cream);overflow:hidden}
+.bar>i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:99px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.bar.here>i{background:var(--c,var(--coral))}
+.bar.us>i{background:#B9BFCC}
+.bar-lab{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted);margin-top:6px}
+
+/* states */
+.card{background:#fff;border-radius:24px;padding:22px;border:2px solid var(--line);box-shadow:var(--shadow)}
+.card input{width:100%;padding:12px 14px;border-radius:14px;border:2px solid var(--line);font:700 15px "Nunito";margin:6px 0 10px}
+.skeleton{color:var(--muted);font-weight:700}
+footer{padding:40px 0 140px;color:var(--muted);font-size:14px}
+footer p{max-width:80ch}
+
+/* Pinny */
+#pinny{position:fixed;left:18px;bottom:16px;z-index:50;display:flex;align-items:flex-end;gap:6px;pointer-events:none}
+#pinny.off{display:none}
+#pinnySvg{width:92px;height:auto;cursor:pointer;pointer-events:auto;filter:drop-shadow(0 8px 10px rgba(31,42,68,.18));animation:bob 3s ease-in-out infinite;transform-origin:50% 100%}
+#pinny.hop #pinnySvg{animation:hop .8s ease-out}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes hop{0%{transform:translateY(0) scale(1,1)}25%{transform:translateY(0) scale(1.1,.88)}55%{transform:translateY(-26px) scale(.95,1.08)}80%{transform:translateY(0) scale(1.08,.92)}100%{transform:translateY(0) scale(1,1)}}
+.eyes{animation:blink 5s infinite;transform-origin:60px 52px}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+#bubble{position:relative;max-width:min(340px,70vw);background:#fff;border:3px solid var(--ink);border-radius:22px 22px 22px 6px;padding:12px 34px 12px 16px;font-weight:700;font-size:15px;line-height:1.35;box-shadow:var(--shadow);margin-bottom:46px;opacity:0;transform:translateY(8px) scale(.96);transition:.25s;pointer-events:none}
+#bubble.show{opacity:1;transform:none;pointer-events:auto}
+#bubble b{color:var(--coral)}
+#bubble button{position:absolute;right:8px;top:6px;border:0;background:none;font:800 18px "Nunito";cursor:pointer;color:var(--muted)}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr}
+  .map-card{min-height:320px}
+  .grid3{grid-template-columns:1fr}
+  .brand span{display:none}
+  #pinnySvg{width:70px}
+}
+@media (prefers-reduced-motion:reduce){#pinnySvg,.eyes{animation:none}.bar>i{transition:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="0 0 120 150" aria-hidden="true"><path d="M60 8C30 8 10 30 10 58c0 34 38 60 50 76 12-16 50-42 50-76C110 30 90 8 60 8Z" fill="#FF6B57"/><circle cx="60" cy="56" r="22" fill="#FFF8EC"/></svg>
+      <span>Know Your City</span>
+    </div>
+    <div class="search">
+      <input id="q" type="search" placeholder="Search any U.S. town or city…" autocomplete="off" aria-label="Search for a place">
+      <ul id="sugg" role="listbox"></ul>
+    </div>
+    <button class="btn ghost" id="pinnyToggle" title="Show or hide Pinny">Pinny: on</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero" id="hero" data-sec="hero">
+    <div>
+      <p class="eyebrow" id="stateName">&nbsp;</p>
+      <h1 id="placeName">Loading…</h1>
+      <p class="sub" id="heroSub">Pinny is fetching the story of this place.</p>
+      <div class="chips" id="heroStats"></div>
+      <div class="hero-actions">
+        <button class="btn coral" id="tourBtn">Take the tour</button>
+        <button class="btn ghost" id="factBtn">Tell me something</button>
+      </div>
+    </div>
+    <div class="map-card">
+      <div id="viewDiv"></div>
+      <div class="map-hint">Click the map to explore another place</div>
+      <img class="photo" id="heroImg" alt="">
+    </div>
+  </section>
+
+  <section class="block" id="setup" hidden>
+    <div class="card">
+      <h2 style="font-size:30px">One quick thing: a Census API key</h2>
+      <p class="lede" style="margin-bottom:8px">The Census Bureau now requires a free key for every API call. <a href="https://api.census.gov/data/key_signup.html" target="_blank" rel="noopener">Get one here</a> (it arrives by email in a minute), paste it below, and the data will load.</p>
+      <input id="keyInput" placeholder="Paste your Census API key" autocomplete="off">
+      <button class="btn coral" id="keySave">Save key &amp; load data</button>
+      <p style="color:var(--muted);font-size:14px;margin:10px 0 0">Stored only in this browser. For a public site, put the key in <code>HARDCODED</code> at the top of the script instead.</p>
+    </div>
+  </section>
+
+  <section class="block" id="standouts" data-sec="standouts" hidden>
+    <span class="kicker"><i style="background:var(--coral)"></i>The headline</span>
+    <h2>What makes <em class="pn">this place</em> stand out</h2>
+    <p class="lede">The biggest differences from the U.S. average that are statistically real, not just noise from the survey sample.</p>
+    <div class="grid3" id="standoutGrid"></div>
+  </section>
+
+  <div id="sections"></div>
+
+  <section class="block" id="errorBox" hidden><div class="card" id="errorMsg"></div></section>
+
+  <footer>
+    <p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average. It doesn't rank places, judge what's good or bad, or use political data.</p>
+    <p>Numbers come from the U.S. Census Bureau's American Community Survey 5-year estimates (<span id="vint">2020–2024</span>), Data Profiles DP02–DP05, compared with the United States overall. "Statistically different" means the gap is larger than the survey's margin of error (95% level). Boundaries from Census TIGERweb. Fun facts from <a id="wikiLink" href="https://en.wikipedia.org" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Basemap: Esri / OpenStreetMap contributors.</p>
+  </footer>
+</main>
+
+<!-- Pinny, the mascot (an original character; swap the SVG for your own anytime) -->
+<div id="pinny" aria-live="polite">
+  <svg id="pinnySvg" viewBox="0 0 120 150" role="button" aria-label="Pinny the map pin. Click for a fun fact.">
+    <ellipse cx="60" cy="144" rx="26" ry="5" fill="rgba(31,42,68,.18)"/>
+    <path d="M60 6C29 6 8 29 8 58c0 35 40 62 52 80 12-18 52-45 52-80C112 29 91 6 60 6Z" fill="#FF6B57"/>
+    <path d="M60 6C29 6 8 29 8 58c0 6 1 11 3 16C20 40 40 22 60 22s40 18 49 52c2-5 3-10 3-16C112 29 91 6 60 6Z" fill="#fff" opacity=".18"/>
+    <circle cx="60" cy="56" r="35" fill="#FFF8EC"/>
+    <g class="eyes">
+      <ellipse cx="47" cy="52" rx="6.5" ry="8.5" fill="#1F2A44"/>
+      <ellipse cx="73" cy="52" rx="6.5" ry="8.5" fill="#1F2A44"/>
+      <circle cx="49" cy="49" r="2.4" fill="#fff"/><circle cx="75" cy="49" r="2.4" fill="#fff"/>
+    </g>
+    <circle cx="38" cy="68" r="5" fill="#FFB3A7" opacity=".8"/><circle cx="82" cy="68" r="5" fill="#FFB3A7" opacity=".8"/>
+    <path d="M48 70q12 12 24 0" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M30 100q-14 4-16 16" stroke="#FF6B57" stroke-width="7" fill="none" stroke-linecap="round" opacity="0"/>
+  </svg>
+  <div id="bubble" role="status"></div>
+</div>
+
+<script src="engine.js"></script>
+<script src="https://js.arcgis.com/4.33/"></script>
+<script>
+/* ---------- Configuration ---------- */
+// For a public deployment, paste keys here. Otherwise the app asks for the Census key and stores it locally.
+// ArcGIS key is optional (without it you get an OpenStreetMap basemap + free geocoder).
+var HARDCODED = { census: "", arcgis: "" };
+
+(function () {
+  var K = window.KYC;
+  var qs = new URLSearchParams(location.search);
+  var CFG = {
+    CENSUS_KEY: HARDCODED.census || qs.get("census") || safeGet("kyc_census"),
+    ARCGIS_KEY: HARDCODED.arcgis || qs.get("arcgis") || safeGet("kyc_arcgis"),
+    VINTAGE: 2024,
+    DEFAULT_GEOID: "0659962"   // Redlands, CA
+  };
+  var API = "https://api.census.gov/data/" + CFG.VINTAGE + "/acs/acs5/profile";
+  var TIGER = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer";
+  var SUBJECT = "https://api.census.gov/data/" + CFG.VINTAGE + "/acs/acs5/subject";
+  var GROUPS = ["DP02", "DP03", "DP04", "DP05"];
+
+  function safeGet(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function $(s) { return document.querySelector(s); }
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  /* ---------- Curated "template" tiles (same structure for every place) ---------- */
+  // find: terms matched against the Census label, so we don't hard-code variable IDs.
+  var SECTIONS = [
+    { id: "people", title: "Who lives here", color: "#14A3A3", lede: "Ages, backgrounds and the languages you'll hear on the street.",
+      tiles: [
+        { t: "Median age", find: ["sex and age", "median age"] },
+        { t: "Under 18", find: ["sex and age", "under 18 years"] },
+        { t: "65 and older", find: ["sex and age", "65 years and over"] },
+        { t: "Hispanic or Latino", find: ["hispanic or latino and race", "hispanic or latino (of any race)"] },
+        { t: "Born outside the U.S.", find: ["place of birth", "foreign born"] },
+        { t: "Speak another language at home", find: ["language spoken at home", "language other than english"] },
+        { t: "Veterans", find: ["veteran status", "civilian veterans"] },
+        { t: "Living with a disability", find: ["disability status", "with a disability"] }
+      ] },
+    { id: "households", title: "Who's under each roof", color: "#8B7CF6", lede: "The shape of a typical household here.",
+      tiles: [
+        { t: "Average household size", find: ["households by type", "average household size"] },
+        { t: "People living alone", find: ["householder living alone"] },
+        { t: "Households with kids", find: ["households with one or more people under 18"] },
+        { t: "Married-couple households", find: ["married-couple household"] },
+        { t: "Female householder, no spouse", find: ["female householder, no spouse"] },
+        { t: "Male householder, no spouse", find: ["male householder, no spouse"] }
+      ] },
+    { id: "homes", title: "Homes & neighborhoods", color: "#FF6B57", lede: "Own or rent, what it costs, and what the houses look like.",
+      tiles: [
+        { t: "Homeowners", find: ["housing tenure", "owner-occupied"] },
+        { t: "Renters", find: ["housing tenure", "renter-occupied"] },
+        { t: "Median home value", find: ["value", "median (dollars)"] },
+        { t: "Median monthly rent", find: ["gross rent", "median (dollars)"] },
+        { t: "Empty homes", find: ["housing occupancy", "vacant housing units"] },
+        { t: "Single-family detached homes", find: ["units in structure", "1-unit, detached"] },
+        { t: "Households with no car", find: ["vehicles available", "no vehicles available"] }
+      ] },
+    { id: "owners", title: "Who owns the homes", color: "#D4609A", custom: "owners",
+      lede: "Which kinds of households actually own their place, and how that stacks up against the rest of the country.",
+      tiles: [
+        { t: "Homeownership: living alone", last: "1-person household" },
+        { t: "Homeownership: 4+ person households", last: "4-or-more-person household" },
+        { t: "Homeownership: married couples", last: "Married-couple family" },
+        { t: "Homeownership: men, no spouse present", last: "Male householder, no spouse present" },
+        { t: "Homeownership: women, no spouse present", last: "Female householder, no spouse present" }
+      ] },
+    { id: "work", title: "Work, money & getting around", color: "#FFB000", lede: "Paychecks, commutes and who's working from the couch.",
+      tiles: [
+        { t: "Median household income", find: ["median household income"] },
+        { t: "Income per person", find: ["per capita income"] },
+        { t: "People below the poverty line", find: ["percentage of families and people", "all people"] },
+        { t: "Work from home", find: ["commuting to work", "worked from home"] },
+        { t: "Drive to work alone", find: ["commuting to work", "drove alone"] },
+        { t: "Take public transit", find: ["commuting to work", "public transportation"] },
+        { t: "Walk to work", find: ["commuting to work", "walked"] },
+        { t: "Average commute", find: ["mean travel time to work"] }
+      ] },
+    { id: "learning", title: "Learning", color: "#2F9E6E", lede: "Diplomas, degrees and the brainpower of the block.",
+      tiles: [
+        { t: "High school grad or higher", find: ["educational attainment", "high school graduate or higher"] },
+        { t: "Bachelor's degree or higher", find: ["educational attainment", "bachelor's degree or higher"] },
+        { t: "Graduate or professional degree", find: ["educational attainment", "graduate or professional degree"] }
+      ] }
+  ];
+  var ACCENTS = ["#FF6B57", "#14A3A3", "#8B7CF6"];
+
+  /* ---------- State ---------- */
+  var S = { place: null, polygon: null, view: null, items: null, placeRow: null, usRow: null,
+            facts: [], blurbs: {}, seen: {}, tour: false, geoid: null, loadId: 0 };
+  var modules = {};
+
+  /* ---------- Pinny ---------- */
+  var pinnyEl = $("#pinny"), bubble = $("#bubble"), pinnyOn = safeGet("kyc_pinny") !== "off", bubbleTimer = null, factIdx = 0;
+  var OPENERS = ["Did you know?", "Fun fact!", "Psst…", "Check this out:", "Little secret:"];
+  function updatePinnyToggle() { $("#pinnyToggle").textContent = "Pinny: " + (pinnyOn ? "on" : "off"); pinnyEl.classList.toggle("off", !pinnyOn); }
+  function say(text, opts) {
+    opts = opts || {};
+    if (!pinnyOn) return;
+    bubble.innerHTML = "";
+    if (opts.opener) { var b = el("b", null, esc(opts.opener) + " "); bubble.appendChild(b); }
+    bubble.appendChild(document.createTextNode(text));
+    var x = el("button", null, "×"); x.setAttribute("aria-label", "Dismiss");
+    x.onclick = function () { bubble.classList.remove("show"); };
+    bubble.appendChild(x);
+    bubble.classList.add("show");
+    pinnyEl.classList.remove("hop"); void pinnyEl.offsetWidth; pinnyEl.classList.add("hop");
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(function () { bubble.classList.remove("show"); }, opts.ms || 9000);
+  }
+  function nextFact() {
+    if (!S.facts.length) { say("I'm still digging up facts about this place…"); return; }
+    var f = S.facts[factIdx++ % S.facts.length];
+    say(f, { opener: OPENERS[Math.floor(Math.random() * OPENERS.length)], ms: 11000 });
+  }
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  $("#pinnySvg").addEventListener("click", nextFact);
+  $("#factBtn").addEventListener("click", nextFact);
+  $("#pinnyToggle").addEventListener("click", function () { pinnyOn = !pinnyOn; safeSet("kyc_pinny", pinnyOn ? "on" : "off"); updatePinnyToggle(); });
+  updatePinnyToggle();
+  // Random "did you know" every so often, only when the tab is visible and nothing is showing.
+  setInterval(function () {
+    if (document.hidden || S.tour || !S.facts.length || bubble.classList.contains("show")) return;
+    if (Math.random() < 0.7) nextFact();
+  }, 17000);
+
+  /* ---------- Section observer (Pinny comments as you scroll) ---------- */
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting || S.tour) return;
+      var id = en.target.getAttribute("data-sec"), key = S.geoid + ":" + id;
+      if (S.seen[key] || !S.blurbs[id]) return;
+      S.seen[key] = true;
+      setTimeout(function () { say(S.blurbs[id], { ms: 8000 }); }, 500);
+    });
+  }, { threshold: 0.55 });
+
+  /* ---------- Tour ---------- */
+  $("#tourBtn").addEventListener("click", function () {
+    var btn = $("#tourBtn");
+    if (S.tour) { S.tour = false; btn.textContent = "Take the tour"; return; }
+    if (!pinnyOn) { pinnyOn = true; updatePinnyToggle(); }
+    S.tour = true; btn.textContent = "Stop tour";
+    runTour();
+  });
+  async function runTour() {
+    var ids = ["hero", "standouts"].concat(SECTIONS.map(function (s) { return s.id; }));
+    for (var i = 0; i < ids.length && S.tour; i++) {
+      var node = document.querySelector('[data-sec="' + ids[i] + '"]');
+      if (!node || node.hidden || !S.blurbs[ids[i]]) continue;
+      node.scrollIntoView({ behavior: "smooth", block: "center" });
+      await sleep(900);
+      say(S.blurbs[ids[i]], { ms: 6500 });
+      await sleep(7000);
+    }
+    if (S.tour) { say("That's the tour! Search another town and I'll do it all again.", { ms: 7000 }); }
+    S.tour = false; $("#tourBtn").textContent = "Take the tour";
+  }
+
+  /* ---------- Census data ---------- */
+  async function getJSON(url) {
+    var r = await fetch(url);
+    if (!r.ok) { var t = ""; try { t = (await r.text()).slice(0, 160); } catch (e) {} throw new Error("HTTP " + r.status + " from " + url.split("?")[0] + (t ? " — " + t : "")); }
+    return r.json();
+  }
+  async function censusRow(group, forClause) {
+    var url = API + "?get=NAME,group(" + group + ")&" + forClause + "&key=" + encodeURIComponent(CFG.CENSUS_KEY);
+    var rows = await getJSON(url);
+    var o = {}; rows[0].forEach(function (h, i) { o[h] = rows[1][i]; });
+    return o;
+  }
+  async function groupRows(forClause) {
+    var parts = await Promise.all(GROUPS.map(function (g) { return censusRow(g, forClause); }));
+    return Object.assign.apply(null, [{}].concat(parts));
+  }
+  async function usRows() {
+    var ck = "kyc_us_" + CFG.VINTAGE;
+    try { var c = sessionStorage.getItem(ck); if (c) return JSON.parse(c); } catch (e) {}
+    var rows = await groupRows("for=us:1");
+    try { sessionStorage.setItem(ck, JSON.stringify(rows)); } catch (e) {}
+    return rows;
+  }
+  // S2501 (Occupancy Characteristics) from the Subject tables: who owns the homes
+  async function ownData(forClause, cacheKey) {
+    if (cacheKey) { try { var c = sessionStorage.getItem(cacheKey); if (c) return JSON.parse(c); } catch (e) {} }
+    var rows = await getJSON(SUBJECT + "?get=NAME,group(S2501)&" + forClause + "&key=" + encodeURIComponent(CFG.CENSUS_KEY));
+    var o = {}; rows[0].forEach(function (h, i) { o[h] = rows[1][i]; });
+    if (cacheKey) { try { sessionStorage.setItem(cacheKey, JSON.stringify(o)); } catch (e) {} }
+    return o;
+  }
+  async function ownLabels() {
+    var ck = "kyc_own_labels_" + CFG.VINTAGE;
+    try { var c = localStorage.getItem(ck); if (c) return JSON.parse(c); } catch (e) {}
+    var p = await getJSON(SUBJECT + "/groups/S2501.json");
+    var vars = {};
+    Object.keys(p.variables).forEach(function (id) {
+      if (/^S2501_C0[13]_\d{3}E$/.test(id)) vars[id] = { label: p.variables[id].label };
+    });
+    try { localStorage.setItem(ck, JSON.stringify(vars)); } catch (e) {}
+    return vars;
+  }
+  async function loadOwnership(place, state) {
+    try {
+      var r = await Promise.all([
+        ownLabels(),
+        ownData("for=us:1", "kyc_own_us_" + CFG.VINTAGE),
+        ownData("for=place:" + place + "&in=state:" + state)
+      ]);
+      return { rows: K.buildOwnRows(r[0]), us: r[1], pl: r[2] };
+    } catch (e) { console.warn("S2501 ownership data unavailable:", e.message); return null; }
+  }
+
+  async function labelMap() {
+    var ck = "kyc_labels_" + CFG.VINTAGE;
+    try { var c = localStorage.getItem(ck); if (c) return JSON.parse(c); } catch (e) {}
+    var parts = await Promise.all(GROUPS.map(function (g) { return getJSON(API + "/groups/" + g + ".json"); }));
+    var vars = {};
+    parts.forEach(function (p) {
+      Object.keys(p.variables).forEach(function (id) { if (/(E|PE)$/.test(id) && !/(EA|PEA)$/.test(id)) vars[id] = { label: p.variables[id].label }; });
+    });
+    try { localStorage.setItem(ck, JSON.stringify(vars)); } catch (e) {}
+    return vars;
+  }
+
+  /* ---------- Places (TIGERweb) ---------- */
+  var layerIds = null;
+  async function placeLayerIds() {
+    if (layerIds) return layerIds;
+    var j = await getJSON(TIGER + "?f=json");
+    layerIds = j.layers.filter(function (l) { return /^(incorporated places|census designated places)$/i.test(l.name); }).map(function (l) { return l.id; });
+    if (!layerIds.length) throw new Error("Couldn't find Census place layers in TIGERweb");
+    return layerIds;
+  }
+  async function tigerQuery(extra) {
+    var ids = await placeLayerIds();
+    for (var i = 0; i < ids.length; i++) {
+      var url = TIGER + "/" + ids[i] + "/query?" + extra + "&outFields=GEOID,BASENAME,NAME,STATE,PLACE,AREALAND&returnGeometry=true&outSR=4326&maxAllowableOffset=0.0004&f=json";
+      var j = await getJSON(url);
+      if (j.features && j.features.length) return j.features[0];
+    }
+    return null;
+  }
+  function lookupByGeoid(g) { return tigerQuery("where=" + encodeURIComponent("GEOID='" + g + "'")); }
+  function lookupByPoint(lon, lat) {
+    return tigerQuery("geometry=" + encodeURIComponent(lon + "," + lat) + "&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&where=1%3D1");
+  }
+
+  /* ---------- Geocoding (search box) ---------- */
+  async function geocode(q) {
+    if (CFG.ARCGIS_KEY) {
+      var j = await getJSON("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&maxLocations=5&countryCode=USA&category=" +
+        encodeURIComponent("City,Town,Village,Populated Place,Neighborhood") + "&singleLine=" + encodeURIComponent(q) + "&token=" + encodeURIComponent(CFG.ARCGIS_KEY));
+      return (j.candidates || []).map(function (c) { return { name: c.address, lon: c.location.x, lat: c.location.y }; });
+    }
+    var n = await getJSON("https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&limit=5&q=" + encodeURIComponent(q));
+    return n.map(function (r) { return { name: r.display_name, lon: parseFloat(r.lon), lat: parseFloat(r.lat) }; });
+  }
+  var qEl = $("#q"), sugg = $("#sugg"), suggTimer = null, suggData = [];
+  qEl.addEventListener("input", function () {
+    clearTimeout(suggTimer);
+    var v = qEl.value.trim();
+    if (v.length < 3) { sugg.style.display = "none"; return; }
+    suggTimer = setTimeout(async function () {
+      try {
+        suggData = await geocode(v);
+        sugg.innerHTML = "";
+        suggData.forEach(function (s, i) { var li = el("li", null, esc(s.name)); li.onclick = function () { pickSuggestion(i); }; sugg.appendChild(li); });
+        sugg.style.display = suggData.length ? "block" : "none";
+      } catch (e) { sugg.style.display = "none"; }
+    }, 350);
+  });
+  qEl.addEventListener("keydown", function (e) { if (e.key === "Enter" && suggData.length) { e.preventDefault(); pickSuggestion(0); } });
+  document.addEventListener("click", function (e) { if (!e.target.closest(".search")) sugg.style.display = "none"; });
+  function pickSuggestion(i) { var s = suggData[i]; sugg.style.display = "none"; qEl.value = ""; selectByPoint(s.lon, s.lat); }
+
+  async function selectByPoint(lon, lat) {
+    try {
+      var f = await lookupByPoint(lon, lat);
+      if (!f) { say("Hmm, that spot isn't inside a Census Place. Try a city, town or village!", { ms: 7000 }); return; }
+      loadPlace(f);
+    } catch (e) { showError("Couldn't look up that place. " + e.message); }
+  }
+
+  /* ---------- Wikipedia facts ---------- */
+  async function wikiFacts(label, lat, lon, base) {
+    var out = { sentences: [], nearby: [], img: null, url: null };
+    try {
+      var j = await getJSON("https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrlimit=1&gsrsearch=" + encodeURIComponent(label) +
+        "&prop=extracts|pageimages|info&inprop=url&exintro=1&explaintext=1&piprop=thumbnail&pithumbsize=300&format=json&origin=*");
+      var pages = j.query && j.query.pages; var p = pages && pages[Object.keys(pages)[0]];
+      if (p && p.title && p.title.toLowerCase().indexOf(base.toLowerCase()) !== -1) {
+        out.sentences = K.factSentences(p.extract, 5);
+        out.img = p.thumbnail && p.thumbnail.source; out.url = p.fullurl; out.title = p.title;
+      }
+    } catch (e) {}
+    try {
+      var g = await getJSON("https://en.wikipedia.org/w/api.php?action=query&generator=geosearch&ggscoord=" + lat + "%7C" + lon +
+        "&ggsradius=8000&ggslimit=12&prop=extracts&exintro=1&explaintext=1&exsentences=1&exlimit=max&format=json&origin=*");
+      var gp = (g.query && g.query.pages) || {};
+      Object.keys(gp).forEach(function (k) {
+        var pg = gp[k]; if (!pg.extract || pg.title === out.title) return;
+        if (!K.isNeutralText(pg.title)) return;
+        var first = K.factSentences(pg.extract, 1)[0] || (pg.extract.length < 200 && K.isNeutralText(pg.extract) ? pg.extract : "");
+        if (first) out.nearby.push("Right nearby: " + pg.title + ". " + first);
+      });
+    } catch (e) {}
+    return out;
+  }
+
+  /* ---------- Render ---------- */
+  function showError(msg) { $("#errorBox").hidden = false; $("#errorMsg").innerHTML = "<b>Something went sideways.</b><br>" + esc(msg); }
+  function tileEl(c, title, sub, color) {
+    var dir = !c.sig ? "flat" : (c.p > c.pus ? "up" : "down");
+    var max = Math.max(c.p, c.pus) * 1.08 || 1;
+    var d = el("div", "tile " + dir);
+    d.style.setProperty("--c", color);
+    d.innerHTML =
+      '<div class="tile-top"><div class="tile-title">' + esc(title) + '</div><span class="pill">' + esc(K.ratioText(c)) + '</span></div>' +
+      '<div class="tile-val">' + esc(K.fmt(c, c.p)) + '<small>here</small></div>' +
+      '<div class="bars"><div class="bar here"><i data-w="' + (c.p / max * 100) + '"></i></div><div class="bar us"><i data-w="' + (c.pus / max * 100) + '"></i></div></div>' +
+      '<div class="bar-lab"><span>' + esc(sub || "") + '</span><span>U.S. ' + esc(K.fmt(c, c.pus)) + '</span></div>';
+    if (c.m != null) d.title = "Margin of error ±" + K.fmt(c, c.m);
+    return d;
+  }
+  function animateBars(root) {
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      root.querySelectorAll(".bar>i").forEach(function (i) { i.style.width = i.getAttribute("data-w") + "%"; });
+    }); });
+  }
+
+  function renderData(name) {
+    var items = S.items, pr = S.placeRow, ur = S.usRow;
+    S.blurbs = {};
+    document.querySelectorAll(".pn").forEach(function (n) { n.textContent = name; });
+
+    // Hero chips
+    var chips = $("#heroStats"); chips.innerHTML = "";
+    function chip(label, find, kind) {
+      var it = K.findItem(items, find); if (!it) return;
+      var v = K.getVals(pr, it.base), val = kind === "inc" || kind === "age" ? v.e : v.e;
+      if (val == null) return;
+      var txt = kind === "inc" ? "$" + Math.round(val).toLocaleString() : kind === "age" ? val.toFixed(1) : Math.round(val).toLocaleString();
+      chips.appendChild(el("div", "chip", "<b>" + txt + "</b><span>" + esc(label) + "</span>"));
+      return val;
+    }
+    var pop = chip("People", ["sex and age", "total population"]);
+    chip("Households", ["households by type", "total households"]);
+    chip("Median age", ["sex and age", "median age"], "age");
+    chip("Median income", ["median household income"], "inc");
+    $("#heroSub").textContent = pop ? "A place of about " + Math.round(pop).toLocaleString() + " people. Here's what makes it tick." : "Here's what makes it tick.";
+    S.blurbs.hero = "Welcome to " + name + "! " + (pop ? "About " + Math.round(pop).toLocaleString() + " people live here. " : "") + "Let's see what makes it different.";
+
+    // Standouts
+    // Ownership findings from S2501 compete in the same ranking as the Data Profile rows.
+    var own = S.own, extra = [], fm = null;
+    if (own) {
+      extra = K.ownCandidates(own.rows, own.pl, own.us, 0.03);
+      fm = K.femaleMaleOwnerRatio(own.rows, own.pl, own.us);
+      if (fm) extra.push(fm);
+    }
+    var top = K.pickStandouts(items, pr, ur, 3, extra);
+    var grid = $("#standoutGrid"); grid.innerHTML = "";
+    top.forEach(function (c, i) {
+      var d = K.describe(c), accent = ACCENTS[i % ACCENTS.length];
+      var card = el("div", "star"); card.style.setProperty("--accent", accent);
+      var big = c.type === "ratio" ? K.fmt(c, c.p)
+        : c.ratio >= 1 ? (c.ratio >= 1.5 ? c.ratio.toFixed(1) + "×" : "+" + Math.round((c.ratio - 1) * 100) + "%") : "−" + Math.round((1 - c.ratio) * 100) + "%";
+      card.innerHTML = '<div class="rank">Standout #' + (i + 1) + '</div><div class="big">' + esc(big) + '</div>' +
+        '<h3>' + esc(d.title) + '</h3><div class="what">' + esc(d.sub) + '</div>';
+      card.appendChild(tileEl(c, c.type === "pct" ? "Here vs. U.S." : "Here vs. U.S.", "", accent));
+      card.appendChild(el("span", "sig", c.sig ? "Statistically different from the U.S." : "Close to the U.S."));
+      grid.appendChild(card);
+    });
+    $("#standouts").hidden = !top.length;
+    if (top.length) {
+      var t0 = top[0], d0 = K.describe(t0);
+      S.blurbs.standouts = "Biggest standout: " + d0.title.toLowerCase() + " is " + K.ratioText(t0) + " (" + K.fmt(t0, t0.p) + " vs " + K.fmt(t0, t0.pus) + ").";
+      // Census-based facts for the mascot
+      top.forEach(function (c) { var d = K.describe(c); S.facts.push(d.title + " (" + d.sub + "): " + K.fmt(c, c.p) + " here versus " + K.fmt(c, c.pus) + " across the U.S. That's " + K.ratioText(c) + "."); });
+    }
+
+    // Template sections
+    var host = $("#sections"); host.innerHTML = "";
+    SECTIONS.forEach(function (sec) {
+      var cmp = [];
+      if (sec.custom === "owners") {
+        // S2501 ownership tiles: the women-led vs men-led owner ratio first, then ownership rate by household type
+        if (!own) return;
+        if (fm) cmp.push({ c: fm, t: { t: "Women-led vs. men-led homeowners" } });
+        sec.tiles.forEach(function (t) {
+          var r = K.findOwnRow(own.rows, t.last); if (!r) return;
+          var c = K.compareOwnRate(r, own.pl, own.us); if (!c) return;
+          cmp.push({ c: c, t: t });
+        });
+      } else {
+        sec.tiles.forEach(function (t) {
+          var it = K.findItem(items, t.find); if (!it) return;
+          var c = K.compare(it, pr, ur); if (!c) return;
+          cmp.push({ c: c, t: t });
+        });
+      }
+      if (!cmp.length) return;
+      var node = el("section", "block"); node.id = sec.id; node.setAttribute("data-sec", sec.id);
+      node.innerHTML = '<span class="kicker"><i style="background:' + sec.color + '"></i>' + esc({ people: "Neighbors", households: "Households", homes: "Housing", owners: "Ownership", work: "Economy", learning: "Education" }[sec.id] || "More") + '</span>' +
+        '<h2>' + esc(sec.title) + '</h2><p class="lede">' + esc(sec.lede) + '</p>';
+      var g = el("div", "grid4");
+      cmp.forEach(function (x) { g.appendChild(tileEl(x.c, x.t.t, "", sec.color)); });
+      node.appendChild(g); host.appendChild(node); io.observe(node); animateBars(node);
+      var best = cmp.filter(function (x) { return x.c.sig; }).sort(function (a, b) { return b.c.rel - a.c.rel; })[0];
+      S.blurbs[sec.id] = best ? sec.title + ": " + best.t.t.toLowerCase() + " is " + K.ratioText(best.c) + " here (" + K.fmt(best.c, best.c.p) + " vs " + K.fmt(best.c, best.c.pus) + ")."
+                              : sec.title + ": pretty close to the national picture here.";
+    });
+    animateBars($("#standouts"));
+    io.observe($("#standouts")); io.observe($("#hero"));
+  }
+
+  /* ---------- Map ---------- */
+  function drawPlace(poly, extent) {
+    S.view.graphics.removeAll();
+    S.view.graphics.add(new modules.Graphic({
+      geometry: poly,
+      symbol: { type: "simple-fill", color: [255, 107, 87, 0.22], outline: { color: [255, 107, 87, 1], width: 3 } }
+    }));
+    S.view.goTo(extent.expand(1.35), { duration: 900 }).catch(function () {});
+  }
+
+  /* ---------- Load a place ---------- */
+  async function loadPlace(feature) {
+    var myLoad = ++S.loadId;
+    var a = feature.attributes, geoid = a.GEOID, state = a.STATE, place = a.PLACE;
+    S.geoid = geoid; S.own = null; S.facts = []; S.blurbs = {}; factIdx = 0; S.tour = false; $("#tourBtn").textContent = "Take the tour";
+    $("#errorBox").hidden = true;
+    history.replaceState(null, "", "?place=" + geoid + (qs.get("census") ? "" : ""));
+    $("#placeName").textContent = a.BASENAME || a.NAME;
+    $("#stateName").innerHTML = "&nbsp;";
+    $("#heroSub").textContent = "Pinny is fetching the story of this place…";
+    $("#heroStats").innerHTML = ""; $("#sections").innerHTML = ""; $("#standouts").hidden = true;
+    $("#heroImg").style.display = "none";
+    say("Ooh, " + (a.BASENAME || a.NAME) + "! Give me a sec to dig up the data…", { ms: 4000 });
+
+    var poly = new modules.Polygon({ rings: feature.geometry.rings, spatialReference: { wkid: 4326 } });
+    drawPlace(poly, poly.extent);
+    var center = poly.extent.center;
+
+    // Wikipedia runs in parallel with the Census calls
+    var wikiP = null;
+
+    if (!CFG.CENSUS_KEY) { $("#setup").hidden = false; $("#heroSub").textContent = "Add a free Census API key to see the numbers."; }
+    else {
+      $("#setup").hidden = true;
+      try {
+        var res = await Promise.all([
+          labelMap(), usRows(),
+          groupRows("for=place:" + place + "&in=state:" + state),
+          loadOwnership(place, state)
+        ]);
+        if (myLoad !== S.loadId) return;
+        S.items = K.buildItems(res[0]); S.usRow = res[1]; S.placeRow = res[2]; S.own = res[3];
+        var nm = K.splitCensusName(S.placeRow.NAME);
+        $("#stateName").textContent = nm.state;
+        S.place = { name: a.BASENAME || nm.place, state: nm.state };
+        renderData(S.place.name);
+        wikiP = wikiFacts(S.place.name + ", " + nm.state, center.latitude, center.longitude, S.place.name);
+      } catch (e) {
+        console.error(e);
+        $("#heroSub").textContent = "The numbers didn't load.";
+        showError(e.message + ". If this mentions 400 or 401, double-check your Census API key.");
+      }
+    }
+    if (!wikiP) {
+      var nm2 = (a.NAME || "").replace(/\s+(city|town|village|CDP|borough)$/i, "");
+      wikiP = wikiFacts((a.BASENAME || nm2), center.latitude, center.longitude, a.BASENAME || nm2);
+    }
+    var w = await wikiP;
+    if (myLoad !== S.loadId) return;
+    if (w.img) { var im = $("#heroImg"); im.src = w.img; im.alt = "Photo related to " + (a.BASENAME || ""); im.style.display = "block"; }
+    if (w.url) $("#wikiLink").href = w.url;
+    var wikiFactsList = w.sentences.concat(shuffle(w.nearby).slice(0, 4));
+    S.facts = shuffle(wikiFactsList.concat(S.facts.slice(0)));
+    // Add a land-area fact when we have both population and area
+    try {
+      var pop = S.items && K.findItem(S.items, ["sex and age", "total population"]);
+      var popV = pop && K.getVals(S.placeRow, pop.base).e;
+      if (popV && a.AREALAND) { var sqmi = a.AREALAND / 2589988.11; if (sqmi > 0.2) S.facts.push("About " + Math.round(popV / sqmi).toLocaleString() + " people per square mile live here, across roughly " + sqmi.toFixed(1) + " square miles of land."); }
+    } catch (e) {}
+    if (S.facts.length && !S.tour) setTimeout(function () { if (myLoad === S.loadId && !bubble.classList.contains("show")) nextFact(); }, 6000);
+  }
+
+  /* ---------- Setup panel ---------- */
+  $("#keySave").addEventListener("click", function () {
+    var v = $("#keyInput").value.trim(); if (!v) return;
+    safeSet("kyc_census", v); CFG.CENSUS_KEY = v;
+    if (S.geoid) { lookupByGeoid(S.geoid).then(loadPlace); }
+  });
+
+  /* ---------- Boot ---------- */
+  require(["esri/config", "esri/Map", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/geometry/support/webMercatorUtils"],
+    function (esriConfig, Map, MapView, Graphic, Polygon, WebTileLayer, wmu) {
+      modules.Graphic = Graphic; modules.Polygon = Polygon;
+      var map;
+      if (CFG.ARCGIS_KEY) { esriConfig.apiKey = CFG.ARCGIS_KEY; map = new Map({ basemap: "arcgis/community" }); }
+      else {
+        map = new Map({ layers: [new WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
+      }
+      S.view = new MapView({ container: "viewDiv", map: map, center: [-117.18, 34.06], zoom: 11, ui: { components: ["zoom"] } });
+      S.view.on("click", function (e) {
+        var ll = wmu.xyToLngLat(e.mapPoint.x, e.mapPoint.y);
+        selectByPoint(ll[0], ll[1]);
+      });
+      S.view.when(async function () {
+        try {
+          var geoid = (qs.get("place") || CFG.DEFAULT_GEOID).replace(/\D/g, "");
+          var f = await lookupByGeoid(geoid) || await lookupByGeoid(CFG.DEFAULT_GEOID);
+          if (!f) throw new Error("Couldn't load the place boundary from Census TIGERweb.");
+          loadPlace(f);
+        } catch (e) { console.error(e); showError(e.message); }
+      });
+    });
+})();
+</script>
+</body>
+</html>
