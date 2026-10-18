@@ -321,7 +321,105 @@
     return f && m ? compareOwnerRatio(f, m, pl, us, FM_ITEM) : null;
   }
 
+  /* ---------- Plain-language sentences (neutral: describe and compare, never judge) ---------- */
+  function trimNum(x) { var r = Math.round(x * 10) / 10; return r % 1 === 0 ? String(Math.round(r)) : r.toFixed(1); }
+
+  var FRACTIONS = [
+    [0.5, "About half", true], [1 / 3, "About 1 in 3"], [2 / 3, "About 2 in 3"], [0.25, "About 1 in 4"], [0.75, "About 3 in 4"],
+    [0.2, "About 1 in 5"], [0.8, "About 4 in 5"], [0.1, "About 1 in 10"], [0.9, "About 9 in 10"],
+    [0.4, "About 2 in 5"], [0.6, "About 3 in 5"]
+  ];
+  // p is a percent (0-100). Returns {t: "About 1 in 4", of: bool} where `of` means "of the" is needed after it.
+  function shareWords(p) {
+    if (p >= 97) return { t: "Nearly all", of: true };
+    for (var i = 0; i < FRACTIONS.length; i++) {
+      if (Math.abs(p - FRACTIONS[i][0] * 100) <= 2) return { t: FRACTIONS[i][1], of: !!FRACTIONS[i][2] };
+    }
+    if (p >= 10) return { t: "About " + Math.round(p) + " in every 100", of: false };
+    if (p >= 0.5) return { t: "About 1 in " + Math.round(100 / p), of: false };
+    return { t: "Fewer than 1 in 200", of: false };
+  }
+
+  // r = place / U.S. for a share of people or things.
+  function relCommon(r) {
+    if (r >= 1.8) return "about " + trimNum(r) + " times as common";
+    if (r >= 1.15) return "about " + Math.round((r - 1) * 100) + "% more common";
+    if (r > 0.87) return "about as common";
+    if (r > 0.5) return "about " + Math.round((1 - r) * 100) + "% less common";
+    var n = Math.round(1 / r);
+    return "about " + (n === 2 ? "half" : n === 3 ? "a third" : n === 4 ? "a quarter" : "1/" + n) + " as common";
+  }
+  // r = place / U.S. for a dollar amount, age, time...
+  function relAbove(r) {
+    if (r >= 1.8) return "about " + trimNum(r) + " times the national figure";
+    if (r >= 1.15) return "about " + Math.round((r - 1) * 100) + "% above the national figure";
+    if (r > 0.87) return "close to the national figure";
+    if (r > 0.5) return "about " + Math.round((1 - r) * 100) + "% below the national figure";
+    var n = Math.round(1 / r);
+    return "about " + (n === 2 ? "half" : "1/" + n) + " of the national figure";
+  }
+
+  // spec: { subj, pred }  for shares  ("people in {P}", "are under 18")
+  //       { main: function(c, P) -> string, usWord }  for medians, ratios and anything custom
+  // Returns { main, cmp }: two plain sentences.
+  function sentence(c, spec, place) {
+    var fill = function (s) { return String(s).replace(/\{P\}/g, place); };
+    var main, cmp;
+    if (spec.main) main = spec.main(c, place);
+    else {
+      var sw = shareWords(c.p);
+      main = sw.t + (sw.of ? " of the " : " ") + fill(spec.subj) + " " + fill(spec.pred) + ".";
+    }
+    if (spec.cmp) cmp = spec.cmp(c, place);
+    else if (c.type === "pct") {
+      var us = shareWords(c.pus).t.toLowerCase();
+      var clearGap = c.sig && (c.ratio >= 1.15 || c.ratio <= 0.87);   // a real but tiny gap reads as "about the same"
+      cmp = clearGap ? "Nationwide it's " + us + ", which makes it " + relCommon(c.ratio) + " in " + place + "."
+                  : "Nationwide it's " + us + ", so " + place + " looks a lot like the U.S. here.";
+    } else {
+      var usTxt = fmt(c, c.pus);
+      cmp = (spec.usWord || "The U.S. figure") + " is " + usTxt + ", so " + place + " is " + (c.sig ? relAbove(c.ratio) : "close to the national figure") + ".";
+    }
+    return { main: main, cmp: cmp };
+  }
+
+  /* ---------- "Mix of backgrounds": chance two random residents differ in race/ethnicity ---------- */
+  var DIV_GROUPS = [
+    ["hispanic or latino and race", "hispanic or latino (of any race)"],
+    ["not hispanic or latino", "white alone"],
+    ["not hispanic or latino", "black or african american alone"],
+    ["not hispanic or latino", "american indian and alaska native alone"],
+    ["not hispanic or latino", "asian alone"],
+    ["not hispanic or latino", "native hawaiian and other pacific islander alone"],
+    ["not hispanic or latino", "some other race alone"],
+    ["not hispanic or latino", "two or more races"]
+  ];
+  function diversityValue(items, row) {
+    var shares = [];
+    DIV_GROUPS.forEach(function (terms) {
+      var it = findItem(items, terms); if (!it) return;
+      var p = getVals(row, it.base).p; if (p === null) return;
+      shares.push(p);
+    });
+    if (shares.length < 5) return null;
+    var sum = shares.reduce(function (a, b) { return a + b; }, 0);
+    if (sum < 90 || sum > 101) return null;                      // groups don't cover the population: don't guess
+    var s2 = shares.reduce(function (a, b) { return a + (b / 100) * (b / 100); }, 0);
+    return (1 - s2) * 100;
+  }
+  function diversityCompare(items, pl, us) {
+    var a = diversityValue(items, pl), b = diversityValue(items, us);
+    if (a === null || b === null) return null;
+    return {
+      item: { base: "DIVERSITY", topic: "MIX", segs: ["Mix of backgrounds"], last: "Mix of backgrounds", denom: "", search: "" },
+      type: "pct", p: a, pus: b, m: null, mus: null, z: 0, rel: Math.abs(Math.log((a + 1) / (b + 1))),
+      diff: a - b, cv: 0, sig: false, ratio: a / b
+    };
+  }
+
   var api = {
+    trimNum: trimNum, shareWords: shareWords, relCommon: relCommon, relAbove: relAbove, sentence: sentence,
+    diversityCompare: diversityCompare, diversityValue: diversityValue,
     isNeutralText: isNeutralText, buildOwnRows: buildOwnRows, ownRate: ownRate, findOwnRow: findOwnRow, compareOwnRate: compareOwnRate,
     ownCandidates: ownCandidates, compareOwnerRatio: compareOwnerRatio, femaleMaleOwnerRatio: femaleMaleOwnerRatio,
     num: num, buildItems: buildItems, getVals: getVals, compare: compare,
