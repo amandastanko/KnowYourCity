@@ -199,6 +199,33 @@ button{font:inherit;color:inherit}
 .end{text-align:left;max-width:1000px;margin:0 auto;padding:8vh 0 4vh}
 .end h2{font:800 clamp(40px,7vw,100px)/.92 var(--f-display);letter-spacing:-.04em;margin:0 0 .4em}
 .end .big{width:100%;max-width:560px;padding:16px 22px;border-radius:999px;border:4px solid var(--ink);font:700 20px var(--f-body);background:#fff;color:var(--ink)}
+.evwrap{max-width:1100px;margin:0 auto;padding:6vh 0 4vh}
+.evwrap h2{font:800 clamp(34px,5.4vw,76px)/.95 var(--f-display);letter-spacing:-.035em;margin:0 0 .3em}
+.evwrap .evnote{max-width:60ch;margin:0 0 22px;font-size:18px}
+.evgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+.evcard{display:flex;flex-direction:column;gap:6px;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:16px 18px;box-shadow:6px 6px 0 var(--ink);color:var(--ink);text-decoration:none;transition:transform .15s}
+.evcard:hover,.evcard:focus-visible{transform:translate(-2px,-2px)}
+.evcard b{font:800 20px/1.15 var(--f-display)}
+.evcard .evhow{font-size:14px;opacity:.85}
+.evtag{align-self:flex-start;font-weight:700;font-size:13px;background:var(--acc,#FFE98F);border:2px solid var(--ink);border-radius:999px;padding:2px 10px}
+.evlist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.evlist li{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 14px}
+.evlist time{font-weight:800;margin-right:8px}
+.wxwrap{max-width:1100px;margin:0 auto;padding:6vh 0 4vh;color:var(--ink)}
+.wxwrap h2{font:800 clamp(34px,5.4vw,76px)/.95 var(--f-display);letter-spacing:-.035em;margin:0 0 .3em}
+.wxnow{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:0 0 22px}
+.wxnow .wxbig{font:800 clamp(56px,9vw,110px)/1 var(--f-display);letter-spacing:-.04em}
+.wxnow .wxico{font-size:clamp(48px,7vw,84px);line-height:1}
+.wxnow p{margin:0;font-size:19px;max-width:34ch}
+.wxdays{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px}
+.wxday{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:14px 12px;box-shadow:5px 5px 0 var(--ink);text-align:center;display:flex;flex-direction:column;gap:4px}
+.wxday b{font:800 18px var(--f-display)}
+.wxday .wxico{font-size:38px;line-height:1.1}
+.wxday .wxt{font:800 22px var(--f-display)}
+.wxday .wxt span{opacity:.6;font-weight:700}
+.wxday small{font-size:13px;line-height:1.25}
+.wxsrc{margin-top:14px;font-size:14px}
+.wxsrc a{text-decoration:underline}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
 .foot{max-width:1000px;margin:6vh auto 0;font-size:15px}
 .foot p{margin:0 0 .8em;max-width:75ch}
@@ -410,6 +437,29 @@ i.sw{border-width:3px}
 //   expression: definition query; {GEOID} {STATE} {PLACE} {NAME} are replaced for each place
 var WEBMAP = { id: "b8cf1cda3b8a478386ac03a1c0a3adcb", layerTitles: ["Census Designated Place", "Incorporated Place", "Consolidated City"], expression: "GEOID = '{GEOID}'" };
 var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "AAPTaWduh3eXELl158kRP-_vyBA..8xaoKh-46KJCfHz90o-Y0aI17Tb8I8IBhRjko8G_mA7-7DjCsmDgISPtuoYHpsgVTDGecyPH7BOZKoeEGuX6BnkztKkBovzzu-pSkuhDP6DmrR1TbSnlyUtLsP8_sQef1QvN9CPAVxBYL5bseqICAS3cOq5GBGhje56t5nIEd7dQ73Q-BZcaCFYNqz_uS697ncoJ9Pxpla0hPLPxZYBZikghB3i7z6PrxFS039_jKFabqwF974_DXrQ.AT1_lxq1zj7D" };
+
+/* ---------- Where to find events, place by place ----------
+   Each place (matched by Census place name + state FIPS code) can list the ways its events are published:
+     kind:  "City calendar" | "Permit info" | "Community calendar" | "Open data feed"
+     how:   how the information is provided ("Web page", "Live feed shown here", ...)
+     url:   where to go
+     feed:  optional. Live data we can read right here. { type: "socrata", domain, id, titleField, whenField, whereField, whereClause }
+   A place with no entry gets a web search link. To add a place, add one object below. */
+var EVENT_SOURCES = [
+  { name: "Redlands", fips: "06", items: [
+    { kind: "City calendar", how: "Web page", title: "City of Redlands calendar", url: "https://www.redlands.gov/calendar/" },
+    { kind: "Permit info", how: "Web page", title: "Special events and permits", url: "https://www.redlands.gov/?p=4029" },
+    { kind: "Community calendar", how: "Web page", title: "About Redlands events", url: "https://aboutredlands.com/redlands-events/" } ] },
+  { name: "Tempe", fips: "04", items: [
+    { kind: "City calendar", how: "Web page", title: "City of Tempe events and meetings", url: "https://tempe.gov/community/calendar-of-events-meetings" },
+    { kind: "City calendar", how: "Web page", title: "Tempe Town Lake events", url: "https://tempe.gov/community/calendar-of-events-meetings/-cat-Town%20Lake%20Events" } ] },
+  { name: "Garden City", fips: "26", items: [
+    { kind: "Community calendar", how: "Web page", title: "Garden City events on Patch", url: "https://patch.com/michigan/garden-city-mi/calendar" },
+    { kind: "Community calendar", how: "Web page", title: "Downtown Garden City events", url: "https://festivalnet.com/Garden-City-Downtown-Development-Authority/calendar" } ] },
+  { name: "New York", fips: "36", items: [
+    { kind: "Open data feed", how: "Live feed shown here", title: "NYC permitted events (open data)", url: "https://catalog.data.gov/dataset/nyc-permitted-event-information",
+      feed: { type: "socrata", domain: "data.cityofnewyork.us", id: "tvpp-9vvx", titleField: "event_name", whenField: "start_date_time", whereField: "event_location", typeField: "event_type" } } ] }
+];
 
 (function () {
   var K = window.KYC;
@@ -984,6 +1034,48 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     return out;
   }
 
+  // Forecast from the National Weather Service (U.S. only, no key). Shown right after the events section.
+  function wxIcon(t) {
+    t = (t || "").toLowerCase();
+    if (/thunder/.test(t)) return "⛈️"; if (/snow|flurr|sleet|ice|freezing/.test(t)) return "🌨️"; if (/rain|shower|drizzle/.test(t)) return "🌧️";
+    if (/fog|haze|smoke|dust/.test(t)) return "🌫️"; if (/partly/.test(t)) return "⛅"; if (/mostly sunny|mostly clear/.test(t)) return "🌤️";
+    if (/mostly cloudy/.test(t)) return "🌥️"; if (/cloud|overcast/.test(t)) return "☁️"; if (/sunny|clear/.test(t)) return "☀️"; if (/wind|breezy/.test(t)) return "💨"; return "🌡️";
+  }
+  async function loadWeather(center, myLoad) {
+    var P = S.name, link = "https://forecast.weather.gov/MapClick.php?lat=" + center.latitude.toFixed(4) + "&lon=" + center.longitude.toFixed(4), days = [], now = null;
+    try {
+      var pt = await getJSON("https://api.weather.gov/points/" + center.latitude.toFixed(4) + "," + center.longitude.toFixed(4));
+      var fc = await getJSON(pt.properties.forecast);
+      var per = (fc.properties && fc.properties.periods) || [], by = {}, order = [];
+      per.forEach(function (p) {
+        var d = p.startTime.slice(0, 10); if (!by[d]) { by[d] = {}; order.push(d); }
+        by[d][p.isDaytime ? "day" : "night"] = p;
+      });
+      now = per[0];
+      days = order.slice(0, 5).map(function (d, i) {
+        var g = by[d], main = g.day || g.night, dt = new Date(d + "T12:00:00");
+        return { label: i === 0 ? (g.day ? "Today" : "Tonight") : dt.toLocaleDateString(undefined, { weekday: "short" }), hi: g.day ? g.day.temperature : null, lo: g.night ? g.night.temperature : null, txt: main.shortForecast, rain: main.probabilityOfPrecipitation && main.probabilityOfPrecipitation.value, unit: main.temperatureUnit };
+      });
+    } catch (e) { console.info("Weather unavailable:", e.message); }
+    if (myLoad !== S.loadId) return;
+    var story = $("#story"), anchor = story.querySelector('[data-hid="events"]'); anchor = anchor && anchor.closest(".scene");
+    var sc = scene("teal", "The weather in " + P), w = el("div", "wxwrap"); w.setAttribute("data-hid", "weather");
+    if (days.length && now) {
+      var rainTxt = function (r) { return r != null && r >= 20 ? r + "% chance of rain" : ""; };
+      w.innerHTML = '<h2>What\'s the weather like?</h2><div class="wxnow"><span class="wxico" aria-hidden="true">' + wxIcon(now.shortForecast) + '</span><span class="wxbig">' + esc(now.temperature) + '°' + esc(now.temperatureUnit) + '</span>' +
+        '<p>' + esc(now.name === "Tonight" || !now.isDaytime ? "Tonight" : "Right now") + ' in ' + esc(P) + ': ' + esc(now.shortForecast.toLowerCase()) + ', wind ' + esc(now.windSpeed || "light") + '.</p></div>' +
+        '<div class="wxdays">' + days.map(function (d) {
+          return '<div class="wxday"><b>' + esc(d.label) + '</b><span class="wxico" aria-hidden="true">' + wxIcon(d.txt) + '</span><span class="wxt">' + (d.hi != null ? esc(d.hi) + '°' : '') + (d.lo != null ? ' <span>' + esc(d.lo) + '°</span>' : '') + '</span><small>' + esc(d.txt) + (rainTxt(d.rain) ? '<br>' + esc(rainTxt(d.rain)) : '') + '</small></div>';
+        }).join("") + '</div><p class="wxsrc">Forecast: <a href="' + esc(link) + '" target="_blank" rel="noopener">National Weather Service</a>. Big number is the high, small number is the low.</p>';
+      S.SAY.weather = "It's " + now.temperature + " degrees and " + now.shortForecast.toLowerCase() + " in " + P + ". Here's the next few days.";
+    } else {
+      w.innerHTML = '<h2>What\'s the weather like?</h2><p class="evnote">The forecast didn\'t load just now. The National Weather Service has the latest for ' + esc(P) + '.</p><div class="evgrid"><a class="evcard" href="' + esc(link) + '" target="_blank" rel="noopener"><span class="evtag">Forecast</span><b>Forecast for ' + esc(P) + '</b><span class="evhow">National Weather Service web page</span></a></div>';
+      S.SAY.weather = "I couldn't load the forecast, but the weather service link has it.";
+    }
+    sc.appendChild(w);
+    if (anchor) anchor.insertAdjacentElement("afterend", sc); else story.insertBefore(sc, story.children[2] || null);
+  }
+
   function buildStory() {
     var story = $("#story"); story.innerHTML = ""; S.SAY = {};
     resolveAll();
@@ -1102,6 +1194,39 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       });
     })();
 
+    // Where to find events: how each place publishes them (live feed, city page, community calendar, or a search)
+    (function () {
+      var src = EVENT_SOURCES.filter(function (s) { return s.name === S.name && s.fips === S.fips; })[0], items = src ? src.items.slice() : [];
+      var q = encodeURIComponent("events in " + S.name + " " + (S.stateName || ""));
+      items.push({ kind: "Web search", how: "Search results", title: "Search for events in " + S.name, url: "https://www.google.com/search?q=" + q });
+      var sc = scene(pickColor(), "Happening in " + P), w = el("div", "evwrap"); w.setAttribute("data-hid", "events");
+      w.innerHTML = '<h2>Get out and about.</h2><p class="evnote">' + (src ? 'Here is where ' + esc(P) + ' lists its events and permits.' : esc(P) + ' doesn\'t have a single events feed that I know of, so here is a search to start with.') + ' Each link says how the information is provided.</p>';
+      var live = el("ul", "evlist"); live.hidden = true; w.appendChild(live);
+      var grid = el("div", "evgrid");
+      items.forEach(function (it) {
+        var a = el("a", "evcard"); a.href = it.url; a.target = "_blank"; a.rel = "noopener";
+        a.innerHTML = '<span class="evtag">' + esc(it.kind) + '</span><b>' + esc(it.title) + '</b><span class="evhow">' + esc(it.how) + '</span>';
+        grid.appendChild(a);
+        if (it.feed && it.feed.type === "socrata") {
+          var f = it.feed, today = new Date(), end = new Date(today.getTime() + 30 * 864e5), iso = function (d) { return d.toISOString().slice(0, 19); };
+          getJSON("https://" + f.domain + "/resource/" + f.id + ".json?$limit=6&$order=" + f.whenField + "&$where=" + encodeURIComponent(f.whenField + " between '" + iso(today) + "' and '" + iso(end) + "'"))
+            .then(function (rows) {
+              if (!rows || !rows.length || !document.body.contains(w)) return;
+              live.innerHTML = rows.map(function (r) {
+                var d = new Date(r[f.whenField]), when = isNaN(d) ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+                return '<li><time>' + esc(when) + '</time>' + esc(r[f.titleField] || "Event") + (r[f.whereField] ? ' <span class="evhow">at ' + esc(String(r[f.whereField]).split(",")[0]) + '</span>' : '') + '</li>';
+              }).join("");
+              live.hidden = false;
+            }).catch(function (e) { console.info("Events feed unavailable:", e.message); });
+        }
+      });
+      w.appendChild(grid); sc.appendChild(w);
+      S.SAY.events = "Want to get out and about? Here is where to find what's happening in " + P + ".";
+      // Sits right after the postcards (or after the first scene when there are none), not at the very top or bottom
+      var pcs = [].slice.call(story.children).filter(function (n) { return !!n.querySelector(".cards-title"); })[0] || story.children[0];
+      if (pcs) pcs.insertAdjacentElement("afterend", sc); else story.appendChild(sc);
+    })();
+
     // Next stop
     var end = scene("yellow", null);
     var e = el("div", "end");
@@ -1110,7 +1235,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     var foot = el("div", "foot");
     foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
       '<p>Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.</p>' +
-      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
+      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
     end.appendChild(foot);
     story.appendChild(end);
     var chips = $("#chips", end);
@@ -1397,6 +1522,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     S.pendingPoly = poly; S.curAttrs = a; applyPlaceToMap();
     var xs = [], ys = []; rg.forEach(function (r) { r.forEach(function (c) { xs.push(c[0]); ys.push(c[1]); }); });
     var center = { longitude: (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, latitude: (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2 };
+    S.center = center;
 
     if (!CFG.CENSUS_KEY) { showError("This app needs a free Census API key. Paste it into HARDCODED.census at the top of the script in index.html."); return; }
     try {
@@ -1422,6 +1548,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     } catch (e) {}
     S.facts = facts;
     buildStory();
+    loadWeather(center, myLoad);
     $("#loading").classList.add("gone");
     setTimeout(function () { sched(); }, 200);
   }
