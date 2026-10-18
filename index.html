@@ -363,9 +363,9 @@ button{font:inherit;color:inherit}
 // Keys can live here for a public deployment. ArcGIS key is optional (OpenStreetMap basemap + free geocoder without it).
 // Optional: an ArcGIS web map for the hero. Its Census Places layer gets filtered to the selected place.
 //   id:         the web map's item ID (share the map publicly), or "" to use a plain basemap
-//   layerTitle: title of the Census Places layer in that web map ("" = first feature layer)
+//   layerTitles: titles of the Census place layers in that web map ([] = every feature layer). Each gets the same filter.
 //   expression: definition query; {GEOID} {STATE} {PLACE} {NAME} are replaced for each place
-var WEBMAP = { id: "", layerTitle: "", expression: "GEOID = '{GEOID}'" };
+var WEBMAP = { id: "b8cf1cda3b8a478386ac03a1c0a3adcb", layerTitles: ["Census Designated Place", "Incorporated Place", "Consolidated City"], expression: "GEOID = '{GEOID}'" };
 var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "AAPTaWduh3eXELl158kRP-_vyBA..8xaoKh-46KJCfHz90o-Y0aI17Tb8I8IBhRjko8G_mA7-7DjCsmDgISPtuoYHpsgVTDGecyPH7BOZKoeEGuX6BnkztKkBovzzu-pSkuhDP6DmrR1TbSnlyUtLsP8_sQef1QvN9CPAVxBYL5bseqICAS3cOq5GBGhje56t5nIEd7dQ73Q-BZcaCFYNqz_uS697ncoJ9Pxpla0hPLPxZYBZikghB3i7z6PrxFS039_jKFabqwF974_DXrQ.AT1_lxq1zj7D" };
 
 (function () {
@@ -1131,18 +1131,24 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   async function applyPlaceToMap() {
     var v = S.view, a = S.curAttrs; if (!v || !a) return;
     if (S.webmap) {
+      var layers = [];
       try {
         await v.when();
-        var layer = v.map.allLayers.find(function (l) { return WEBMAP.layerTitle ? l.title === WEBMAP.layerTitle : (l.type === "feature" && "definitionExpression" in l); });
-        if (!layer) throw new Error("no Census Places layer found in the web map" + (WEBMAP.layerTitle ? " named '" + WEBMAP.layerTitle + "'" : ""));
-        await layer.load();
-        layer.definitionExpression = (WEBMAP.expression || "GEOID = '{GEOID}'").replace(/\{(GEOID|STATE|PLACE|NAME)\}/g, function (m, k) { return String(a[k] == null ? "" : a[k]).replace(/'/g, "''"); });
-        layer.visible = true;
-        v.graphics.removeAll();
-        var q = await layer.queryExtent();
-        if (q && q.extent) { await v.goTo(q.extent.expand(1.3), { duration: 900 }); return; }
-        throw new Error("the layer returned no feature for " + a.GEOID);
-      } catch (e) { console.warn("Web map filter failed (" + e.message + "). Drawing the place outline instead."); }
+        layers = v.map.allLayers.filter(function (l) { return l.type === "feature" && (!WEBMAP.layerTitles || !WEBMAP.layerTitles.length || WEBMAP.layerTitles.indexOf(l.title) > -1); }).toArray();
+        if (!layers.length) throw new Error("no Census place layers found in the web map");
+        layers.forEach(function (l) { l.visible = false; });
+        var expr = (WEBMAP.expression || "GEOID = '{GEOID}'").replace(/\{(GEOID|STATE|PLACE|NAME)\}/g, function (m, k) { return String(a[k] == null ? "" : a[k]).replace(/'/g, "''"); });
+        var found = null;
+        for (var i = 0; i < layers.length; i++) {
+          await layers[i].load();
+          layers[i].definitionExpression = expr;
+          if (found) continue;
+          var q = await layers[i].queryExtent();
+          if (q && q.count > 0 && q.extent) { found = { layer: layers[i], extent: q.extent }; }
+        }
+        if (found) { found.layer.visible = true; v.graphics.removeAll(); await v.goTo(found.extent.expand(1.4), { duration: 900 }); return; }
+        console.info("None of the web map's layers has a feature for " + a.GEOID + "; showing the Census boundary instead.");
+      } catch (e) { layers.forEach(function (l) { try { l.visible = false; } catch (e2) {} }); console.warn("Web map filter failed (" + e.message + "). Showing the place outline only."); }
     }
     drawPlace(S.pendingPoly);
   }
