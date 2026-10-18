@@ -1141,6 +1141,10 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
         var found = null;
         for (var i = 0; i < layers.length; i++) {
           await layers[i].load();
+          // Respect the popups configured in the web map. A template with a title and no content should show only the title
+          // (the SDK would otherwise fill in a table of every field).
+          var tpl = layers[i].popupTemplate;
+          if (tpl && (tpl.content == null || (Array.isArray(tpl.content) && !tpl.content.length) || tpl.content === "")) tpl.content = [];
           layers[i].definitionExpression = expr;
           if (found) continue;
           var q = await layers[i].queryExtent();
