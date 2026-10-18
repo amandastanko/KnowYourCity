@@ -187,6 +187,9 @@ button{font:inherit;color:inherit}
 .pc img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;margin-bottom:12px;border:3px solid var(--ink)}
 .pc p{margin:0;font:500 clamp(18px,1.7vw,21px)/1.25 var(--f-display)}
 .pc.spot{outline:4px dashed var(--ink);outline-offset:8px}
+.pc.photo p{font-size:clamp(16px,1.5vw,19px)}
+.pc .credit{margin-top:10px;font:400 12px/1.3 var(--f-body);opacity:.85;overflow-wrap:anywhere}
+.pc .credit a{text-decoration:underline}
 .cards-title{font:800 clamp(34px,5vw,64px)/1 var(--f-display);letter-spacing:-.03em;margin:0 auto;max-width:1100px}
 
 /* next stop */
@@ -586,6 +589,34 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     return n.map(function (r) { return { name: r.display_name, lon: parseFloat(r.lon), lat: parseFloat(r.lat) }; });
   }
 
+  // Free-licensed photos taken near the place, from Wikimedia Commons (no key needed). Keeps real photos only, with credits.
+  var PHOTO_SKIP = /\b(map|maps|logo|flag|seal|coat of arms|diagram|locator|plan|chart|poster|scan|sign|signage|plaque|interior|screenshot|banner|icon|diploma|certificate)\b/i;
+  var OK_LICENSE = /^(CC[ -]BY(-SA)?( |$)|CC0|Public domain|PD)/i;
+  function plainText(html) { var d = document.createElement("div"); d.innerHTML = html || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); }
+  async function commonsPhotos(lat, lon, avoidUrl) {
+    var out = [];
+    try {
+      var j = await getJSON("https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsnamespace=6&ggscoord=" + lat + "%7C" + lon +
+        "&ggsradius=10000&ggslimit=50&prop=imageinfo&iiprop=url%7Cextmetadata%7Cmime%7Csize&iiurlwidth=640&format=json&origin=*");
+      var pages = (j.query && j.query.pages) || {};
+      Object.keys(pages).map(function (k) { return pages[k]; }).sort(function (a, b) { return (a.index || 0) - (b.index || 0); }).forEach(function (pg) {
+        var ii = pg.imageinfo && pg.imageinfo[0]; if (!ii || !ii.extmetadata) return;
+        if (ii.mime !== "image/jpeg" || ii.width < 900 || ii.height < 500) return;
+        var ratio = ii.width / ii.height; if (ratio < 1.15 || ratio > 2.1) return;
+        var m = ii.extmetadata, lic = plainText(m.LicenseShortName && m.LicenseShortName.value);
+        if (!OK_LICENSE.test(lic) || /NC|ND/i.test(lic)) return;
+        var title = plainText(m.ObjectName && m.ObjectName.value) || pg.title.replace(/^File:/, "").replace(/\.[a-z]+$/i, "").replace(/_/g, " ");
+        var desc = plainText(m.ImageDescription && m.ImageDescription.value);
+        if (PHOTO_SKIP.test(title) || !K.isNeutralText(title) || !K.isNeutralText(desc)) return;
+        if (/^(IMG|DSC|P)[_ -]?\d+/i.test(title) && !desc) return;
+        var url = ii.thumburl || ii.url; if (avoidUrl && ii.url === avoidUrl) return;
+        var author = plainText(m.Artist && m.Artist.value).slice(0, 48) || "Unknown author";
+        out.push({ url: url, title: title.length > 90 ? title.slice(0, 88) + "…" : title, author: author, license: lic, page: ii.descriptionurl });
+      });
+    } catch (e) { console.warn("Photo search failed:", e.message); }
+    return out.slice(0, 5);
+  }
+
   async function wikiFacts(label, lat, lon, base) {
     var out = { sentences: [], nearby: [], img: null, url: null, title: null };
     try {
@@ -888,8 +919,8 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     });
   }
 
-  function pickTwists() {
-    var all = Object.keys(S.R).map(function (k) { return S.R[k]; }).filter(function (r) { return r.spec.viz !== "road" && r.spec.viz !== "stairs" && r.spec.viz !== "ring" && r.spec.viz !== "bars" && r.spec.viz !== "duel" && r.spec.viz !== "stack"; });
+  function pickTwists(skip) {
+    var all = Object.keys(S.R).map(function (k) { return S.R[k]; }).filter(function (r) { return !(skip && skip[r.id]) && r.spec.viz !== "road" && r.spec.viz !== "stairs" && r.spec.viz !== "ring" && r.spec.viz !== "bars" && r.spec.viz !== "duel" && r.spec.viz !== "stack"; });
     var ok = all.filter(function (r) { return K.isStandoutEligible(r.c); }).sort(function (a, b) { return b.c.rel - a.c.rel; });
     var out = [], seen = {};
     function take(list) { list.forEach(function (r) { if (out.length < 3 && !seen[r.spec.grp]) { seen[r.spec.grp] = 1; out.push(r); } }); }
@@ -905,17 +936,25 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     function pickColor() { var k; do { k = CYCLE[ci++ % CYCLE.length]; } while (k === prev); prev = k; return k; }
 
     // 1. Local stories come first, right after the map
-    if (S.facts.length) {
+    if (S.facts.length || (S.photos && S.photos.length)) {
       var ss = scene("pink", null);
-      ss.appendChild(el("h2", "cards-title", "A few stories from " + esc(P)));
-      var wrap = el("div", "cards");
-      S.facts.slice(0, 6).forEach(function (f, i) {
-        var id = "fact" + i, card = el("div", "pc");
-        card.setAttribute("data-hid", id);
-        card.innerHTML = (i === 0 && S.img ? '<img src="' + esc(S.img) + '" alt="">' : "") + "<p>" + esc(f) + "</p>";
-        wrap.appendChild(card);
-        S.SAY[id] = QUIPS[i % QUIPS.length];
-      });
+      ss.appendChild(el("h2", "cards-title", "Postcards from " + esc(P)));
+      var wrap = el("div", "cards"), facts = S.facts.slice(0, 5), photos = (S.photos || []).slice(0, 5), n = 0;
+      function addCard(html, id, quip, extra) {
+        var card = el("div", "pc" + (extra ? " " + extra : "")); card.setAttribute("data-hid", id); card.innerHTML = html; wrap.appendChild(card); S.SAY[id] = quip;
+      }
+      var fi = 0, pi = 0;
+      while (fi < facts.length || pi < photos.length) {
+        if (pi < photos.length) {
+          var ph = photos[pi++];
+          addCard('<img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><p>' + esc(ph.title) + '</p><div class="credit">Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a></div>', "photo" + pi, PHOTO_QUIPS[pi % PHOTO_QUIPS.length], "photo");
+        }
+        if (fi < facts.length) {
+          var f = facts[fi];
+          addCard((fi === 0 && S.img && !photos.length ? '<img src="' + esc(S.img) + '" alt="">' : "") + "<p>" + esc(f) + "</p>", "fact" + fi, QUIPS[fi % QUIPS.length]);
+          fi++;
+        }
+      }
       ss.appendChild(wrap); story.appendChild(ss);
     }
 
@@ -935,6 +974,13 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       story.appendChild(cs);
     })();
 
+    // 1a2. Median home value follows, also near the top
+    if (S.R.value) {
+      used.value = 1;
+      var vs = scene(pickColor(), "The price of a home"), vb = beat("value", false, true);
+      if (vb) { vs.appendChild(vb); story.appendChild(vs); }
+    }
+
     // 1b. The women-led vs men-led homeownership finding gets its own screen when the gap is real
     var fm = S.R.ownFM;
     if (fm && fm.c.sig && fm.c.nW != null && (fm.c.rel >= 0.2 || fm.c.ratio >= 1.25 || fm.c.ratio <= 0.8)) {
@@ -944,7 +990,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     }
 
     // 2. Plot twists: the three biggest real differences from the U.S., one per screen
-    var twists = pickTwists();
+    var twists = pickTwists(used);
     twists.forEach(function (r) { used[r.id] = 1; });
     twists.forEach(function (r, i) {
       var sc = scene(pickColor(), i === 0 ? "What sets " + P + " apart" : null), b = beat(r.id, i % 2 === 1, true);
@@ -990,7 +1036,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     var foot = el("div", "foot");
     foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
       '<p>Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.</p>' +
-      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Basemap: Esri / OpenStreetMap contributors.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
+      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Basemap: Esri / OpenStreetMap contributors.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
     end.appendChild(foot);
     story.appendChild(end);
     var chips = $("#chips", end);
@@ -1008,6 +1054,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
 
     observeAll();
   }
+  var PHOTO_QUIPS = ["Here's what it looks like around here.", "A snapshot from a local.", "Take a look at this view.", "Somebody took this nearby.", "A little scenery for you."];
   var QUIPS = ["Here's a story from this place.", "Locals might know this one.", "A little local trivia.", "One more from around town.", "This one's from the history books.", "And one more for the road."];
 
   /* ====================================================================
@@ -1260,14 +1307,14 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
 
   async function loadPlace(feature) {
     var myLoad = ++S.loadId, a = feature.attributes;
-    S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.img = null; S.wikiUrl = null;
+    S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.photos = []; S.img = null; S.wikiUrl = null;
     history.replaceState(null, "", "?place=" + a.GEOID);
     $("#loading").classList.remove("gone");
     $("#placeName").textContent = a.BASENAME || a.NAME;
     $("#stateName").innerHTML = "&nbsp;";
     S.name = a.BASENAME || a.NAME;
 
-    var rg = feature.geometry.rings, poly = Poly(rg), wikiP = null;
+    var rg = feature.geometry.rings, poly = Poly(rg), wikiP = null, photoP = null;
     S.pendingPoly = poly; S.curAttrs = a; applyPlaceToMap();
     var xs = [], ys = []; rg.forEach(function (r) { r.forEach(function (c) { xs.push(c[0]); ys.push(c[1]); }); });
     var center = { longitude: (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, latitude: (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2 };
@@ -1282,10 +1329,11 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
       S.name = a.BASENAME || nm.place; S.stateName = nm.state;
       $("#placeName").textContent = S.name;
 
-      wikiP = wikiFacts(S.name + ", " + nm.state, center.latitude, center.longitude, S.name);
+      wikiP = wikiFacts(S.name + ", " + nm.state, center.latitude, center.longitude, S.name); photoP = commonsPhotos(center.latitude, center.longitude);
     } catch (e) { console.error(e); showError(e.message); return; }
 
     var w = await wikiP;
+    S.photos = (await photoP) || [];
     if (myLoad !== S.loadId) return;
     S.img = w.img; S.wikiUrl = w.url;
     var facts = w.sentences.concat(w.nearby.sort(function () { return Math.random() - 0.5; }).slice(0, 3));
