@@ -25,7 +25,7 @@ button{font:inherit;color:inherit}
 
 /* progress + header */
 #progress{position:fixed;left:0;top:0;right:0;height:5px;background:var(--ink);transform-origin:0 50%;transform:scaleX(0);z-index:90}
-.top{position:fixed;left:0;right:0;top:5px;z-index:80;display:flex;gap:12px;align-items:center;padding:10px clamp(14px,3vw,36px);pointer-events:none}
+.top{position:fixed;left:0;right:0;top:5px;z-index:110;display:flex;gap:12px;align-items:center;padding:10px clamp(14px,3vw,36px);pointer-events:none}
 .top>*{pointer-events:auto}
 .brand{display:flex;align-items:center;gap:8px;font:800 22px var(--f-display);text-decoration:none;background:#fff;border:3px solid var(--ink);border-radius:14px;padding:4px 12px 4px 8px}
 .brand svg{width:26px;height:26px;fill:var(--ink)}
@@ -394,7 +394,10 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
    * Data layer (Census API, TIGERweb, Wikipedia)
    * ==================================================================== */
   async function getJSON(url) {
-    var r = await fetch(url);
+    var ctl = new AbortController(), tm = setTimeout(function () { ctl.abort(); }, 15000), r;
+    try { r = await fetch(url, { signal: ctl.signal }); }
+    catch (e) { throw new Error(e.name === "AbortError" ? "Timed out waiting for " + url.split("?")[0] : "Couldn't reach " + url.split("?")[0] + " (" + e.message + ")"); }
+    finally { clearTimeout(tm); }
     if (!r.ok) { var t = ""; try { t = (await r.text()).slice(0, 160); } catch (e) {} throw new Error("HTTP " + r.status + " from " + url.split("?")[0] + (t ? " - " + t : "")); }
     return r.json();
   }
@@ -864,7 +867,8 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
    * Load a place
    * ==================================================================== */
   function drawPlace(poly) {
-    if (!S.view) return;
+    S.pendingPoly = poly;
+    if (!S.view || !poly) return;
     S.view.graphics.removeAll();
     S.view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [30, 27, 75, 0.18], outline: { color: [30, 27, 75, 1], width: 3 } } }));
     S.view.goTo(poly.extent.expand(1.3), { duration: 900 }).catch(function () {});
@@ -879,9 +883,10 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
     $("#stateName").innerHTML = "&nbsp;";
     S.name = a.BASENAME || a.NAME;
 
-    var poly = new modules.Polygon({ rings: feature.geometry.rings, spatialReference: { wkid: 4326 } });
-    drawPlace(poly);
-    var center = poly.extent.center, wikiP = null;
+    var rg = feature.geometry.rings, poly = Poly(rg), wikiP = null;
+    if (poly) drawPlace(poly); else S.pendingPoly = null;
+    var xs = [], ys = []; rg.forEach(function (r) { r.forEach(function (c) { xs.push(c[0]); ys.push(c[1]); }); });
+    var center = { longitude: (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, latitude: (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2 };
 
     if (!CFG.CENSUS_KEY) { showError("This app needs a free Census API key. Paste it into HARDCODED.census at the top of the script in index.html."); return; }
     try {
@@ -910,22 +915,36 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "A
   }
 
   /* ---------- Boot ---------- */
-  require(["esri/config", "esri/Map", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer"],
-    function (esriConfig, Map, MapView, Graphic, Polygon, WebTileLayer) {
-      modules.Graphic = Graphic; modules.Polygon = Polygon;
-      var map;
-      if (CFG.ARCGIS_KEY) { esriConfig.apiKey = CFG.ARCGIS_KEY; map = new Map({ basemap: "arcgis/community" }); }
-      else map = new Map({ layers: [new WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
-      S.view = new MapView({ container: "viewDiv", map: map, center: [-117.18, 34.06], zoom: 11, ui: { components: [] } });
-      S.view.when(async function () {
-        try {
-          var geoid = (qs.get("place") || CFG.DEFAULT_GEOID).replace(/\D/g, "");
-          var f = await lookupByGeoid(geoid) || await lookupByGeoid(CFG.DEFAULT_GEOID);
-          if (!f) throw new Error("Couldn't load the place boundary from Census TIGERweb.");
-          loadPlace(f);
-        } catch (e) { console.error(e); showError(e.message); }
-      });
-    });
+  function startMap() {
+    if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); return; }
+    try {
+      require(["esri/config", "esri/Map", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer"],
+        function (esriConfig, Map, MapView, Graphic, Polygon, WebTileLayer) {
+          modules.Graphic = Graphic; modules.Polygon = Polygon;
+          var map;
+          if (CFG.ARCGIS_KEY) { esriConfig.apiKey = CFG.ARCGIS_KEY; map = new Map({ basemap: "arcgis/community" }); }
+          else map = new Map({ layers: [new WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
+          S.view = new MapView({ container: "viewDiv", map: map, center: [-117.18, 34.06], zoom: 11, ui: { components: [] } });
+          if (S.pendingPoly) drawPlace(S.pendingPoly);
+        }, function (err) { console.warn("Map failed to start:", err); });
+    } catch (e) { console.warn("Map failed to start:", e); }
+  }
+  function Poly(rings) { return modules.Polygon ? new modules.Polygon({ rings: rings, spatialReference: { wkid: 4326 } }) : null; }
+
+  window.addEventListener("error", function (e) { if ($("#loading") && !$("#loading").classList.contains("gone")) showError("Something went wrong: " + e.message); });
+  window.addEventListener("unhandledrejection", function (e) { if (!$("#loading").classList.contains("gone")) showError("Something went wrong: " + ((e.reason && e.reason.message) || e.reason)); });
+
+  startMap();
+  (async function () {
+    var wd = setTimeout(function () { if (!$("#loading").classList.contains("gone")) showError("This is taking too long. Check your internet connection and reload."); }, 40000);
+    try {
+      var geoid = (qs.get("place") || CFG.DEFAULT_GEOID).replace(/\D/g, "");
+      var f = await lookupByGeoid(geoid) || await lookupByGeoid(CFG.DEFAULT_GEOID);
+      if (!f) throw new Error("Couldn't load the place boundary from Census TIGERweb.");
+      await loadPlace(f);
+    } catch (e) { console.error(e); showError(e.message); }
+    clearTimeout(wd);
+  })();
 })();
 </script>
 </body>
