@@ -303,7 +303,7 @@ button{font:inherit;color:inherit}
 <script>
 /* ---------- Configuration ---------- */
 // Keys can live here for a public deployment. ArcGIS key is optional (OpenStreetMap basemap + free geocoder without it).
-var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "" };
+var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "AAPTaYM52d1Q4jVvSS6Hvdm2tSg..gmLGy0llO89Rerp3y8tY6ew6egdffD08Yqj51J5v5xRdSjrcTm9BkrsktAVByXEPTxt8AR6chCr_HFWci2UC2X9rDTPYg7zksHlonihoQswcR9siX_GS5g6YwFv1UgdKe_tbiE9RuY-iGU0dT915ZqJN6U07i7t0028XAtxoBqGD-pmGyuik7E7hkka7qtpvnTqKp8j_UFuKf4C1NuQHSjKCwMXvc_Rk-Svw-ehVJQKCGE3MTbtebsU.AT1_lxq1zj7D" };
 
 (function () {
   var K = window.KYC;
@@ -637,7 +637,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: ""
   }
 
   function pickTwists() {
-    var all = Object.keys(S.R).map(function (k) { return S.R[k]; });
+    var all = Object.keys(S.R).map(function (k) { return S.R[k]; }).filter(function (r) { return r.spec.viz !== "road" && r.spec.viz !== "stairs" && r.spec.viz !== "ring"; });
     var ok = all.filter(function (r) { return K.isStandoutEligible(r.c); }).sort(function (a, b) { return b.c.rel - a.c.rel; });
     var out = [], seen = {};
     function take(list) { list.forEach(function (r) { if (out.length < 3 && !seen[r.spec.grp]) { seen[r.spec.grp] = 1; out.push(r); } }); }
@@ -652,7 +652,8 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: ""
     var P = S.name, flip = false, order = ["mint", "lilac", "tang"];
 
     // Plot twists: the three biggest real differences from the U.S., one per screen
-    var twists = pickTwists();
+    var twists = pickTwists(), used = {};
+    twists.forEach(function (r) { used[r.id] = 1; });
     twists.forEach(function (r, i) {
       var sc = scene(order[i], i === 0 ? "What sets " + P + " apart" : null);
       var spec = r.spec, vz = spec.viz, original = spec.viz;
@@ -665,7 +666,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: ""
 
     function addScene(key, sign, ids, special) {
       var sc = scene(key, sign), n = 0;
-      ids.forEach(function (id) { var b = beat(id, flip); if (b) { sc.appendChild(b); flip = !flip; n++; } });
+      ids.forEach(function (id) { if (used[id]) return; var b = beat(id, flip); if (b) { sc.appendChild(b); flip = !flip; n++; } });
       if (special) { var x = special(sc); if (x) n++; }
       if (n) story.appendChild(sc);
     }
@@ -676,7 +677,7 @@ var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: ""
 
     // Who owns the homes (S2501): the ratio first, then four rings in a grid
     (function () {
-      var sc = scene("lilac", "Who owns the homes"), n = 0;
+      var sc = scene("lilac", "Who owns the homes"), n = 0; used.ownFM = used.ownFM || 0;
       var b = beat("ownFM", false); if (b) { sc.appendChild(b); n++; }
       var cells = ["ownF", "ownM", "own1p", "ownMC"].map(function (id) {
         var r = S.R[id]; if (!r) return "";
