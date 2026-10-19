@@ -226,6 +226,15 @@ button{font:inherit;color:inherit}
 .wxday small{font-size:13px;line-height:1.25}
 .wxsrc{margin-top:14px;font-size:14px}
 .wxsrc a{text-decoration:underline}
+.poimapwrap{margin:4px 0 26px}
+.poimap{height:clamp(320px,55vh,540px);border:4px solid var(--ink);border-radius:20px;overflow:hidden;box-shadow:8px 8px 0 var(--ink);background:#e9e5d8}
+.poimapwrap .evnote{margin:12px 0 0;font-size:16px}
+.poicard{cursor:default}
+.poicard[data-oid]{cursor:pointer}
+.poicard:hover{transform:none}
+.poicard.sel{outline:4px solid var(--ink);outline-offset:3px;background:#FFF6CC}
+.poibtn{align-self:flex-start;margin-top:auto;font:700 15px var(--f-body);color:var(--ink)}
+.poibtn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .poiwrap h3{font:800 clamp(22px,2.6vw,32px) var(--f-display);margin:26px 0 12px}
 .poicard{gap:8px}
 .poicard h4{margin:0;font:800 20px/1.15 var(--f-display)}
@@ -1091,7 +1100,7 @@ var EVENT_SOURCES = [
 
   // ---------- Places to see (OpenStreetMap points of interest) ----------
   var POI = { url: "https://services6.arcgis.com/Do88DoK2xjTUCXd1/ArcGIS/rest/services/OSM_NA_POIs/FeatureServer/0",
-    fields: "information,name,name_en,name_es,name_fr,tourism,historic,emergency,amenity,healthcare,opening_hours,parking,website,wheelchair,addr_housenumber,addr_street,addr_city" };
+    fields: "OBJECTID,information,name,name_en,name_es,name_fr,tourism,historic,emergency,amenity,healthcare,opening_hours,parking,website,wheelchair,addr_housenumber,addr_street,addr_city" };
   var TOUR = { attraction: ["Attraction", 5], museum: ["Museum", 5], zoo: ["Zoo", 5], theme_park: ["Theme park", 5], aquarium: ["Aquarium", 5], viewpoint: ["Viewpoint", 4], gallery: ["Gallery", 3], artwork: ["Public art", 2] };
   var HIST = { castle: ["Castle", 5], monument: ["Monument", 4], fort: ["Fort", 4], memorial: ["Memorial", 3], building: ["Historic building", 3], ruins: ["Ruins", 3], archaeological_site: ["Archaeological site", 4], ship: ["Historic ship", 3], "yes": ["Historic site", 2] };
   var HIST_SKIP = ["no", "boundary_stone", "milestone", "survey_point", "wayside_cross", "wayside_shrine", "charcoal_pile"];
@@ -1162,27 +1171,78 @@ var EVENT_SOURCES = [
     rings.forEach(function (r) { for (var i = 0, j = r.length - 1; i < r.length; j = i++) { var xi = r[i][0], yi = r[i][1], xj = r[j][0], yj = r[j][1]; if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside; } });
     return inside;
   }
-  // Show the points of interest layer in the web map, filtered to this place, with accessible popups.
+  // Points of interest layer inside a web map view: shows only the listed places (by OBJECTID), with accessible popups.
+  var POI_SYMBOL = { type: "simple", symbol: { type: "simple-marker", style: "circle", color: "#FFD23F", size: 13, outline: { color: "#1E1B4B", width: 2.5 } } };
+  // scope "list": only the places in the Places to see section. scope "all": every matching point inside the place boundary.
+  async function setupPoiLayer(v, scope) {
+    var all = scope === "all", oids = (all ? S.poiAllOids : S.poiOids) || [];
+    var l = v.map.allLayers.find(function (x) { return x.title === WEBMAP.poiTitle; }); if (!l) return null;
+    await l.load();
+    var byIds = oids.length > 0 && !(all && (S.poiTruncated || oids.length > 1500));
+    l.minScale = 0; l.popupEnabled = true; l.renderer = POI_SYMBOL;
+    l.popupTemplate = { title: function (f) { return poiName(f.graphic.attributes); }, content: function (f) { var d = document.createElement("div"); d.className = "poipop"; d.innerHTML = poiDetailsHTML(f.graphic.attributes, false); return d; } };
+    if (byIds) { l.definitionExpression = "OBJECTID IN (" + oids.join(",") + ")"; l.visible = true; }
+    else if (all && oids.length && S.pendingPoly && modules.FeatureFilter) {
+      // Too many points to list by ID: use the category query and clip to the place boundary on the map
+      l.definitionExpression = POI_WHERE;
+      var lv = await v.whenLayerView(l);
+      lv.filter = new modules.FeatureFilter({ geometry: S.pendingPoly, spatialRelationship: "intersects" });
+      l.visible = true;
+    } else { l.definitionExpression = "1=0"; l.visible = false; }
+    return l;
+  }
   async function applyPoiLayer() {
     var v = S.view; if (!v || !S.webmap) return;
+    try { await v.when(); await setupPoiLayer(v, "all"); } catch (e) { console.info("Points of interest layer not applied:", e.message); }
+  }
+  // The second map, inside the Places to see section. Built when it scrolls near the screen.
+  function ensurePoiMap(box) {
+    if (S.poiMapP) return S.poiMapP;
+    S.poiMapP = (async function () {
+      if (!modules.MapView || !S.webmap) throw new Error("web map not available");
+      var map = new modules.WebMap({ portalItem: { id: WEBMAP.id } });
+      var view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 12, ui: { components: ["zoom"] },
+        popup: { collapseEnabled: true, dockEnabled: false }, navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
+      S.poiView = view;
+      view.on("click", function () { view.navigation.mouseWheelZoomEnabled = true; });
+      box.addEventListener("mouseleave", function () { view.navigation.mouseWheelZoomEnabled = false; });
+      await view.when();
+      var a = S.curAttrs || {}, expr = (WEBMAP.expression || "GEOID = '{GEOID}'").replace(/\{(GEOID|STATE|PLACE|NAME)\}/g, function (m, k) { return String(a[k] == null ? "" : a[k]).replace(/'/g, "''"); });
+      view.map.allLayers.forEach(function (l) { if (l.type === "feature" && WEBMAP.layerTitles.indexOf(l.title) > -1) { try { l.definitionExpression = expr; l.visible = true; } catch (e) {} } });
+      var l = await setupPoiLayer(view, "list"); S.poiLayer = l;
+      try { view.on("click", function (ev) { view.hitTest(ev, { include: [l] }).then(function (r) { var g = r.results && r.results[0] && r.results[0].graphic; if (g) markPoiCard(g.attributes.OBJECTID, true); }); }); } catch (e) {}
+      if (S.pendingPoly) view.goTo(S.pendingPoly.extent.expand(1.2), { duration: 0 }).catch(function () {});
+      return view;
+    })();
+    S.poiMapP.catch(function (e) { console.info("Places map unavailable:", e.message); var w = box.closest(".poimapwrap"); if (w) w.hidden = true; document.querySelectorAll(".poibtn").forEach(function (b) { b.hidden = true; }); });
+    return S.poiMapP;
+  }
+  function markPoiCard(oid, scrollCard) {
+    document.querySelectorAll(".poicard.sel").forEach(function (c) { c.classList.remove("sel"); c.removeAttribute("aria-current"); });
+    var c = oid != null && document.querySelector('.poicard[data-oid="' + oid + '"]');
+    if (c) { c.classList.add("sel"); c.setAttribute("aria-current", "true"); if (scrollCard) c.scrollIntoView({ block: "nearest", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" }); }
+  }
+  async function showOnPoiMap(oid) {
+    var box = document.getElementById("poiMap"), it = (S.poiItems || []).filter(function (a) { return a.OBJECTID === oid; })[0]; if (!box || !it) return;
+    var st = document.getElementById("poiStatus");
+    markPoiCard(oid, false);
+    box.closest(".poimapwrap").scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
     try {
-      await v.when();
-      var l = v.map.allLayers.find(function (x) { return x.title === WEBMAP.poiTitle; }); if (!l) return;
-      await l.load();
-      l.definitionExpression = POI_WHERE; l.minScale = 0; l.popupEnabled = true;
-      l.popupTemplate = { title: function (f) { return poiName(f.graphic.attributes); }, content: function (f) { var d = document.createElement("div"); d.className = "poipop"; d.innerHTML = poiDetailsHTML(f.graphic.attributes, false); return d; } };
-      var lv = await v.whenLayerView(l);
-      lv.filter = S.pendingPoly ? { geometry: S.pendingPoly, spatialRelationship: "intersects" } : null;
-      l.visible = true;
-    } catch (e) { console.info("Points of interest layer not applied:", e.message); }
+      var view = await ensurePoiMap(box), l = S.poiLayer;
+      if (st) st.textContent = "Showing " + poiName(it) + " on the map.";
+      view.popup.close();
+      await view.goTo({ center: [it.__x, it.__y], zoom: 17 }, { duration: 700 }).catch(function () {});
+      if (l) { var r = await l.queryFeatures({ where: "OBJECTID = " + oid, outFields: ["*"], returnGeometry: true }); var g = r.features && r.features[0]; if (g) view.openPopup({ features: [g], location: g.geometry }); }
+    } catch (e) { console.info("Couldn't show that place on the map:", e.message); }
   }
   async function loadPois(myLoad) {
     var rg = S.rings; if (!rg) return;
     var xs = [], ys = []; rg.forEach(function (r) { r.forEach(function (c) { xs.push(c[0]); ys.push(c[1]); }); });
     var env = [Math.min.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, xs), Math.max.apply(null, ys)].join(",");
+    var truncated = false;
     function q(where) {
       return getJSON(POI.url + "/query?f=json&where=" + encodeURIComponent(where) + "&geometry=" + encodeURIComponent(env) + "&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=" + POI.fields + "&returnGeometry=true&outSR=4326&resultRecordCount=2000")
-        .then(function (j) { if (j.error) throw new Error(j.error.message || "points of interest query failed"); return (j.features || []).filter(function (f) { return f.geometry && inRings(f.geometry.x, f.geometry.y, rg); }).map(function (f) { return f.attributes; }); });
+        .then(function (j) { if (j.error) throw new Error(j.error.message || "points of interest query failed"); if (j.exceededTransferLimit) truncated = true; return (j.features || []).filter(function (f) { return f.geometry && inRings(f.geometry.x, f.geometry.y, rg); }).map(function (f) { f.attributes.__x = f.geometry.x; f.attributes.__y = f.geometry.y; return f.attributes; }); });
     }
     var res;
     try { res = await Promise.all([q(POI_SEE_WHERE), q(POI_SAFE_WHERE)]); } catch (e) { console.info("Points of interest unavailable:", e.message); return; }
@@ -1195,11 +1255,23 @@ var EVENT_SOURCES = [
     var perLabel = {}, safe = uniq(res[1].filter(function (a) { var k = poiKind(a); return k && k.group === "safe"; }).sort(function (x, y) { return poiKind(x).w - poiKind(y).w || String(poiName(x)).localeCompare(poiName(y)); }))
       .filter(function (a) { var l = poiKind(a).label; perLabel[l] = (perLabel[l] || 0) + 1; return perLabel[l] <= 3; }).slice(0, 9);
     if (!see.length && !safe.length) return;
+    var allIds = {}; res[0].concat(res[1]).forEach(function (a) { if (a.OBJECTID != null) allIds[a.OBJECTID] = 1; });
+    S.poiAllOids = Object.keys(allIds).map(Number); S.poiTruncated = truncated;
+    S.poiItems = see.concat(safe); S.poiOids = S.poiItems.map(function (a) { return a.OBJECTID; }).filter(function (o) { return o != null; });
+    applyPoiLayer();
     var P = S.name, story = $("#story"), sc = scene("mint", "Places in " + P), w = el("div", "evwrap poiwrap"); w.setAttribute("data-hid", "pois");
-    function cards(list) { return '<div class="evgrid">' + list.map(function (a) { return '<article class="evcard poicard">' + poiDetailsHTML(a, true) + '</article>'; }).join("") + '</div>'; }
+    function cards(list) { return '<div class="evgrid">' + list.map(function (a) { return '<article class="evcard poicard"' + (a.OBJECTID != null ? ' data-oid="' + a.OBJECTID + '"' : '') + '>' + poiDetailsHTML(a, true) + (a.OBJECTID != null && S.webmap ? '<button type="button" class="pill poibtn" data-oid="' + a.OBJECTID + '" aria-label="Show ' + esc(poiName(a)) + ' on the map">Show on the map</button>' : '') + '</article>'; }).join("") + '</div>'; }
     w.innerHTML = '<h2>Places to see.</h2><p class="evnote">Landmarks, museums and historic sites in ' + esc(P) + ', plus emergency services. The list comes from OpenStreetMap volunteers, so it may be incomplete. Each place shows its hours, parking and wheelchair access when that is known.</p>' +
+      (S.webmap ? '<div class="poimapwrap"><div id="poiMap" class="poimap" role="region" aria-label="Map of the places listed below"></div><p id="poiStatus" class="evnote" role="status" aria-live="polite">Select &ldquo;Show on the map&rdquo; on any place below to find it here.</p></div>' : '') +
       (see.length ? '<h3>Landmarks and history</h3>' + cards(see) : '') + (safe.length ? '<h3>Emergency and safety</h3>' + cards(safe) : '');
     sc.appendChild(w);
+    w.addEventListener("click", function (e) {
+      var btn = e.target.closest(".poibtn"), card = e.target.closest(".poicard");
+      if (btn) { showOnPoiMap(+btn.getAttribute("data-oid")); return; }
+      if (card && !e.target.closest("a") && card.getAttribute("data-oid") && S.webmap) showOnPoiMap(+card.getAttribute("data-oid"));
+    });
+    var mapBox = w.querySelector("#poiMap");
+    if (mapBox) { if ("IntersectionObserver" in window) { var mio = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { mio.disconnect(); ensurePoiMap(mapBox); } }, { rootMargin: "500px" }); mio.observe(mapBox); } else ensurePoiMap(mapBox); }
     var ev = story.querySelector('[data-hid="events"]'); ev = ev && ev.closest(".scene");
     var nxt = ev && ev.nextElementSibling, after = nxt && nxt.querySelector('[data-hid="weather"]') ? nxt : ev;
     if (after) after.insertAdjacentElement("afterend", sc); else story.insertBefore(sc, story.children[2] || null);
@@ -1642,6 +1714,8 @@ var EVENT_SOURCES = [
 
   async function loadPlace(feature) {
     var myLoad = ++S.loadId, a = feature.attributes;
+    if (S.poiView) { try { S.poiView.destroy(); } catch (e) {} }
+    S.poiView = null; S.poiMapP = null; S.poiLayer = null; S.poiOids = null; S.poiAllOids = null; S.poiTruncated = false; S.poiItems = [];
     S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.photos = []; S.img = null; S.wikiUrl = null;
     history.replaceState(null, "", "?place=" + a.GEOID);
     $("#loading").classList.remove("gone");
@@ -1688,9 +1762,9 @@ var EVENT_SOURCES = [
   function startMap() {
     if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); return; }
     try {
-      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils"],
-        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils) {
-          modules.Graphic = Graphic; modules.Polygon = Polygon;
+      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter"],
+        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter) {
+          modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter;
           var wmId = WEBMAP.id || qs.get("webmap") || "", map;
           if (CFG.ARCGIS_KEY) esriConfig.apiKey = CFG.ARCGIS_KEY;
           if (wmId) { map = new WebMap({ portalItem: { id: wmId } }); S.webmap = true; }
