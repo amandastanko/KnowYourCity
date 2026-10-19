@@ -286,6 +286,12 @@ button{font:inherit;color:inherit}
 .poimapwrap{margin:4px 0 26px}
 .poimap{height:clamp(320px,55vh,540px);border:4px solid var(--ink);border-radius:20px;overflow:hidden;box-shadow:8px 8px 0 var(--ink);background:#e9e5d8}
 .poimapwrap .evnote{margin:12px 0 0;font-size:16px}
+.wbpick{display:flex;flex-wrap:wrap;gap:12px 22px;margin:6px 0 18px}
+.wbpick label{display:flex;flex-direction:column;gap:4px;font:700 16px var(--f-body)}
+.wbpick select{font:600 17px var(--f-body);padding:10px 14px;border:3px solid var(--ink);border-radius:14px;background:#fff;color:var(--ink);min-width:230px;max-width:100%}
+.wbframe{position:relative}
+.wbcap{position:absolute;top:14px;z-index:5;pointer-events:none;background:var(--ink);color:#fff;font:700 15px var(--f-body);padding:6px 14px;border-radius:999px;max-width:44%}
+.wbcap.l{left:14px}.wbcap.r{right:14px}
 .poicard{cursor:default}
 .poicard[data-oid]{cursor:pointer}
 .poicard:hover{transform:none}
@@ -1766,6 +1772,88 @@ var EVENT_SOURCES = [
     S.SAY.schools = d0 ? (properName(d0.LEA_NAME) + (okNum(d0.MEMBER) ? " has about " + fmtN(d0.MEMBER) + " students." : " runs schools here.")) : "Here are the schools and colleges in " + P + ".";
   }
 
+  /* ---------- Then and now: Esri World Imagery Wayback ---------- */
+  var WAYBACK_CFG = "https://s3-us-west-2.amazonaws.com/config.maptiles.arcgis.com/waybackconfig.json", wbReleases = null;
+  async function wbList() {
+    if (wbReleases) return wbReleases;
+    var j = await getJSON(WAYBACK_CFG), out = [];
+    Object.keys(j).forEach(function (k) {
+      var m = /(\d{4})-(\d{2})-(\d{2})/.exec(j[k].itemTitle || ""); if (!m || !j[k].itemURL) return;
+      out.push({ num: k, t: Date.UTC(+m[1], +m[2] - 1, +m[3]), url: j[k].itemURL });
+    });
+    out.sort(function (a, b) { return a.t - b.t; });
+    if (out.length < 2) throw new Error("no Wayback releases found");
+    return (wbReleases = out);
+  }
+  function wbDate(t) { return new Date(t).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }); }
+  function wbTileUrl(url, lon, lat, z) {
+    var n = Math.pow(2, z), x = Math.floor((lon + 180) / 360 * n), r = lat * Math.PI / 180, y = Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n);
+    return url.replace("{level}", z).replace("{row}", y).replace("{col}", x);
+  }
+  // Releases whose photo actually changed at this spot: fetch the map tile at the centre of the place for each release and keep the ones whose bytes differ from the one before.
+  async function wbChanged(rel, lon, lat, myLoad) {
+    var sizes = new Array(rel.length), next = 0;
+    async function worker() {
+      while (next < rel.length && myLoad === S.loadId) {
+        var i = next++;
+        try { var r = await fetch(wbTileUrl(rel[i].url, lon, lat, 16)); if (r.ok) sizes[i] = (await r.arrayBuffer()).byteLength; } catch (e) {}
+      }
+    }
+    await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
+    var keep = [], last = null;
+    rel.forEach(function (r, i) { var s = sizes[i]; if (s == null || s === last) return; keep.push(r); last = s; });
+    if (keep.length < 2) { var seen = {}; keep = rel.filter(function (r) { var y = new Date(r.t).getUTCFullYear(); if (seen[y]) return false; seen[y] = 1; return true; }); }
+    return keep;
+  }
+  async function loadWayback(myLoad) {
+    var poly = S.pendingPoly; if (!poly || !modules.Map || !modules.WebTileLayer || !modules.MapView || !modules.Swipe) return;
+    var P = S.name, sc = scene("tang", "Then and now in " + P), w = el("div", "evwrap wbwrap"); w.setAttribute("data-hid", "wayback");
+    w.innerHTML = '<h2>Then and now.</h2><p class="evnote">Drag the bar on the map to compare two aerial photos of ' + esc(P) + '. Pick any two dates. The photos come from Esri World Imagery Wayback. Each date is when that version was released, so the photos themselves can be a little older.</p>' +
+      '<div class="wbpick"><label for="wbThen">Left side<select id="wbThen"></select></label><label for="wbNow">Right side<select id="wbNow"></select></label></div>' +
+      '<div class="poimapwrap"><div class="wbframe"><div id="wbMap" class="poimap" role="region" aria-label="Aerial photos of ' + esc(P) + ' from two dates, with a bar you can drag to compare them"></div><span class="wbcap l" id="wbCapL"></span><span class="wbcap r" id="wbCapR"></span></div>' +
+      '<p id="wbStatus" class="evnote" role="status" aria-live="polite">Looking for the dates when the photo changed here.</p></div>';
+    sc.appendChild(w);
+    var story = $("#story"), prev = null;
+    ["schools", "pois", "weather", "events", "namecard"].some(function (id) { var n = story.querySelector('[data-hid="' + id + '"]'); prev = n && n.closest(".scene"); return !!prev; });
+    if (prev) prev.insertAdjacentElement("afterend", sc); else story.insertBefore(sc, story.children[2] || null);
+    S.SAY.wayback = "Drag the bar to see how " + P + " looks from above, then and now.";
+
+    var box = w.querySelector("#wbMap"), selT = w.querySelector("#wbThen"), selN = w.querySelector("#wbNow"), capL = w.querySelector("#wbCapL"), capR = w.querySelector("#wbCapR"), st = w.querySelector("#wbStatus");
+    async function start() {
+      var keep, view;
+      try {
+        var all = await wbList(); keep = await wbChanged(all, S.center.longitude, S.center.latitude, myLoad);
+        if (myLoad !== S.loadId) return;
+        var C = "Esri, Maxar, Earthstar Geographics, and the GIS User Community";
+        function mk(r) { return new modules.WebTileLayer({ urlTemplate: r.url, copyright: C }); }
+        var map = new modules.Map({ layers: [] }), lT = mk(keep[0]), lN = mk(keep[keep.length - 1]);
+        map.addMany([lT, lN]);
+        view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 14, ui: { components: ["zoom"] }, constraints: { maxZoom: 19 },
+          navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
+        S.wbView = view;
+        view.on("click", function () { view.navigation.mouseWheelZoomEnabled = true; });
+        box.addEventListener("mouseleave", function () { view.navigation.mouseWheelZoomEnabled = false; });
+        await view.when();
+        if (myLoad !== S.loadId) { try { view.destroy(); } catch (e) {} return; }
+        var swipe = new modules.Swipe({ view: view, leadingLayers: [lT], trailingLayers: [lN], position: 50 }); view.ui.add(swipe);
+        [[3, "#FFD23F"], [1.5, "#1E1B4B"]].forEach(function (s) { view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [0, 0, 0, 0], outline: { color: s[1], width: s[0] + (s[0] === 3 ? 2 : 0) } } })); });
+        view.goTo(poly.extent.expand(1.3), { duration: 0 }).catch(function () {});
+        keep.forEach(function (r, i) { var o = '<option value="' + i + '">' + esc(wbDate(r.t)) + '</option>'; selT.insertAdjacentHTML("beforeend", o); selN.insertAdjacentHTML("beforeend", o); });
+        selT.value = "0"; selN.value = String(keep.length - 1);
+        function say() { capL.textContent = wbDate(keep[+selT.value].t); capR.textContent = wbDate(keep[+selN.value].t); st.textContent = "Showing " + capL.textContent + " on the left and " + capR.textContent + " on the right. " + keep.length + " dates here have a different photo."; }
+        function swap(which) {
+          var isT = which === "t", old = isT ? lT : lN, nw = mk(keep[+(isT ? selT : selN).value]);
+          map.add(nw, isT ? 0 : 1); map.remove(old); try { old.destroy(); } catch (e) {}
+          if (isT) { lT = nw; swipe.leadingLayers.removeAll(); swipe.leadingLayers.add(nw); } else { lN = nw; swipe.trailingLayers.removeAll(); swipe.trailingLayers.add(nw); }
+          say();
+        }
+        selT.addEventListener("change", function () { swap("t"); }); selN.addEventListener("change", function () { swap("n"); });
+        say();
+      } catch (e) { console.info("Then and now unavailable:", e.message); sc.hidden = true; }
+    }
+    if ("IntersectionObserver" in window) { var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { io.disconnect(); start(); } }, { rootMargin: "400px" }); io.observe(box); } else start();
+  }
+
   function buildStory() {
     var story = $("#story"); story.innerHTML = ""; S.SAY = {};
     resolveAll();
@@ -1925,7 +2013,7 @@ var EVENT_SOURCES = [
     var foot = el("div", "foot");
     foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
       '<p>Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.</p>' +
-      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>. Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
+      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>. Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Aerial photos over time: <a href="https://livingatlas.arcgis.com/wayback/" target="_blank" rel="noopener">Esri World Imagery Wayback</a>. Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
     end.appendChild(foot);
     story.appendChild(end);
     var chips = $("#chips", end);
@@ -2241,6 +2329,7 @@ var EVENT_SOURCES = [
   async function loadPlace(feature) {
     var myLoad = ++S.loadId, a = feature.attributes;
     if (S.poiView) { try { S.poiView.destroy(); } catch (e) {} }
+    if (S.wbView) { try { S.wbView.destroy(); } catch (e) {} } S.wbView = null;
     if (S.schoolView) { try { S.schoolView.destroy(); } catch (e) {} }
     S.schoolView = null; S.schoolMapP = null; S.schoolWM = null; S.sch = null; S.schoolHl = null;
     S.poiView = null; S.poiMapP = null; S.poiLayer = null; S.poiPhotos = {}; S.poiOids = null; S.poiAllOids = null; S.poiTruncated = false; S.poiItems = [];
@@ -2281,7 +2370,8 @@ var EVENT_SOURCES = [
     } catch (e) {}
     S.facts = facts;
     buildStory();
-    loadNameCard(myLoad); loadWeather(center, myLoad); loadPois(myLoad); loadSchools(myLoad);
+    loadNameCard(myLoad); loadWeather(center, myLoad); loadPois(myLoad);
+    loadSchools(myLoad).catch(function () {}).then(function () { if (myLoad === S.loadId) return loadWayback(myLoad); }).catch(function (e) { console.info("Then and now unavailable:", e && e.message); });
     $("#loading").classList.add("gone");
     setTimeout(function () { sched(); }, 200);
   }
@@ -2290,8 +2380,9 @@ var EVENT_SOURCES = [
   function startMap() {
     if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); return; }
     try {
-      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home"],
-        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home) {
+      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home", "esri/widgets/Swipe"],
+        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home, Swipe) {
+          modules.Swipe = Swipe;
           modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter; modules.Viewpoint = Viewpoint;
           var wmId = WEBMAP.id || qs.get("webmap") || "", map;
           if (CFG.ARCGIS_KEY) esriConfig.apiKey = CFG.ARCGIS_KEY;
