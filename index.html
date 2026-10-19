@@ -62,9 +62,10 @@ button{font:inherit;color:inherit}
 .house-map{position:relative;width:min(100%,560px);aspect-ratio:1/1.08;justify-self:center;background:var(--ink);clip-path:polygon(50% 0,100% 27%,100% 100%,0 100%,0 27%)}
 .house-map .inner{position:absolute;inset:12px;background:#d9e4d0;clip-path:polygon(50% 0,100% 27%,100% 100%,0 100%,0 27%)}
 #viewDiv{position:absolute;inset:0}
-.maphint{position:absolute;left:12%;right:12%;bottom:5%;z-index:5;text-align:center;font-weight:700;font-size:14px;background:#fff;border:3px solid var(--ink);border-radius:999px;padding:5px 12px;pointer-events:none;transition:opacity .4s}
+.maphint{position:absolute;left:18%;right:18%;bottom:68px;z-index:5;text-align:center;font-weight:700;font-size:14px;background:#fff;border:3px solid var(--ink);border-radius:999px;padding:5px 12px;pointer-events:none;transition:opacity .4s}
 .maphint.gone{opacity:0}
-.esri-ui .esri-zoom{margin:14px 0 0 14px}
+.esri-ui .esri-zoom{margin:0 0 14px 14px}
+.esri-ui .esri-home{margin:0 14px 14px 0}
 
 /* loading */
 #loading{position:fixed;inset:0;z-index:100;background:#FFD23F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font:800 clamp(22px,3vw,34px) var(--f-display);text-align:center;padding:20px;transition:opacity .5s}
@@ -1887,8 +1888,19 @@ var EVENT_SOURCES = [
   function drawPlace(poly) {
     if (!S.view || !poly) return;
     S.view.graphics.removeAll();
-    S.view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [30, 27, 75, 0.18], outline: { color: [30, 27, 75, 1], width: 3 } } }));
-    S.view.goTo(poly.extent.expand(1.3), { duration: 900 }).catch(function () {});
+    var g = new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [30, 27, 75, 0.18], outline: { color: [30, 27, 75, 1], width: 3 } }, attributes: { name: S.name }, popupTemplate: { title: "{name}" } });
+    S.view.graphics.add(g);
+    setHomeView(poly.extent.expand(1.3));
+    S.view.goTo(poly.extent.expand(1.3), { duration: 900 }).catch(function () {}).then(function () { openPlacePopup([g], poly); });
+  }
+  // The Home button returns to this place. The place is also selected so its popup shows as a title bar along the bottom.
+  function setHomeView(extent) {
+    try { if (S.home && modules.Viewpoint) S.home.viewpoint = new modules.Viewpoint({ targetGeometry: extent }); } catch (e) { console.info("Home view not set:", e.message); }
+  }
+  function openPlacePopup(features, poly) {
+    var v = S.view; if (!v || !features || !features.length) return;
+    try { v.popup.close(); } catch (e) {}
+    try { var p = v.openPopup({ features: features, location: poly && poly.centroid ? poly.centroid : undefined, shouldFocus: false }); if (p && p.catch) p.catch(function () {}); } catch (e) { console.info("Popup not opened:", e.message); }
   }
   // Web map: filter its Census Places layer to this place. Otherwise: outline the place from TIGERweb.
   async function applyPlaceToMap() {
@@ -1919,7 +1931,17 @@ var EVENT_SOURCES = [
           var q = await layers[i].queryExtent();
           if (q && q.count > 0 && q.extent) { found = { layer: layers[i], extent: q.extent }; }
         }
-        if (found) { found.layer.visible = true; v.graphics.removeAll(); await v.goTo(found.extent.expand(1.4), { duration: 900 }); return; }
+        if (found) {
+          found.layer.visible = true; v.graphics.removeAll();
+          setHomeView(found.extent.expand(1.4));
+          var myPlace = S.geoid;
+          await v.goTo(found.extent.expand(1.4), { duration: 900 }).catch(function () {});
+          try {
+            var qf = await found.layer.queryFeatures({ where: expr, outFields: ["*"], returnGeometry: true, num: 1 });
+            if (S.geoid === myPlace && qf.features && qf.features[0]) openPlacePopup([qf.features[0]], S.pendingPoly);
+          } catch (e) { console.info("Place popup not opened:", e.message); }
+          return;
+        }
         console.info("None of the web map's layers has a feature for " + a.GEOID + "; showing the Census boundary instead.");
       } catch (e) { layers.forEach(function (l) { try { l.visible = false; } catch (e2) {} }); console.warn("Web map filter failed (" + e.message + "). Showing the place outline only."); }
     }
@@ -1976,17 +1998,22 @@ var EVENT_SOURCES = [
   function startMap() {
     if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); return; }
     try {
-      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter"],
-        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter) {
-          modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter;
+      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home"],
+        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home) {
+          modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter; modules.Viewpoint = Viewpoint;
           var wmId = WEBMAP.id || qs.get("webmap") || "", map;
           if (CFG.ARCGIS_KEY) esriConfig.apiKey = CFG.ARCGIS_KEY;
           if (wmId) { map = new WebMap({ portalItem: { id: wmId } }); S.webmap = true; }
           else if (CFG.ARCGIS_KEY) map = new Map({ basemap: "arcgis/community" });
           else map = new Map({ layers: [new WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
-          S.view = new MapView({ container: "viewDiv", map: map, center: [-117.18, 34.06], zoom: 11, ui: { components: ["zoom"] },
+          S.view = new MapView({ container: "viewDiv", map: map, center: [-117.18, 34.06], zoom: 11, ui: { components: [] },
             popup: { collapseEnabled: true, dockEnabled: true, dockOptions: { buttonEnabled: false, breakpoint: false, position: "bottom-center" } },
             navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
+          // Zoom controls bottom left, Home button bottom right (Home returns to the selected place).
+          try {
+            S.view.ui.add(new Zoom({ view: S.view }), "bottom-left");
+            S.home = new Home({ view: S.view }); S.view.ui.add(S.home, "bottom-right");
+          } catch (e) { console.warn("Map buttons unavailable:", e); }
           // The page scrolls by default. Click the map to zoom with the scroll wheel; moving away gives scrolling back.
           var box = $("#viewDiv"), hint = $("#maphint");
           S.view.on("click", function () { S.view.navigation.mouseWheelZoomEnabled = true; if (hint) hint.classList.add("gone"); });
