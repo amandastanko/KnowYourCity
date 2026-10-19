@@ -1091,14 +1091,16 @@ var EVENT_SOURCES = [
 
   // ---------- Places to see (OpenStreetMap points of interest) ----------
   var POI = { url: "https://services6.arcgis.com/Do88DoK2xjTUCXd1/ArcGIS/rest/services/OSM_NA_POIs/FeatureServer/0",
-    fields: "name,name_en,name_es,name_fr,tourism,historic,emergency,amenity,healthcare,opening_hours,parking,website,wheelchair,addr_housenumber,addr_street,addr_city" };
+    fields: "information,name,name_en,name_es,name_fr,tourism,historic,emergency,amenity,healthcare,opening_hours,parking,website,wheelchair,addr_housenumber,addr_street,addr_city" };
   var TOUR = { attraction: ["Attraction", 5], museum: ["Museum", 5], zoo: ["Zoo", 5], theme_park: ["Theme park", 5], aquarium: ["Aquarium", 5], viewpoint: ["Viewpoint", 4], gallery: ["Gallery", 3], artwork: ["Public art", 2] };
   var HIST = { castle: ["Castle", 5], monument: ["Monument", 4], fort: ["Fort", 4], memorial: ["Memorial", 3], building: ["Historic building", 3], ruins: ["Ruins", 3], archaeological_site: ["Archaeological site", 4], ship: ["Historic ship", 3], "yes": ["Historic site", 2] };
   var HIST_SKIP = ["no", "boundary_stone", "milestone", "survey_point", "wayside_cross", "wayside_shrine", "charcoal_pile"];
   var EMER = { fire_station: ["Fire station", 2], ambulance_station: ["Ambulance station", 3], coast_guard: ["Coast Guard", 4], mountain_rescue: ["Mountain rescue", 5], lifeguard: ["Lifeguard", 6], disaster_response: ["Disaster response", 7], assembly_point: ["Emergency assembly point", 8], shelter: ["Emergency shelter", 9], first_aid: ["First aid", 10] };
   var AMEN = { hospital: ["Hospital", 0], police: ["Police", 1], fire_station: ["Fire station", 2] };
   function sqlList(o) { return Object.keys(o).map(function (k) { return "'" + k + "'"; }).join(","); }
-  var POI_SEE_WHERE = "name IS NOT NULL AND (tourism IN (" + sqlList(TOUR) + ") OR (historic IS NOT NULL AND historic NOT IN (" + HIST_SKIP.map(function (k) { return "'" + k + "'"; }).join(",") + ")))";
+  // Tourism "information" points are mostly signs and trail markers. Only staffed offices and visitor centres are worth listing.
+  var INFO = { office: ["Visitor information", 3], visitor_centre: ["Visitor centre", 4] };
+  var POI_SEE_WHERE = "name IS NOT NULL AND (tourism IN (" + sqlList(TOUR) + ") OR (tourism = 'information' AND information IN (" + sqlList(INFO) + ")) OR (historic IS NOT NULL AND historic NOT IN (" + HIST_SKIP.map(function (k) { return "'" + k + "'"; }).join(",") + ")))";
   var POI_SAFE_WHERE = "name IS NOT NULL AND (emergency IN (" + sqlList(EMER) + ") OR amenity IN (" + sqlList(AMEN) + "))";
   var POI_WHERE = "(" + POI_SEE_WHERE + ") OR (" + POI_SAFE_WHERE + ")";
   var WC_GLYPH = '<circle cx="11" cy="4" r="1.7" fill="#1E1B4B"/><path d="M11 7.5v6h5l2.5 5"/><path d="M11 10.5h5"/><path d="M8.2 12.8A5 5 0 1 0 15.5 18.2"/>';
@@ -1123,6 +1125,7 @@ var EVENT_SOURCES = [
   function poiKind(a) {
     var t = TOUR[a.tourism], hs = a.historic && HIST_SKIP.indexOf(a.historic) < 0 ? (HIST[a.historic] || ["Historic site", 1]) : null;
     if (t) return { group: "see", label: t[0], w: t[1] + (hs ? 1 : 0) };
+    if (a.tourism === "information" && INFO[a.information]) return { group: "see", label: INFO[a.information][0], w: INFO[a.information][1] + (hs ? 1 : 0) };
     if (hs) return { group: "see", label: hs[0], w: hs[1] };
     var e = EMER[a.emergency] || AMEN[a.amenity] || (a.healthcare === "hospital" ? AMEN.hospital : null);
     return e ? { group: "safe", label: e[0], w: e[1] } : null;
