@@ -538,7 +538,7 @@ i.sw{border-width:3px}
 //   expression: definition query; {GEOID} {STATE} {PLACE} {NAME} are replaced for each place
 // Schools and colleges web map (NCES layers from ArcGIS Living Atlas). Layers are found by title.
 var SCHOOLS = { id: "83fbe7d0e9fd4fc4a42a3fde1c4a199c" };
-var WEBMAP = { id: "b8cf1cda3b8a478386ac03a1c0a3adcb", layerTitles: ["Census Designated Place", "Incorporated Place", "Consolidated City"], poiTitle: "OpenStreetMap POIs for North America", expression: "GEOID = '{GEOID}'" };
+var WEBMAP = { id: "b8cf1cda3b8a478386ac03a1c0a3adcb", layerTitles: ["Census Designated Place", "Incorporated Place", "Consolidated City", "County Subdivisions"], poiTitle: "OpenStreetMap POIs for North America", expression: "GEOID = '{GEOID}'" };
 var HARDCODED = { census: "062d2715fc817fbaa69d6777a88b711f932144d1", arcgis: "AAPTaWduh3eXELl158kRP-_vyBA..8xaoKh-46KJCfHz90o-Y0aI17Tb8I8IBhRjko8G_mA7-7DjCsmDgISPtuoYHpsgVTDGecyPH7BOZKoeEGuX6BnkztKkBovzzu-pSkuhDP6DmrR1TbSnlyUtLsP8_sQef1QvN9CPAVxBYL5bseqICAS3cOq5GBGhje56t5nIEd7dQ73Q-BZcaCFYNqz_uS697ncoJ9Pxpla0hPLPxZYBZikghB3i7z6PrxFS039_jKFabqwF974_DXrQ.AT1_lxq1zj7D" };
 
 /* ---------- Where to find events, place by place ----------
@@ -566,6 +566,10 @@ var EVENT_SOURCES = [
 
 (function () {
   var K = window.KYC;
+  if (!K) {
+    document.body.insertAdjacentHTML("afterbegin", '<p style="margin:0;padding:16px;background:#FFD23F;color:#1B1A4B;font:600 16px system-ui,sans-serif">Know Your City needs engine.js saved in the same folder as index.html. It did not load.</p>');
+    throw new Error("engine.js did not load. Put engine.js in the same folder as index.html.");
+  }
   var qs = new URLSearchParams(location.search);
   var CFG = {
     CENSUS_KEY: HARDCODED.census || qs.get("census") || safeGet("kyc_census"),
@@ -714,19 +718,28 @@ var EVENT_SOURCES = [
     var r = await Promise.all([groupRows("for=state:" + fips), ownData("for=state:" + fips, "kyc_own_st_" + fips).catch(function () { return null; })]);
     S.st = { rows: r[0], ownRow: r[1], fips: fips };
   }
-  async function loadOwnership(place, state) {
+  async function loadOwnership(clause) {
     try {
-      var r = await Promise.all([ownLabels(), ownData("for=us:1", "kyc_own_us_" + CFG.VINTAGE), ownData("for=place:" + place + "&in=state:" + state)]);
+      var r = await Promise.all([ownLabels(), ownData("for=us:1", "kyc_own_us_" + CFG.VINTAGE), ownData(clause)]);
       return { rows: K.buildOwnRows(r[0]), us: r[1], pl: r[2] };
     } catch (e) { console.warn("S2501 ownership data unavailable:", e.message); return null; }
   }
 
-  var layerIds = null, layerKinds = {};
+  var layerIds = null, layerKinds = {}, layerSub = {};
+  // Only active, general-purpose county subdivisions (townships, towns). Skips statistical divisions such as California's "county census divisions".
+  var SUB_WHERE = "FUNCSTAT = 'A'";
+  // Census API geography for a TIGERweb feature: a place, or a county subdivision (which also needs its county).
+  function geoClause(a) {
+    if (a.COUSUB && !a.PLACE) return "for=county%20subdivision:" + a.COUSUB + "&in=state:" + a.STATE + "%20county:" + a.COUNTY;
+    return "for=place:" + a.PLACE + "&in=state:" + a.STATE;
+  }
   async function placeLayerIds() {
     if (layerIds) return layerIds;
     var j = await getJSON(TIGER + "?f=json");
-    var ls = j.layers.filter(function (l) { return /^(incorporated places|census designated places)$/i.test(l.name); });
-    ls.forEach(function (l) { layerKinds[l.id] = /census designated/i.test(l.name) ? " (census-designated place)" : ""; });
+    var ls = j.layers.filter(function (l) { return /^(incorporated places|census designated places|county subdivisions)$/i.test(l.name); });
+    // Places first, then county subdivisions (townships and similar), so a point or ID match prefers a city or town.
+    ls.forEach(function (l) { l.sub = /county subdivisions/i.test(l.name); layerSub[l.id] = l.sub; layerKinds[l.id] = /census designated/i.test(l.name) ? " (census-designated place)" : ""; });
+    ls.sort(function (a, b) { return (a.sub ? 1 : 0) - (b.sub ? 1 : 0) || a.id - b.id; });
     layerIds = ls.map(function (l) { return l.id; });
     if (!layerIds.length) throw new Error("Couldn't find Census place layers in TIGERweb");
     return layerIds;
@@ -734,7 +747,8 @@ var EVENT_SOURCES = [
   async function tigerQuery(extra) {
     var ids = await placeLayerIds();
     for (var i = 0; i < ids.length; i++) {
-      var j = await getJSON(TIGER + "/" + ids[i] + "/query?" + extra + "&outFields=GEOID,BASENAME,NAME,STATE,PLACE,AREALAND&returnGeometry=true&outSR=4326&maxAllowableOffset=0.0004&f=json");
+      var sub = layerSub[ids[i]] ? " AND (" + SUB_WHERE + ")" : "";
+      var j = await getJSON(TIGER + "/" + ids[i] + "/query?" + extra.replace(/where=([^&]*)/, function (m, w) { return "where=" + w + encodeURIComponent(sub); }) + "&outFields=*&returnGeometry=true&outSR=4326&maxAllowableOffset=0.0004&f=json");
       if (j.features && j.features.length) return j.features[0];
     }
     return null;
@@ -746,7 +760,7 @@ var EVENT_SOURCES = [
 
   // Closest Census Place within ~25 miles of a point (for visitors standing outside any place boundary).
   async function nearestPlace(lon, lat) {
-    var ids = await placeLayerIds(), best = null;
+    var ids = (await placeLayerIds()).filter(function (id) { return !layerSub[id]; }), best = null;
     var lists = await Promise.all(ids.map(function (id) {
       return getJSON(TIGER + "/" + id + "/query?geometry=" + encodeURIComponent(lon + "," + lat) + "&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&distance=40000&units=esriSRUnit_Meter&where=1%3D1&outFields=GEOID,INTPTLAT,INTPTLON&returnGeometry=false&resultRecordCount=200&f=json")
         .then(function (j) { return j.features || []; }).catch(function () { return []; });
@@ -2045,10 +2059,20 @@ var EVENT_SOURCES = [
     var where = "UPPER(BASENAME) LIKE '" + name + "%'" + (pq.fips ? " AND STATE='" + pq.fips + "'" : "");
     var ids = await placeLayerIds();
     var lists = await Promise.all(ids.map(function (id, n) {
-      return getJSON(TIGER + "/" + id + "/query?where=" + encodeURIComponent(where) + "&outFields=GEOID,BASENAME,NAME,STATE,PLACE&returnGeometry=false&resultRecordCount=25&f=json")
-        .then(function (j) { if (j.error) throw new Error(j.error.message || "TIGERweb search error"); return (j.features || []).map(function (f) { return { geoid: f.attributes.GEOID, base: f.attributes.BASENAME, state: f.attributes.STATE, kind: layerKinds[id] || "" }; }); });
+      var w = layerSub[id] ? where + " AND (" + SUB_WHERE + ")" : where;
+      return getJSON(TIGER + "/" + id + "/query?where=" + encodeURIComponent(w) + "&outFields=GEOID,BASENAME,NAME,STATE&returnGeometry=false&resultRecordCount=25&f=json")
+        .then(function (j) { if (j.error) throw new Error(j.error.message || "TIGERweb search error"); return (j.features || []).map(function (f) {
+          var at = f.attributes, kind = layerKinds[id] || "";
+          if (layerSub[id]) { var suf = String(at.NAME || "").slice(String(at.BASENAME || "").length).trim().toLowerCase(); kind = suf ? " (" + suf + ")" : " (township)"; }
+          return { geoid: at.GEOID, base: at.BASENAME, state: at.STATE, kind: kind, sub: !!layerSub[id] };
+        }); })
+        .catch(function (e) { if (layerSub[id]) return []; throw e; });
     }));
-    var seenG = {}, out = [].concat.apply([], lists).filter(function (r) { var k = r.geoid || (r.base + "|" + r.state); if (seenG[k]) return false; seenG[k] = 1; return true; }), qlow = name.toLowerCase();
+    var all = [].concat.apply([], lists), placeKeys = {};
+    all.forEach(function (r) { if (!r.sub) placeKeys[r.base.toLowerCase() + "|" + r.state] = 1; });
+    // A township or town that shares its name with a city or town in the same state is already listed as that place.
+    all = all.filter(function (r) { return !r.sub || !placeKeys[r.base.toLowerCase() + "|" + r.state]; });
+    var seenG = {}, out = all.filter(function (r) { var k = r.geoid || (r.base + "|" + r.state); if (seenG[k]) return false; seenG[k] = 1; return true; }), qlow = name.toLowerCase();
     out.sort(function (a, b) {
       var ea = a.base.toLowerCase() === qlow ? 0 : 1, eb = b.base.toLowerCase() === qlow ? 0 : 1;
       return ea - eb || a.base.localeCompare(b.base) || (STATES[a.state] ? STATES[a.state][0] : "").localeCompare(STATES[b.state] ? STATES[b.state][0] : "");
@@ -2235,7 +2259,7 @@ var EVENT_SOURCES = [
 
     if (!CFG.CENSUS_KEY) { showError("This app needs a free Census API key. Paste it into HARDCODED.census at the top of the script in index.html."); return; }
     try {
-      var res = await Promise.all([labelMap(), usRows(), groupRows("for=place:" + a.PLACE + "&in=state:" + a.STATE), loadOwnership(a.PLACE, a.STATE), loadState(a.STATE).catch(function (e) { console.warn("State comparison unavailable:", e.message); })]);
+      var res = await Promise.all([labelMap(), usRows(), groupRows(geoClause(a)), loadOwnership(geoClause(a)), loadState(a.STATE).catch(function (e) { console.warn("State comparison unavailable:", e.message); })]);
       if (myLoad !== S.loadId) return;
       S.items = K.buildItems(res[0]); S.us = res[1]; S.pl = res[2]; S.own = res[3];
       var nm = K.splitCensusName(S.pl.NAME);
