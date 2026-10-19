@@ -292,6 +292,16 @@ button{font:inherit;color:inherit}
 .wbframe{position:relative}
 .wbcap{position:absolute;top:14px;z-index:5;pointer-events:none;background:var(--ink);color:#fff;font:700 15px var(--f-body);padding:6px 14px;border-radius:999px;max-width:44%}
 .wbcap.l{left:14px}.wbcap.r{right:14px}
+.jump[hidden]{display:none}
+.jump{max-width:1180px;margin:0 auto;padding:6px clamp(18px,6vw,90px) clamp(40px,7vh,80px)}
+.jumpcard{background:#fff;border:4px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--ink);padding:clamp(18px,3vw,30px)}
+.jumpcard h2{font:800 clamp(24px,3vw,34px)/1.1 var(--f-display);margin:0 0 12px}
+.jumpcard h3{font:800 18px var(--f-display);margin:22px 0 10px}
+.stand{margin:0;padding:0 0 0 22px;display:grid;gap:8px;font-size:18px;line-height:1.45}
+.chips{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px}
+.chip{display:inline-block;font:700 16px var(--f-body);color:var(--ink);text-decoration:none;background:#FFD23F;border:3px solid var(--ink);border-radius:999px;padding:6px 15px}
+.chip:hover{background:var(--ink);color:#fff}
+.chip:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .wbfind[hidden]{display:none}
 .wbfind label{display:flex;flex-direction:column;gap:4px;font:700 16px var(--f-body)}
 .wbrow{display:flex;gap:8px}
@@ -521,6 +531,7 @@ i.sw{border-width:3px}
     <div class="mapcol"><div class="house-map" data-hid="hero"><div class="inner"><div id="viewDiv"></div></div></div><p class="maphint" id="maphint">Drag to move. Click, then scroll to zoom.</p></div>
   </section>
 
+  <nav id="jump" class="jump" aria-label="On this page" hidden></nav>
   <div id="story"></div>
 </main>
 
@@ -1624,6 +1635,19 @@ var EVENT_SOURCES = [
     l.definitionExpression = "1=1";
     if (modules.FeatureFilter && poly) view.whenLayerView(l).then(function (lv) { lv.filter = new modules.FeatureFilter({ geometry: poly, spatialRelationship: "intersects" }); }).catch(function () {});
   }
+  // NCES codes read as plain sentences. "13-City: Small" -> "a small city"; "1-Regular local school district that is NOT..." -> a short description.
+  var LEA_KIND = {
+    1: "A regular school district that runs its own schools.", 2: "A local school district that is part of a larger group of districts.", 3: "An office that supports a group of districts.",
+    4: "A regional agency that serves schools.", 5: "A state-run education agency.", 6: "A federally run education agency.", 7: "A charter school district.", 8: "An education agency.", 9: "A district for specialized public schools."
+  };
+  function leaKind(t) { var m = /^(\d)/.exec(String(t || "").trim()); return m && LEA_KIND[m[1]] ? LEA_KIND[m[1]] : String(t || "").replace(/^\d+\s*-\s*/, ""); }
+  function localeKind(t) {
+    var m = /^\d*\s*-?\s*(city|suburb|town|rural)\s*:\s*(\w+)/i.exec(String(t || "")); if (!m) return "";
+    var k = m[1].toLowerCase(), s = m[2].toLowerCase();
+    if (k === "city" || k === "suburb") return "a " + s + " " + k;
+    var near = { fringe: "close to a city", distant: "farther from a city", remote: "far from any city" }[s];
+    return k === "town" ? "a town " + (near || "") : "a rural area " + (near || "");
+  }
   function collegePopup(a) {
     var d = document.createElement("div"); d.className = "poipop";
     var url = safeUrl(a.WEBADDR), flags = [];
@@ -1754,9 +1778,9 @@ var EVENT_SOURCES = [
         cmp = '<div class="tviz" role="img" aria-label="' + esc(txt.replace(/&[a-z]+;/g, "")) + '">' + dots(r, "This district", true) + (st ? dots(st, stName) : "") + (us ? dots(us, "U.S.") : "") + '</div>' +
           '<p class="tnote">' + txt + ' Each yellow dot is a student, and the dark dot is one teacher. This counts every teacher on staff, so it is not the same as class size.</p>';
       }
-      return '<article class="dcard scard" data-key="' + esc(key) + '"><header><h3 class="dname">' + esc(nm) + '</h3>' + (a.LEA_TYPE_TEXT ? '<span class="evtag">' + esc(a.LEA_TYPE_TEXT) + '</span>' : "") + '</header>' +
+      return '<article class="dcard scard" data-key="' + esc(key) + '"><header><h3 class="dname">' + esc(nm) + '</h3>' + (a.LEA_TYPE_TEXT ? '<span class="evtag">' + esc(leaKind(a.LEA_TYPE_TEXT)) + '</span>' : "") + '</header>' +
         (nums.length ? '<dl class="dnums">' + nums.map(function (n) { return '<div><dd>' + esc(fmtN(n[1])) + '</dd><dt>' + esc(n[0]) + '</dt></div>'; }).join("") + '</dl>' : '') +
-        '<p class="dsent">' + (a.__n ? plural(a.__n, "of its schools is", "of its schools are") + " in " + esc(P) + ". " : "") + esc(grade) + (loc ? " Setting: " + esc(loc.toLowerCase().replace(": ", ", ")) + "." : "") + '</p>' + cmp +
+        '<p class="dsent">' + (a.__n ? plural(a.__n, "of its schools is", "of its schools are") + " in " + esc(P) + ". " : "") + esc(grade) + (localeKind(loc) ? " It is based in " + esc(localeKind(loc).trim()) + "." : "") + '</p>' + cmp +
         '<div class="dact">' + ('<button type="button" class="pill sbtn" data-kind="dist" data-key="' + esc(key) + '" aria-label="Show ' + esc(nm) + ' on the map">Show district on map</button>') + phoneLink(a.PHONE) + '</div></article>';
     }
     function colTile(a) {
@@ -1917,7 +1941,7 @@ var EVENT_SOURCES = [
         }
         selT.addEventListener("change", function () { swap("t"); }); selN.addEventListener("change", function () { swap("n"); });
         say();
-      } catch (e) { console.info("Then and now unavailable:", e.message); sc.hidden = true; }
+      } catch (e) { console.info("Then and now unavailable:", e.message); sc.hidden = true; try { buildJump(); } catch (e2) {} }
     }
     if ("IntersectionObserver" in window) { var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { io.disconnect(); start(); } }, { rootMargin: "400px" }); io.observe(box); } else start();
   }
@@ -1986,10 +2010,28 @@ var EVENT_SOURCES = [
     var anchor = wb || p;
     if (sch && anchor && anchor.nextElementSibling !== sch) anchor.insertAdjacentElement("afterend", sch);
   }
-  (function () { var st = $("#story"); if (st && window.MutationObserver) new MutationObserver(function () { orderSections(); decorateShare(); tryJump(); }).observe(st, { childList: true }); })();
+  // "On this page": what stands out, then a chip for each titled section, in page order.
+  var JUMP_LABEL = { namecard: "Name card", events: "Events", weather: "Weather", pois: "Places to see", wayback: "Then and now", schools: "Schools and colleges" };
+  function buildJump() {
+    var nav = $("#jump"), story = $("#story"); if (!nav || !story) return;
+    var items = [], seen = {};
+    story.querySelectorAll(":scope > .scene[id]").forEach(function (sc) {
+      if (sc.hidden) return;
+      var sign = sc.querySelector(":scope > .sign"); if (!sign) return;
+      var label = JUMP_LABEL[sc.id] || sign.textContent.trim(); if (!label || seen[label]) return; seen[label] = 1; items.push({ id: sc.id, label: label });
+    });
+    var stand = S.standouts || [], sig = items.map(function (i) { return i.id; }).join("|") + "#" + stand.join("|");
+    if (sig === nav.getAttribute("data-sig")) return; nav.setAttribute("data-sig", sig);
+    if (items.length < 3) { nav.hidden = true; nav.innerHTML = ""; return; }
+    nav.innerHTML = '<div class="jumpcard">' + (stand.length ? '<h2>What stands out in ' + esc(S.name) + '</h2><ul class="stand">' + stand.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>" : "") +
+      '<h3>Jump to a section</h3><ul class="chips">' + items.map(function (i) { return '<li><a class="chip" href="#' + esc(i.id) + '">' + esc(i.label) + "</a></li>"; }).join("") + "</ul></div>";
+    nav.hidden = false;
+  }
+  (function () { var st = $("#story"); if (st && window.MutationObserver) new MutationObserver(function () { orderSections(); decorateShare(); buildJump(); tryJump(); }).observe(st, { childList: true }); })();
 
   function buildStory() {
-    var story = $("#story"); story.innerHTML = ""; S.SAY = {};
+    var story = $("#story"); story.innerHTML = ""; S.SAY = {}; S.standouts = [];
+    var jn = $("#jump"); if (jn) { jn.hidden = true; jn.innerHTML = ""; jn.removeAttribute("data-sig"); }
     resolveAll();
     var P = S.name, used = {}, flip = false, prev = "pink", ci = 0, CYCLE = ["teal", "yellow", "leaf", "lilac", "tang", "mint", "pink"];
     function pickColor() { var k; do { k = CYCLE[ci++ % CYCLE.length]; } while (k === prev); prev = k; return k; }
@@ -2050,6 +2092,7 @@ var EVENT_SOURCES = [
 
     // 2. Plot twists: the three biggest real differences from the U.S., one per screen
     var twists = pickTwists(used);
+    S.standouts = twists.map(function (r) { return r.say.main; });
     twists.forEach(function (r) { used[r.id] = 1; });
     twists.forEach(function (r, i) {
       var sc = scene(pickColor(), i === 0 ? "What sets " + P + " apart" : null), b = beat(r.id, i % 2 === 1, true);
