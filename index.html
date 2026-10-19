@@ -200,7 +200,7 @@ button{font:inherit;color:inherit}
 .end h2{font:800 clamp(40px,7vw,100px)/.92 var(--f-display);letter-spacing:-.04em;margin:0 0 .4em}
 .end .big{width:100%;max-width:560px;padding:16px 22px;border-radius:999px;border:4px solid var(--ink);font:700 20px var(--f-body);background:#fff;color:var(--ink)}
 .evwrap{max-width:1100px;margin:0 auto;padding:6vh 0 4vh}
-.evwrap h2{font:800 clamp(34px,5.4vw,76px)/.95 var(--f-display);letter-spacing:-.035em;margin:0 0 .3em}
+.evwrap>h2{font:800 clamp(34px,5.4vw,76px)/.95 var(--f-display);letter-spacing:-.035em;margin:0 0 .3em}
 .evwrap .evnote{max-width:60ch;margin:0 0 22px;font-size:18px}
 .evgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
 .evcard{display:flex;flex-direction:column;gap:6px;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:16px 18px;box-shadow:6px 6px 0 var(--ink);color:var(--ink);text-decoration:none;transition:transform .15s}
@@ -212,7 +212,7 @@ button{font:inherit;color:inherit}
 .evlist li{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 14px}
 .evlist time{font-weight:800;margin-right:8px}
 .wxwrap{max-width:1100px;margin:0 auto;padding:6vh 0 4vh;color:var(--ink)}
-.wxwrap h2{font:800 clamp(34px,5.4vw,76px)/.95 var(--f-display);letter-spacing:-.035em;margin:0 0 .3em}
+.wxwrap>h2{font:800 clamp(34px,5.4vw,76px)/.95 var(--f-display);letter-spacing:-.035em;margin:0 0 .3em}
 .wxnow{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:0 0 22px}
 .wxnow .wxbig{font:800 clamp(56px,9vw,110px)/1 var(--f-display);letter-spacing:-.04em}
 .wxnow .wxico{font-size:clamp(48px,7vw,84px);line-height:1}
@@ -240,6 +240,17 @@ button{font:inherit;color:inherit}
 .poiphoto figcaption{font-size:12px;line-height:1.3;padding:5px 8px;background:#fff;overflow-wrap:anywhere}
 .poiphoto a{text-decoration:underline}
 .poipop .poiphoto{margin:0 0 4px}
+.esri-popup h1,.esri-popup h2,.esri-popup h3,.esri-popup [class*="header-title"],.esri-features__heading{font:700 16px/1.35 var(--f-body)!important;letter-spacing:0!important;margin:0!important;color:var(--ink)}
+.poigrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.poitile{background:#fff;border:3px solid var(--ink);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:4px 4px 0 var(--ink);color:var(--ink)}
+.poitile .pimg{position:relative;aspect-ratio:4/3;background:#EFE9D6;display:flex;align-items:center;justify-content:center;font-size:12px;text-align:center;padding:6px}
+.poitile .pimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.poitile .pcredit{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);font-size:10px;line-height:1.25;padding:2px 6px;overflow-wrap:anywhere}
+.poitile .pcredit a{text-decoration:underline;color:var(--ink)}
+.poitile .pbody{display:flex;flex-direction:column;gap:6px;padding:8px 10px 10px;flex:1}
+.poitile .pname{font:700 13px/1.25 var(--f-body);display:flex;align-items:flex-start;gap:6px;justify-content:space-between}
+.poitile .pname svg{flex:none;width:16px;height:16px}
+.poitile .poibtn{margin-top:auto;font:700 12px var(--f-body);padding:5px 10px;align-self:flex-start}
 .poiwrap h3{font:800 clamp(22px,2.6vw,32px) var(--f-display);margin:26px 0 12px}
 .poicard{gap:8px}
 .poicard h4{margin:0;font:800 20px/1.15 var(--f-display)}
@@ -1168,7 +1179,7 @@ var EVENT_SOURCES = [
     if (rows.length) out += "<dl>" + rows.join("") + "</dl>";
     var wc = wheelchairHTML(a.wheelchair); if (wc) out += wc;
     var url = safeUrl(a.website);
-    if (url) out += '<a href="' + esc(url) + '" target="_blank" rel="noopener">Website for ' + esc(nm) + ' (opens in a new tab)</a>';
+    if (url) out += '<a href="' + esc(url) + '" target="_blank" rel="noopener">Website for ' + esc(nm) + '</a>';
     return out;
   }
   // A photo for a place: Commons photos taken within ~75 m of the point whose title, description or categories also mention the place's name.
@@ -1199,7 +1210,7 @@ var EVENT_SOURCES = [
     return best;
   }
   function placePhotoHTML(ph) {
-    return '<figure class="poiphoto"><img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><figcaption>Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + ' (opens in a new tab)</a></figcaption></figure>';
+    return '<figure class="poiphoto"><img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><figcaption>Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a></figcaption></figure>';
   }
   function inRings(lon, lat, rings) {
     var inside = false;
@@ -1301,7 +1312,11 @@ var EVENT_SOURCES = [
     S.poiItems = see.concat(safe); S.poiOids = S.poiItems.map(function (a) { return a.OBJECTID; }).filter(function (o) { return o != null; });
     applyPoiLayer();
     var P = S.name, story = $("#story"), sc = scene("mint", "Places in " + P), w = el("div", "evwrap poiwrap"); w.setAttribute("data-hid", "pois");
-    function cards(list) { return '<div class="evgrid">' + list.map(function (a) { return '<article class="evcard poicard"' + (a.OBJECTID != null ? ' data-oid="' + a.OBJECTID + '"' : '') + '>' + poiDetailsHTML(a, true) + (a.OBJECTID != null && S.webmap ? '<button type="button" class="pill poibtn" data-oid="' + a.OBJECTID + '" aria-label="Show ' + esc(poiName(a)) + ' on the map">Show on the map</button>' : '') + '</article>'; }).join("") + '</div>'; }
+    function cards(list) { return '<div class="poigrid">' + list.map(function (a) {
+      var wcv = String(a.wheelchair || "").toLowerCase(), wcIcon = (wcv === "yes" || wcv === "designated" || wcv === "limited") ? WC_YES.replace('aria-hidden="true"', 'role="img" aria-label="' + (wcv === "limited" ? "Partly wheelchair accessible" : "Wheelchair accessible") + '"') : wcv === "no" ? WC_NO.replace('aria-hidden="true"', 'role="img" aria-label="Not wheelchair accessible"') : "";
+      var k = poiKind(a);
+      return '<article class="poitile poicard"' + (a.OBJECTID != null ? ' data-oid="' + a.OBJECTID + '"' : '') + '><div class="pimg"><span class="pph">' + esc(k ? k.label : "") + '</span></div><div class="pbody"><span class="pname"><span>' + esc(poiName(a)) + '</span>' + wcIcon + '</span>' +
+        (a.OBJECTID != null && S.webmap ? '<button type="button" class="pill poibtn" data-oid="' + a.OBJECTID + '" aria-label="Show ' + esc(poiName(a)) + ' on the map">Show on map</button>' : '') + '</div></article>'; }).join("") + '</div>'; }
     w.innerHTML = '<h2>Places to see.</h2><p class="evnote">Landmarks, museums and historic sites in ' + esc(P) + ', plus emergency services. The list comes from OpenStreetMap volunteers, so it may be incomplete. Each place shows its hours, parking and wheelchair access when that is known.</p>' +
       (S.webmap ? '<div class="poimapwrap"><div id="poiMap" class="poimap" role="region" aria-label="Map of the places listed below"></div><p id="poiStatus" class="evnote" role="status" aria-live="polite">Select &ldquo;Show on the map&rdquo; on any place below to find it here.</p></div>' : '') +
       (see.length ? '<h3>Landmarks and history</h3>' + cards(see) : '') + (safe.length ? '<h3>Emergency and safety</h3>' + cards(safe) : '');
@@ -1320,7 +1335,8 @@ var EVENT_SOURCES = [
         if (!ph || myLoad !== S.loadId) return;
         S.poiPhotos[a.OBJECTID] = ph;
         var card = w.querySelector('.poicard[data-oid="' + a.OBJECTID + '"]');
-        if (card) card.insertAdjacentHTML("afterbegin", placePhotoHTML(ph));
+        var box = card && card.querySelector(".pimg");
+        if (box) box.innerHTML = '<img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><span class="pcredit">Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a></span>';
       }).catch(function () {});
     });
     var ev = story.querySelector('[data-hid="events"]'); ev = ev && ev.closest(".scene");
