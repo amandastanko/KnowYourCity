@@ -292,6 +292,17 @@ button{font:inherit;color:inherit}
 .wbframe{position:relative}
 .wbcap{position:absolute;top:14px;z-index:5;pointer-events:none;background:var(--ink);color:#fff;font:700 15px var(--f-body);padding:6px 14px;border-radius:999px;max-width:44%}
 .wbcap.l{left:14px}.wbcap.r{right:14px}
+.wbfsbtn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:#fff;color:var(--ink);border:0;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.3);cursor:pointer;padding:0}
+.wbfsbtn:hover{background:#f0f0f0}
+.wbfsbtn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.wbfs.wbmax{position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;background:#FFB35C;padding:12px 16px 16px;overflow:auto}
+.wbfs.wbmax .wbpick{margin:0 0 12px}
+.wbfs.wbmax .wbframe{flex:1;min-height:0}
+.wbfs.wbmax .poimap{position:absolute;inset:0;height:auto;box-shadow:none}
+.wbfsLock{overflow:hidden}
+.sharebtn{position:absolute;top:clamp(14px,3vh,28px);right:clamp(14px,3vw,40px);z-index:6;display:flex;align-items:center;gap:7px;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:999px;padding:6px 15px 6px 11px;font:700 15px var(--f-body);cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.sharebtn:hover{background:#FFD23F}
+.sharebtn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .poicard{cursor:default}
 .poicard[data-oid]{cursor:pointer}
 .poicard:hover{transform:none}
@@ -1809,8 +1820,8 @@ var EVENT_SOURCES = [
     var poly = S.pendingPoly; if (!poly || !modules.Map || !modules.WebTileLayer || !modules.MapView || !modules.Swipe) return;
     var P = S.name, sc = scene("tang", "Then and now in " + P), w = el("div", "evwrap wbwrap"); w.setAttribute("data-hid", "wayback");
     w.innerHTML = '<h2>Then and now.</h2><p class="evnote">Drag the bar on the map to compare two aerial photos of ' + esc(P) + '. Pick any two dates. The photos come from Esri World Imagery Wayback. Each date is when that version was released, so the photos themselves can be a little older.</p>' +
-      '<div class="wbpick"><label for="wbThen">Left side<select id="wbThen"></select></label><label for="wbNow">Right side<select id="wbNow"></select></label></div>' +
-      '<div class="poimapwrap"><div class="wbframe"><div id="wbMap" class="poimap" role="region" aria-label="Aerial photos of ' + esc(P) + ' from two dates, with a bar you can drag to compare them"></div><span class="wbcap l" id="wbCapL"></span><span class="wbcap r" id="wbCapR"></span></div>' +
+      '<div class="poimapwrap"><div class="wbfs" id="wbFs"><div class="wbpick"><label for="wbThen">Left side<select id="wbThen"></select></label><label for="wbNow">Right side<select id="wbNow"></select></label></div>' +
+      '<div class="wbframe"><div id="wbMap" class="poimap" role="region" aria-label="Aerial photos of ' + esc(P) + ' from two dates, with a bar you can drag to compare them"></div><span class="wbcap l" id="wbCapL"></span><span class="wbcap r" id="wbCapR"></span></div></div>' +
       '<p id="wbStatus" class="evnote" role="status" aria-live="polite">Looking for the dates when the photo changed here.</p></div>';
     sc.appendChild(w);
     var story = $("#story"), prev = null;
@@ -1828,13 +1839,34 @@ var EVENT_SOURCES = [
         function mk(r) { return new modules.WebTileLayer({ urlTemplate: r.url, copyright: C }); }
         var map = new modules.Map({ layers: [] }), lT = mk(keep[0]), lN = mk(keep[keep.length - 1]);
         map.addMany([lT, lN]);
-        view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 14, ui: { components: ["zoom"] }, constraints: { maxZoom: 19 },
+        view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 14, ui: { components: ["zoom", "attribution"] }, constraints: { maxZoom: 19 },
           navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
         S.wbView = view;
+        view.ui.move("zoom", "bottom-left");
         view.on("click", function () { view.navigation.mouseWheelZoomEnabled = true; });
-        box.addEventListener("mouseleave", function () { view.navigation.mouseWheelZoomEnabled = false; });
+        box.addEventListener("mouseleave", function () { if (!fsOn()) view.navigation.mouseWheelZoomEnabled = false; });
         await view.when();
         if (myLoad !== S.loadId) { try { view.destroy(); } catch (e) {} return; }
+        // Full screen: the real browser full screen where it exists, otherwise the map fills the window. The date menus come along.
+        var fsBox = w.querySelector("#wbFs"), fsBtn = document.createElement("button"), ICO_IN = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>', ICO_OUT = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        function fsOn() { return fsBox.classList.contains("wbmax"); }
+        function fsSet(on) {
+          fsBox.classList.toggle("wbmax", on); document.documentElement.classList.toggle("wbfsLock", on);
+          fsBtn.innerHTML = on ? ICO_OUT : ICO_IN; fsBtn.setAttribute("aria-pressed", on ? "true" : "false");
+          fsBtn.setAttribute("aria-label", on ? "Exit full screen" : "Full screen"); fsBtn.title = on ? "Exit full screen" : "Full screen";
+          view.navigation.mouseWheelZoomEnabled = on;
+          if (!on && document.fullscreenElement === fsBox && document.exitFullscreen) document.exitFullscreen().catch(function () {});
+        }
+        fsBtn.type = "button"; fsBtn.className = "wbfsbtn"; fsSet(false);
+        fsBtn.addEventListener("click", function () {
+          if (fsOn()) { fsSet(false); return; }
+          fsSet(true);
+          if (fsBox.requestFullscreen) fsBox.requestFullscreen().catch(function () {});
+          fsBtn.focus();
+        });
+        document.addEventListener("fullscreenchange", function () { if (!document.fullscreenElement && fsOn() && fsBox.isConnected) fsSet(false); });
+        document.addEventListener("keydown", function (e) { if (e.key === "Escape" && fsOn()) fsSet(false); });
+        view.ui.add(fsBtn, "bottom-right");
         var swipe = new modules.Swipe({ view: view, leadingLayers: [lT], trailingLayers: [lN], position: 50 }); view.ui.add(swipe);
         [[3, "#FFD23F"], [1.5, "#1E1B4B"]].forEach(function (s) { view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [0, 0, 0, 0], outline: { color: s[1], width: s[0] + (s[0] === 3 ? 2 : 0) } } })); });
         view.goTo(poly.extent.expand(1.3), { duration: 0 }).catch(function () {});
@@ -1853,6 +1885,63 @@ var EVENT_SOURCES = [
     }
     if ("IntersectionObserver" in window) { var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { io.disconnect(); start(); } }, { rootMargin: "400px" }); io.observe(box); } else start();
   }
+
+  /* ---------- Share links: every section gets an id and a Share button ---------- */
+  var JUMP = (function () { try { return decodeURIComponent(location.hash.replace(/^#/, "")); } catch (e) { return ""; } })(), jumpMoved = false, jumpTimer = null, shareTimer = null;
+  var NAMED_SECTIONS = ["namecard", "weather", "events", "pois", "schools", "wayback"];
+  var ICON_SHARE = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3A4.5 4.5 0 0 0 11 19.4l1.1-1.1" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function slugify(s) { return String(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
+  function sectionInfo(sc) {
+    var sign = sc.querySelector(":scope > .sign"), signText = sign ? sign.textContent.trim() : "";
+    for (var i = 0; i < NAMED_SECTIONS.length; i++) if (sc.querySelector('[data-hid="' + NAMED_SECTIONS[i] + '"]')) return { id: NAMED_SECTIONS[i], label: signText || "this section" };
+    var base = signText && S.name ? signText.split(S.name).join(" ").trim().replace(/\s+(in|of|for|at|to)$/i, "") : signText;
+    if (slugify(base)) return { id: slugify(base), label: signText };
+    var h = sc.querySelector("[data-hid]"); if (h && slugify(h.getAttribute("data-hid"))) return { id: slugify(h.getAttribute("data-hid")), label: "this section" };
+    return null;
+  }
+  function decorateShare() {
+    var story = $("#story"); if (!story) return;
+    var scenes = [].slice.call(story.querySelectorAll(":scope > .scene")), used = {};
+    scenes.forEach(function (sc) { if (sc.id) used[sc.id] = 1; });
+    scenes.forEach(function (sc) {
+      if (sc.getAttribute("data-share")) return;
+      var info = sectionInfo(sc); if (!info) return; sc.setAttribute("data-share", "1");
+      if (sc.id) return;
+      var id = info.id, n = 2; while (used[id] || document.getElementById(id)) id = info.id + "-" + n++;
+      used[id] = 1; sc.id = id;
+      var b = el("button", "sharebtn", ICON_SHARE + "<span>Share</span>"); b.type = "button"; b.setAttribute("data-id", id);
+      b.setAttribute("aria-label", "Share a link to " + info.label); sc.appendChild(b);
+    });
+  }
+  function shareUrl(id) { return location.origin + location.pathname + "?place=" + S.geoid + "#" + id; }
+  function copyText(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
+    return new Promise(function (res, rej) {
+      var ta = document.createElement("textarea"); ta.value = t; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed;top:-100px;opacity:0";
+      document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand("copy"); } catch (e) {} document.body.removeChild(ta); ok ? res() : rej(new Error("copy failed"));
+    });
+  }
+  function shareSay(msg) {
+    var r = document.getElementById("shareLive");
+    if (!r) { r = el("div"); r.id = "shareLive"; r.setAttribute("role", "status"); r.setAttribute("aria-live", "polite"); r.style.cssText = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap"; document.body.appendChild(r); }
+    r.textContent = ""; setTimeout(function () { r.textContent = msg; }, 30);
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".sharebtn"); if (!b || !S.geoid) return;
+    var url = shareUrl(b.getAttribute("data-id")), span = b.querySelector("span"), label = (b.getAttribute("aria-label") || "").replace(/^Share a link to /, "");
+    if (navigator.share && typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches) { navigator.share({ title: "Know Your City: " + S.name, url: url }).catch(function () {}); return; }
+    copyText(url).then(function () {
+      span.textContent = "Link copied"; shareSay("Link to " + label + " copied."); clearTimeout(shareTimer);
+      shareTimer = setTimeout(function () { span.textContent = "Share"; }, 2400);
+    }).catch(function () { window.prompt("Copy this link:", url); });
+  });
+  // A link with #section: once that section exists, scroll to it, and keep it in view while sections above it finish loading, until the visitor scrolls on their own.
+  function tryJump() {
+    if (!S.jump || jumpMoved) return;
+    var t = document.getElementById(S.jump); if (t) t.scrollIntoView({ block: "start", behavior: "instant" });
+  }
+  ["wheel", "touchstart", "keydown", "pointerdown"].forEach(function (ev) { window.addEventListener(ev, function () { jumpMoved = true; }, { passive: true }); });
+  (function () { var st = $("#story"); if (st && window.MutationObserver) new MutationObserver(function () { decorateShare(); tryJump(); }).observe(st, { childList: true }); })();
 
   function buildStory() {
     var story = $("#story"); story.innerHTML = ""; S.SAY = {};
@@ -2334,7 +2423,10 @@ var EVENT_SOURCES = [
     S.schoolView = null; S.schoolMapP = null; S.schoolWM = null; S.sch = null; S.schoolHl = null;
     S.poiView = null; S.poiMapP = null; S.poiLayer = null; S.poiPhotos = {}; S.poiOids = null; S.poiAllOids = null; S.poiTruncated = false; S.poiItems = [];
     S.qid = null; S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.photos = []; S.img = null; S.wikiUrl = null;
-    history.replaceState(null, "", "?place=" + a.GEOID);
+    S.jump = S.placeLoaded ? null : (JUMP || null); S.placeLoaded = true; jumpMoved = false; clearTimeout(jumpTimer);
+    if (S.jump) jumpTimer = setTimeout(function () { S.jump = null; }, 25000);
+    document.documentElement.classList.remove("wbfsLock");
+    history.replaceState(null, "", "?place=" + a.GEOID + (S.jump ? "#" + encodeURIComponent(S.jump) : ""));
     $("#loading").classList.remove("gone");
     $("#placeName").textContent = a.BASENAME || a.NAME;
     $("#stateName").innerHTML = "&nbsp;";
