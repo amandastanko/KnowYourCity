@@ -292,6 +292,13 @@ button{font:inherit;color:inherit}
 .wbframe{position:relative}
 .wbcap{position:absolute;top:14px;z-index:5;pointer-events:none;background:var(--ink);color:#fff;font:700 15px var(--f-body);padding:6px 14px;border-radius:999px;max-width:44%}
 .wbcap.l{left:14px}.wbcap.r{right:14px}
+.wbfind[hidden]{display:none}
+.wbfind label{display:flex;flex-direction:column;gap:4px;font:700 16px var(--f-body)}
+.wbrow{display:flex;gap:8px}
+.wbfind input{font:600 17px var(--f-body);padding:10px 14px;border:3px solid var(--ink);border-radius:14px;background:#fff;color:var(--ink);width:min(320px,60vw)}
+.wbgo{font:800 17px var(--f-body);padding:10px 18px;border:3px solid var(--ink);border-radius:14px;background:var(--ink);color:#fff;cursor:pointer}
+.wbgo:hover{background:#3b3590}
+.wbgo:focus-visible,.wbfind input:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .wbfsbtn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:#fff;color:var(--ink);border:0;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.3);cursor:pointer;padding:0}
 .wbfsbtn:hover{background:#f0f0f0}
 .wbfsbtn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
@@ -1820,7 +1827,8 @@ var EVENT_SOURCES = [
     var poly = S.pendingPoly; if (!poly || !modules.Map || !modules.WebTileLayer || !modules.MapView || !modules.Swipe) return;
     var P = S.name, sc = scene("tang", "Then and now in " + P), w = el("div", "evwrap wbwrap"); w.setAttribute("data-hid", "wayback");
     w.innerHTML = '<h2>Then and now.</h2><p class="evnote">Drag the bar on the map to compare two aerial photos of ' + esc(P) + '. Pick any two dates. The photos come from Esri World Imagery Wayback. Each date is when that version was released, so the photos themselves can be a little older.</p>' +
-      '<div class="poimapwrap"><div class="wbfs" id="wbFs"><div class="wbpick"><label for="wbThen">Left side<select id="wbThen"></select></label><label for="wbNow">Right side<select id="wbNow"></select></label></div>' +
+      '<div class="poimapwrap"><div class="wbfs" id="wbFs"><div class="wbpick"><label for="wbThen">Left side<select id="wbThen"></select></label><label for="wbNow">Right side<select id="wbNow"></select></label>' +
+      '<form class="wbfind" id="wbFind" role="search" hidden><label for="wbQ">Find an address<span class="wbrow"><input id="wbQ" type="search" autocomplete="off" placeholder="Street, city, state"><button type="submit" class="wbgo">Search</button></span></label></form></div>' +
       '<div class="wbframe"><div id="wbMap" class="poimap" role="region" aria-label="Aerial photos of ' + esc(P) + ' from two dates, with a bar you can drag to compare them"></div><span class="wbcap l" id="wbCapL"></span><span class="wbcap r" id="wbCapR"></span></div></div>' +
       '<p id="wbStatus" class="evnote" role="status" aria-live="polite">Looking for the dates when the photo changed here.</p></div>';
     sc.appendChild(w);
@@ -1867,6 +1875,34 @@ var EVENT_SOURCES = [
         document.addEventListener("fullscreenchange", function () { if (!document.fullscreenElement && fsOn() && fsBox.isConnected) fsSet(false); });
         document.addEventListener("keydown", function (e) { if (e.key === "Escape" && fsOn()) fsSet(false); });
         view.ui.add(fsBtn, "bottom-right");
+
+        // Address search: drop a pin and zoom to it, so the same spot can be compared across dates.
+        var form = w.querySelector("#wbFind"), qIn = w.querySelector("#wbQ"), pin = null;
+        async function findAddress(q) {
+          var c = S.center, hint = /,/.test(q) ? "" : ", " + S.name + (S.stateName ? ", " + S.stateName : "");
+          if (CFG.ARCGIS_KEY) {
+            var j = await getJSON("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&maxLocations=1&countryCode=USA&location=" + c.longitude + "," + c.latitude + "&singleLine=" + encodeURIComponent(q + hint) + "&token=" + encodeURIComponent(CFG.ARCGIS_KEY));
+            if (j.error) throw new Error(j.error.message || "geocoder error");
+            var k = (j.candidates || [])[0]; return k && k.score >= 60 ? { name: k.address, lon: k.location.x, lat: k.location.y } : null;
+          }
+          var n = await getJSON("https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&limit=1&q=" + encodeURIComponent(q + hint));
+          return n[0] ? { name: n[0].display_name, lon: parseFloat(n[0].lon), lat: parseFloat(n[0].lat) } : null;
+        }
+        form.addEventListener("submit", async function (e) {
+          e.preventDefault(); var q = qIn.value.trim(); if (q.length < 3) { st.textContent = "Type a street address, like 123 Main St."; return; }
+          st.textContent = "Looking up " + q + "...";
+          try {
+            var hit = await findAddress(q);
+            if (myLoad !== S.loadId) return;
+            if (!hit) { st.textContent = "We couldn't find that address. Try adding the city and state."; return; }
+            if (pin) view.graphics.remove(pin);
+            pin = new modules.Graphic({ geometry: { type: "point", longitude: hit.lon, latitude: hit.lat }, symbol: { type: "simple-marker", style: "circle", size: 16, color: "#FFD23F", outline: { color: "#1E1B4B", width: 3.5 } } });
+            view.graphics.add(pin);
+            await view.goTo({ center: [hit.lon, hit.lat], zoom: 18 }, { duration: 800 }).catch(function () {});
+            st.textContent = "Showing " + hit.name + ". " + capL.textContent + " is on the left and " + capR.textContent + " is on the right.";
+          } catch (err) { console.info("Address search failed:", err.message); st.textContent = "Address search isn't available right now."; }
+        });
+        form.hidden = false;
         var swipe = new modules.Swipe({ view: view, leadingLayers: [lT], trailingLayers: [lN], position: 50 }); view.ui.add(swipe);
         [[3, "#FFD23F"], [1.5, "#1E1B4B"]].forEach(function (s) { view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [0, 0, 0, 0], outline: { color: s[1], width: s[0] + (s[0] === 3 ? 2 : 0) } } })); });
         view.goTo(poly.extent.expand(1.3), { duration: 0 }).catch(function () {});
