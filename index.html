@@ -20,7 +20,7 @@
   --bg:#FFD23F; --acc:#1E1B4B; --roof:#FFD23F;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
 body{margin:0;background:#FFD23F;color:var(--ink);font:400 18px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
 a{color:inherit}
 button{font:inherit;color:inherit}
@@ -28,8 +28,7 @@ button{font:inherit;color:inherit}
 
 /* progress + header */
 #progress{position:fixed;left:0;top:0;right:0;height:5px;background:var(--ink);transform-origin:0 50%;transform:scaleX(0);z-index:90}
-.top{position:fixed;left:0;right:0;top:5px;z-index:110;display:flex;gap:12px;align-items:center;padding:10px clamp(14px,3vw,36px);pointer-events:none}
-.top>*{pointer-events:auto}
+.top{position:fixed;left:0;right:0;top:5px;z-index:110;display:flex;gap:12px;align-items:center;padding:8px clamp(14px,3vw,36px);background:#FFD23F;border-bottom:3px solid var(--ink)}
 .brand{display:flex;align-items:center;gap:8px;font:800 22px var(--f-display);text-decoration:none;background:#fff;border:3px solid var(--ink);border-radius:14px;padding:4px 12px 4px 8px}
 .brand svg{width:26px;height:26px;fill:var(--ink)}
 .search{position:relative;flex:1;max-width:460px;margin-left:auto}
