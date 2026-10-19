@@ -1292,7 +1292,12 @@ var EVENT_SOURCES = [
   }
   async function applyPoiLayer() {
     var v = S.view; if (!v || !S.webmap) return;
-    try { await v.when(); await setupPoiLayer(v, "all"); } catch (e) { console.info("Points of interest layer not applied:", e.message); }
+    // The intro map shows the boundary only. Points of interest appear in the Places to see map further down the page.
+    try {
+      await v.when();
+      var pl = v.map.allLayers.find(function (x) { return x.title === WEBMAP.poiTitle; });
+      if (pl) { pl.visible = false; pl.popupEnabled = false; try { pl.definitionExpression = "1=0"; } catch (e) {} }
+    } catch (e) { console.info("Points of interest layer not hidden:", e.message); }
   }
   // The second map, inside the Places to see section. Built when it scrolls near the screen.
   function ensurePoiMap(box) {
