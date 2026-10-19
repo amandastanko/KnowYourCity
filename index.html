@@ -1977,7 +1977,16 @@ var EVENT_SOURCES = [
     var t = document.getElementById(S.jump); if (t) t.scrollIntoView({ block: "start", behavior: "instant" });
   }
   ["wheel", "touchstart", "keydown", "pointerdown"].forEach(function (ev) { window.addEventListener(ev, function () { jumpMoved = true; }, { passive: true }); });
-  (function () { var st = $("#story"); if (st && window.MutationObserver) new MutationObserver(function () { decorateShare(); tryJump(); }).observe(st, { childList: true }); })();
+  // Sections that load on their own can arrive in any order, so keep these three in story order: Places to see, Then and now, Schools and colleges.
+  function orderSections() {
+    var story = $("#story"); if (!story) return;
+    function sec(id) { var n = story.querySelector('[data-hid="' + id + '"]'); return n && n.closest(".scene"); }
+    var p = sec("pois"), wb = sec("wayback"), sch = sec("schools");
+    if (wb && p && p.nextElementSibling !== wb) p.insertAdjacentElement("afterend", wb);
+    var anchor = wb || p;
+    if (sch && anchor && anchor.nextElementSibling !== sch) anchor.insertAdjacentElement("afterend", sch);
+  }
+  (function () { var st = $("#story"); if (st && window.MutationObserver) new MutationObserver(function () { orderSections(); decorateShare(); tryJump(); }).observe(st, { childList: true }); })();
 
   function buildStory() {
     var story = $("#story"); story.innerHTML = ""; S.SAY = {};
@@ -2499,7 +2508,8 @@ var EVENT_SOURCES = [
     S.facts = facts;
     buildStory();
     loadNameCard(myLoad); loadWeather(center, myLoad); loadPois(myLoad);
-    loadSchools(myLoad).catch(function () {}).then(function () { if (myLoad === S.loadId) return loadWayback(myLoad); }).catch(function (e) { console.info("Then and now unavailable:", e && e.message); });
+    loadSchools(myLoad).catch(function () {});
+    loadWayback(myLoad).catch(function (e) { console.info("Then and now unavailable:", e && e.message); });
     $("#loading").classList.add("gone");
     setTimeout(function () { sched(); }, 200);
   }
