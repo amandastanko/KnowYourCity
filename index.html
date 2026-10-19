@@ -219,6 +219,8 @@ button{font:inherit;color:inherit}
 .nthello b{display:block;font:800 clamp(34px,5vw,56px)/1 var(--f-display);letter-spacing:-.02em}
 .nthello span{font:700 17px var(--f-body)}
 .ntname{padding:34px 16px 38px;font:800 clamp(34px,5.4vw,68px)/1 var(--f-display);letter-spacing:-.03em;color:var(--ink);overflow-wrap:anywhere}
+.ntname.tight{padding-bottom:10px}
+.ntcap{margin:0;padding:0 16px 26px;font:700 16px/1.3 var(--f-body);color:var(--ink)}
 .ntrows{margin:0;display:grid;gap:12px}
 .ntrows>div{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 16px;display:grid;gap:2px}
 .ntrows dt{font:700 14px var(--f-body);opacity:.75}
@@ -1143,7 +1145,7 @@ var EVENT_SOURCES = [
 
 
   // ---------- Name card (Wikidata): nickname, what residents are called, namesake, and so on ----------
-  var NC_SKIP = /murder|killer|criminal|convicted|terroris|gangster|mobster|politic|senator|congress|governor|mayor|legislat|lobbyist|activist|judge|diplomat|military|general\b|candidate|party/i;
+  var NC_SKIP = /porn|erotic|adult (film|video|entertain|model)|stripper|escort|nude|playboy|playmate|sexual|prostitut|webcam|onlyfans|murder|killer|criminal|convicted|terroris|gangster|mobster|politic|senator|congress|governor|mayor|legislat|lobbyist|activist|judge|diplomat|military|general\b|candidate|party/i;
   function wdVals(claims, prop) {
     var arr = (claims && claims[prop]) || [];
     arr = arr.filter(function (c) { return c.rank !== "deprecated" && c.mainsnak && c.mainsnak.datavalue; });
@@ -1154,11 +1156,29 @@ var EVENT_SOURCES = [
     var en = vals.filter(function (v) { return v && v.text && /^en/.test(v.language || ""); });
     return en.map(function (v) { return String(v.text).trim(); }).filter(function (t) { return t && K.isNeutralText(t); });
   }
+  // What people from a place are called. Wikidata first, then the Wikipedia infobox, then this short list you can add to (keyed by Census GEOID).
+  var DEMONYMS = { "0659962": "Redlander" };
+  function demonymOne(t) {
+    t = String(t || "").replace(/<ref[^>]*\/>|<ref[^>]*>.*?<\/ref>/gi, "").replace(/\{\{[^}]*\}\}/g, "").replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, "$1").replace(/<br\s*\/?>/gi, "|").replace(/<[^>]+>/g, "").replace(/''+/g, "");
+    t = t.split(/[|,;\/]| or /)[0].trim();
+    if (!t || t.length > 28 || /[=\d]/.test(t)) return "";
+    if (/(ers|ites|ians|ans|ese)$/i.test(t) && !/(ese)$/i.test(t)) t = t.slice(0, -1);
+    return t;
+  }
+  async function wikiDemonym(title) {
+    if (!title) return "";
+    try {
+      var j = await getJSON("https://en.wikipedia.org/w/api.php?action=parse&page=" + encodeURIComponent(title) + "&prop=wikitext&section=0&format=json&formatversion=2&origin=*");
+      var wt = (j.parse && j.parse.wikitext) || "", m = /\|\s*demonym\s*=\s*([^\n]*)/i.exec(wt);
+      return m ? demonymOne(m[1]) : "";
+    } catch (e) { return ""; }
+  }
   async function loadNameCard(myLoad) {
     var qid = S.qid, P = S.name; if (!qid || !/^Q\d+$/.test(qid)) return;
     var ent = null, people = [];
     var spq = 'SELECT ?p ?pLabel ?d ?sl WHERE { ?p wdt:P19 wd:' + qid + '; wdt:P31 wd:Q5; wikibase:sitelinks ?sl. FILTER(?sl >= 5) ' +
       'FILTER NOT EXISTS { ?p wdt:P106 wd:Q82955 } FILTER NOT EXISTS { ?p wdt:P102 ?party } FILTER NOT EXISTS { ?p wdt:P39 ?pos } ' +
+      'FILTER NOT EXISTS { ?p wdt:P106 ?occ. ?occ rdfs:label ?ol. FILTER(LANG(?ol) = "en" && REGEX(LCASE(STR(?ol)), "porn|erotic|adult|stripper|escort|sex|nude|glamour")) } ' +
       'OPTIONAL { ?p schema:description ?d. FILTER(LANG(?d) = "en") } SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } } ORDER BY DESC(?sl) LIMIT 14';
     try {
       var r = await Promise.all([
@@ -1171,7 +1191,8 @@ var EVENT_SOURCES = [
     } catch (e) { console.info("Name card unavailable:", e.message); return; }
     if (myLoad !== S.loadId || !ent || !ent.claims) return;
     var c = ent.claims, rows = [];
-    var nick = wdText(wdVals(c, "P1449")).slice(0, 3), motto = wdText(wdVals(c, "P1451"))[0], demo = wdText(wdVals(c, "P1549"))[0];
+    var nick = wdText(wdVals(c, "P1449")).slice(0, 3), motto = wdText(wdVals(c, "P1451"))[0], demo = demonymOne(wdText(wdVals(c, "P1549"))[0]) || DEMONYMS[S.geoid] || "";
+    if (!demo) { demo = await wikiDemonym(S.wikiTitle); if (myLoad !== S.loadId) return; }
     var found = wdVals(c, "P571")[0], yr = found && found.time && found.precision >= 9 ? parseInt(String(found.time).slice(1, 5), 10) : null;
     var el0 = wdVals(c, "P2044")[0], ft = null;
     if (el0 && el0.amount != null) { var amt = parseFloat(el0.amount), unit = String(el0.unit || ""); ft = /Q11573$/.test(unit) ? amt * 3.28084 : /Q3710$/.test(unit) ? amt : null; }
@@ -1187,7 +1208,6 @@ var EVENT_SOURCES = [
     var named = (wdVals(c, "P138")[0] || {}).id, namedL = named && labels[named];
     var sisters = wdVals(c, "P190").map(function (v) { return v && labels[v.id]; }).filter(function (t) { return t && t !== P; }).slice(0, 5);
     if (nick.length) rows.push(["Nickname", nick.join(", ")]);
-    if (demo) rows.push(["Residents are called", demo + (/s$/i.test(demo) ? "" : "s")]);
     if (namedL && namedL !== P && K.isNeutralText(namedL)) rows.push(["Named after", namedL]);
     if (motto) rows.push(["Motto", "“" + motto + "”"]);
     if (yr && yr > 1000 && yr <= new Date().getFullYear()) rows.push(["Founded", String(yr)]);
@@ -1196,10 +1216,10 @@ var EVENT_SOURCES = [
     var imgs = [["P41", "City flag"], ["P158", "City seal"]].map(function (pr) {
       var v = wdVals(c, pr[0])[0]; return typeof v === "string" && /\.(svg|png|jpe?g|gif)$/i.test(v) ? '<figure><img src="https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(v) + '?width=220" onerror="this.closest(\'figure\').remove()" alt="' + pr[1] + ' of ' + esc(P) + '" loading="lazy"><figcaption>' + pr[1] + '</figcaption></figure>' : "";
     }).join("");
-    if (!rows.length && !people.length) return;
+    if (!rows.length && !people.length && !demo) return;
     var sc = scene("lilac", "The name card"), w = el("div", "evwrap nmwrap"); w.setAttribute("data-hid", "namecard");
     w.innerHTML = '<h2>What\'s in a name?</h2>' +
-      '<div class="ntgrid"><div class="nametag"><div class="nthello"><b>Hello</b><span>my name is</span></div><div class="ntname">' + esc(P) + '</div></div>' +
+      '<div class="ntgrid"><div class="nametag"><div class="nthello"><b>Hello</b><span>my name is</span></div><div class="ntname' + (demo ? ' tight' : '') + '">' + esc(demo || P) + '</div>' + (demo ? '<p class="ntcap">That\'s what people from ' + esc(P) + ' are called.</p>' : '') + '</div>' +
       (rows.length ? '<dl class="ntrows">' + rows.map(function (r) { return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>'; }).join("") + '</dl>' : '') + '</div>' +
       (imgs ? '<div class="ntimgs">' + imgs + '</div>' : '') +
       (people.length ? '<h3>Born in ' + esc(P) + '</h3><ul class="ntpeople">' + people.map(function (x) { return '<li><a href="https://www.wikidata.org/wiki/' + esc(x.id) + '" target="_blank" rel="noopener"><b>' + esc(x.name) + '</b></a><span>' + esc(x.desc.charAt(0).toUpperCase() + x.desc.slice(1)) + '</span></li>'; }).join("") + '</ul>' : '') +
@@ -1989,7 +2009,7 @@ var EVENT_SOURCES = [
     var w = await wikiP;
     S.photos = (await photoP) || [];
     if (myLoad !== S.loadId) return;
-    S.img = w.img; S.wikiUrl = w.url; S.qid = w.qid || null;
+    S.img = w.img; S.wikiUrl = w.url; S.qid = w.qid || null; S.wikiTitle = w.title || null;
     var facts = w.sentences.map(addGrowth).concat(w.nearby.sort(function () { return Math.random() - 0.5; }).slice(0, 3));
     try {
       var pop = K.findItem(S.items, ["sex and age", "total population"]), popV = pop && K.getVals(S.pl, pop.base).e;
