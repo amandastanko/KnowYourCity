@@ -241,16 +241,22 @@ button{font:inherit;color:inherit}
 .poiphoto a{text-decoration:underline}
 .poipop .poiphoto{margin:0 0 4px}
 .esri-popup h1,.esri-popup h2,.esri-popup h3,.esri-popup [class*="header-title"],.esri-features__heading{font:700 16px/1.35 var(--f-body)!important;letter-spacing:0!important;margin:0!important;color:var(--ink)}
-.poigrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
-.poitile{background:#fff;border:3px solid var(--ink);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:4px 4px 0 var(--ink);color:var(--ink)}
-.poitile .pimg{position:relative;aspect-ratio:4/3;background:#EFE9D6;display:flex;align-items:center;justify-content:center;font-size:12px;text-align:center;padding:6px}
-.poitile .pimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.poitile .pcredit{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);font-size:10px;line-height:1.25;padding:2px 6px;overflow-wrap:anywhere}
+.poigrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
+.poitile{background:#fff;border:3px solid var(--ink);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:5px 5px 0 var(--ink);color:var(--ink);transition:transform .12s,box-shadow .12s}
+.poitile:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
+.poitile .pimg{position:relative;aspect-ratio:5/4;border-bottom:3px solid var(--ink)}
+.poitile .pmedia{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.poitile .picon{width:62%;max-width:120px;display:block}
+.poitile .picon svg{width:100%;height:auto;display:block}
+.poitile .pmedia img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.poitile .pkind{position:absolute;left:8px;top:8px;background:#FFD23F;border:2px solid var(--ink);border-radius:999px;font:800 13px/1 var(--f-display);padding:4px 10px;z-index:1}
+.poitile .pcredit{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);font-size:11px;line-height:1.25;padding:2px 8px;overflow-wrap:anywhere}
 .poitile .pcredit a{text-decoration:underline;color:var(--ink)}
-.poitile .pbody{display:flex;flex-direction:column;gap:6px;padding:8px 10px 10px;flex:1}
-.poitile .pname{font:700 13px/1.25 var(--f-body);display:flex;align-items:flex-start;gap:6px;justify-content:space-between}
-.poitile .pname svg{flex:none;width:16px;height:16px}
-.poitile .poibtn{margin-top:auto;font:700 12px var(--f-body);padding:5px 10px;align-self:flex-start}
+.poitile .pbody{display:flex;flex-direction:column;gap:10px;padding:12px 14px 14px;flex:1}
+.poitile .pname{font:800 19px/1.15 var(--f-display);letter-spacing:-.01em;display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
+.poitile .pname svg{flex:none;width:20px;height:20px;margin-top:1px}
+.poitile .poibtn{margin-top:auto;font:700 14px var(--f-body);padding:6px 14px;align-self:flex-start}
+@media (prefers-reduced-motion:reduce){.poitile{transition:none}.poitile:hover{transform:none;box-shadow:5px 5px 0 var(--ink)}}
 .poiwrap h3{font:800 clamp(22px,2.6vw,32px) var(--f-display);margin:26px 0 12px}
 .poicard{gap:8px}
 .poicard h4{margin:0;font:800 20px/1.15 var(--f-display)}
@@ -1155,6 +1161,54 @@ var EVENT_SOURCES = [
     var e = EMER[a.emergency] || AMEN[a.amenity] || (a.healthcare === "hospital" ? AMEN.hospital : null);
     return e ? { group: "safe", label: e[0], w: e[1] } : null;
   }
+
+  // Category icons for tiles without a photo. 96x96, ink outline, flat colour.
+  var SH = "M48 8 L82 20 V46 C82 68 66 82 48 90 C30 82 14 68 14 46 V20 Z";
+  var CROSS = "M40 22 H56 V40 H74 V56 H56 V74 H40 V56 H22 V40 H40Z";
+  var CASTLE = '<rect x="16" y="44" width="64" height="40" fill="#E4D8BC"/><rect x="16" y="34" width="12" height="10" fill="#E4D8BC"/><rect x="42" y="34" width="12" height="10" fill="#E4D8BC"/><rect x="68" y="34" width="12" height="10" fill="#E4D8BC"/><path d="M38 84 V66 A10 10 0 0 1 58 66 V84Z" fill="#1E1B4B"/><path d="M48 34 V10" /><path d="M48 10 L68 17 L48 24Z" fill="#E5484D"/>';
+  var RUINS = '<rect x="16" y="40" width="16" height="44" fill="#E4D8BC"/><rect x="12" y="32" width="24" height="8" fill="#E4D8BC"/><path d="M54 84 V62 L59 54 L64 62 L69 56 L74 64 V84Z" fill="#E4D8BC"/><path d="M8 84 H88"/>';
+  var INFOI = function (c) { return '<circle cx="48" cy="48" r="36" fill="' + c + '"/><circle cx="48" cy="29" r="5" fill="#1E1B4B"/><path d="M48 42 V68" stroke-width="9"/>'; };
+  var ICONS = {
+    star: ['<path d="M48 9 L60 35 L88 38 L67 57 L73 85 L48 70 L23 85 L29 57 L8 38 L36 35Z" fill="#FFD23F"/>', "#FFE9A6"],
+    museum: ['<path d="M10 38 L48 12 L86 38Z" fill="#FFD23F"/><rect x="20" y="42" width="9" height="30" fill="#fff"/><rect x="37" y="42" width="9" height="30" fill="#fff"/><rect x="54" y="42" width="9" height="30" fill="#fff"/><rect x="71" y="42" width="9" height="30" fill="#fff"/><rect x="10" y="72" width="76" height="12" fill="#B79CF2"/>', "#E7DCFB"],
+    paw: ['<ellipse cx="48" cy="62" rx="20" ry="16" fill="#FFB86B"/><circle cx="22" cy="44" r="9" fill="#FFB86B"/><circle cx="37" cy="26" r="9" fill="#FFB86B"/><circle cx="59" cy="26" r="9" fill="#FFB86B"/><circle cx="74" cy="44" r="9" fill="#FFB86B"/>', "#FFE3C2"],
+    wheel: ['<circle cx="48" cy="40" r="28" fill="#fff"/><path d="M48 12 V68 M20 40 H76 M28 20 L68 60 M68 20 L28 60"/><path d="M48 40 L28 88 M48 40 L68 88"/><circle cx="48" cy="12" r="6" fill="#FF7A3D"/><circle cx="48" cy="68" r="6" fill="#4DB6E8"/><circle cx="20" cy="40" r="6" fill="#FFD23F"/><circle cx="76" cy="40" r="6" fill="#E5484D"/><circle cx="48" cy="40" r="5" fill="#1E1B4B"/>', "#FFD6E6"],
+    fish: ['<ellipse cx="42" cy="48" rx="28" ry="19" fill="#4DB6E8"/><path d="M66 48 L88 30 V66Z" fill="#4DB6E8"/><circle cx="29" cy="44" r="3.5" fill="#1E1B4B"/><path d="M40 36 Q46 48 40 60" /><circle cx="14" cy="26" r="4" fill="#fff"/><circle cx="24" cy="16" r="3" fill="#fff"/>', "#CDEEFB"],
+    view: ['<circle cx="70" cy="26" r="11" fill="#FFD23F"/><path d="M6 82 L36 32 L52 58 L62 44 L90 82Z" fill="#5CC46B"/><path d="M28 46 L36 32 L44 46 L36 42Z" fill="#fff"/>', "#CFEFFC"],
+    frame: ['<rect x="12" y="14" width="72" height="58" fill="#FFD23F"/><rect x="22" y="24" width="52" height="38" fill="#8FD3F4"/><path d="M22 62 L38 44 L50 56 L58 48 L74 62Z" fill="#5CC46B" stroke-width="3"/><path d="M30 72 L22 88 M66 72 L74 88"/>', "#FFF1B8"],
+    art: ['<path d="M48 12 C26 12 10 28 10 48 C10 68 26 84 46 84 C56 84 58 76 52 70 C46 64 52 58 60 58 H72 C80 58 88 54 88 46 C88 26 70 12 48 12Z" fill="#FFF6CC"/><circle cx="30" cy="38" r="6" fill="#E5484D"/><circle cx="46" cy="27" r="6" fill="#FFD23F"/><circle cx="64" cy="31" r="6" fill="#5CC46B"/><circle cx="29" cy="58" r="6" fill="#4DB6E8"/>', "#FFD9D9"],
+    castle: [CASTLE, "#E9E2D0"],
+    obelisk: ['<rect x="26" y="80" width="44" height="9" fill="#E4D8BC"/><path d="M37 80 L42 28 H54 L59 80Z" fill="#E4D8BC"/><path d="M42 28 L48 10 L54 28Z" fill="#FFD23F"/>', "#EDE6D6"],
+    heart: ['<path d="M24 86 V36 A24 24 0 0 1 72 36 V86Z" fill="#E4D8BC"/><path d="M48 68 C32 56 32 42 41 42 C46 42 48 47 48 47 C48 47 50 42 55 42 C64 42 64 56 48 68Z" fill="#E5484D" stroke-width="3"/>', "#EDE6D6"],
+    histbldg: ['<rect x="18" y="44" width="60" height="40" fill="#E8A27C"/><path d="M12 46 L48 18 L84 46Z" fill="#A9743F"/><path d="M40 84 V66 A8 8 0 0 1 56 66 V84Z" fill="#1E1B4B"/><rect x="24" y="54" width="10" height="12" fill="#FFF6CC"/><rect x="62" y="54" width="10" height="12" fill="#FFF6CC"/>', "#F8E1D3"],
+    ruins: [RUINS, "#EDE6D6"],
+    ship: ['<path d="M10 58 H86 L74 80 H22Z" fill="#A9743F"/><path d="M48 58 V10"/><path d="M48 14 V54 H22Z" fill="#fff"/><path d="M53 22 V54 H76Z" fill="#fff"/><path d="M8 90 q8 -7 16 0 t16 0 t16 0 t16 0 t16 0" stroke="#4DB6E8"/>', "#CDEEFB"],
+    plaque: ['<rect x="12" y="14" width="72" height="42" rx="8" fill="#FFD23F"/><path d="M24 29 H72 M24 42 H58"/><path d="M34 56 V86 M62 56 V86"/>', "#FFF1B8"],
+    info: [INFOI("#4DB6E8"), "#CDEEFB"],
+    visitor: [INFOI("#5CC46B"), "#D5F2D8"],
+    flame: ['<path d="' + SH + '" fill="#E5484D"/><path d="M48 26 C54 37 63 41 63 54 C63 64 56 72 48 72 C40 72 33 64 33 54 C33 47 38 43 40 36 C43 42 45 44 47 44 C47 38 46 32 48 26Z" fill="#FFD23F"/><path d="M48 50 C52 55 56 57 56 62 C56 66 52 69 48 69 C44 69 40 66 40 62 C40 57 44 55 48 50Z" fill="#FF7A3D" stroke-width="3"/>', "#FFD9D2"],
+    cross: ['<rect x="10" y="10" width="76" height="76" rx="16" fill="#fff"/><path d="' + CROSS + '" fill="#E5484D"/>', "#FFD9D2"],
+    kit: ['<rect x="10" y="28" width="76" height="54" rx="9" fill="#E5484D"/><path d="M34 28 V18 H62 V28"/><path d="M42 40 H54 V50 H64 V62 H54 V72 H42 V62 H32 V50 H42Z" fill="#fff"/>', "#FFD9D2"],
+    badge: ['<path d="' + SH + '" fill="#4D7CFE"/><path d="M48 24 L54 39 L70 40 L58 51 L62 67 L48 58 L34 67 L38 51 L26 40 L42 39Z" fill="#FFD23F" stroke-width="3"/>', "#D8E3FF"],
+    anchor: ['<circle cx="48" cy="20" r="9" fill="#fff"/><path d="M48 29 V84 M30 44 H66 M14 62 C17 78 31 86 48 86 C65 86 79 78 82 62" stroke-width="6"/>', "#CDEEFB"],
+    mtnrescue: ['<path d="M6 84 L38 26 L54 52 L64 38 L90 84Z" fill="#8FA3C7"/><path d="M38 26 L29 42 L36 39 L41 46 L47 39 L51 44Z" fill="#fff" stroke-width="3"/><path d="M42 60 H50 V67 H57 V75 H50 V82 H42 V75 H35 V67 H42Z" fill="#E5484D" stroke-width="2.5"/>', "#DDE5F4"],
+    ring: ['<circle cx="48" cy="48" r="38" fill="#E5484D"/><path d="M42 10 H54 V32 H42Z M42 64 H54 V86 H42Z M10 42 H32 V54 H10Z M64 42 H86 V54 H64Z" fill="#fff" stroke="none"/><circle cx="48" cy="48" r="17" fill="#8FD3F4"/>', "#CDEEFB"],
+    alert: ['<path d="' + SH + '" fill="#FF9F1C"/><path d="M48 28 V54" stroke-width="9"/><circle cx="48" cy="67" r="5.5" fill="#1E1B4B"/>', "#FFE6BE"],
+    group: ['<path d="M14 82 A12 12 0 0 1 38 82Z" fill="#4DB6E8"/><circle cx="26" cy="62" r="9" fill="#FFD23F"/><path d="M58 82 A12 12 0 0 1 82 82Z" fill="#FF7A3D"/><circle cx="70" cy="62" r="9" fill="#FFD23F"/><path d="M34 74 A14 14 0 0 1 62 74Z" fill="#5CC46B"/><circle cx="48" cy="50" r="10" fill="#FFD23F"/><path d="M48 8 V28 M38 18 L48 28 L58 18"/>', "#D5F2D8"],
+    shelter: ['<rect x="20" y="46" width="56" height="38" fill="#FFF6CC"/><path d="M10 50 L48 16 L86 50Z" fill="#4DB6E8"/><path d="M40 84 V62 H56 V84Z" fill="#1E1B4B"/>', "#CDEEFB"],
+    tree: ['<rect x="43" y="52" width="10" height="30" fill="#A9743F"/><circle cx="48" cy="30" r="20" fill="#5CC46B"/><circle cx="30" cy="46" r="15" fill="#5CC46B"/><circle cx="66" cy="46" r="15" fill="#5CC46B"/><circle cx="48" cy="30" r="18" fill="#5CC46B" stroke="none"/><circle cx="30" cy="46" r="13" fill="#5CC46B" stroke="none"/><circle cx="66" cy="46" r="13" fill="#5CC46B" stroke="none"/><path d="M6 80 H90 V90 H6Z" fill="#8ED081"/><path d="M18 80 L21 70 L24 80 M70 80 L73 68 L76 80 M78 80 L80 73 L83 80" fill="none"/>', "#D5F2D8"],
+    pin: ['<path d="M48 90 C30 68 22 58 22 40 A26 26 0 0 1 74 40 C74 58 66 68 48 90Z" fill="#FF7A3D"/><circle cx="48" cy="40" r="10" fill="#fff"/>', "#FFE3C2"]
+  };
+  var ICON_BY_LABEL = { "Attraction": "star", "Museum": "museum", "Zoo": "paw", "Theme park": "wheel", "Aquarium": "fish", "Viewpoint": "view", "Gallery": "frame", "Public art": "art", "Castle": "castle", "Monument": "obelisk", "Fort": "castle", "Memorial": "heart", "Historic building": "histbldg", "Ruins": "ruins", "Archaeological site": "ruins", "Historic ship": "ship", "Historic site": "plaque", "Visitor information": "info", "Visitor centre": "visitor", "Fire station": "flame", "Ambulance station": "cross", "Hospital": "cross", "First aid": "kit", "Police": "badge", "Coast Guard": "anchor", "Mountain rescue": "mtnrescue", "Lifeguard": "ring", "Disaster response": "alert", "Emergency assembly point": "group", "Emergency shelter": "shelter" };
+  function poiIconKey(a, k) {
+    var nm = poiName(a);
+    if (/\b(park|parks|garden|gardens|preserve|nature|trail|grove|woods?)\b/i.test(nm) && !/theme park|park (ave|avenue|st|street|road|blvd)/i.test(nm) && (!k || /^(Viewpoint|Attraction|Public art|Historic site)$/.test(k.label))) return "tree";
+    return (k && ICON_BY_LABEL[k.label]) || "pin";
+  }
+  function poiIconHTML(key) {
+    var ic = ICONS[key] || ICONS.pin;
+    return '<svg viewBox="0 0 96 96" aria-hidden="true" focusable="false"><g stroke="#1E1B4B" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">' + ic[0] + '</g></svg>';
+  }
   function wheelchairHTML(v) {
     v = String(v || "").toLowerCase();
     if (v === "yes" || v === "designated") return '<span class="wc">' + WC_YES + '<span>Wheelchair accessible</span></span>';
@@ -1314,8 +1368,8 @@ var EVENT_SOURCES = [
     var P = S.name, story = $("#story"), sc = scene("mint", "Places in " + P), w = el("div", "evwrap poiwrap"); w.setAttribute("data-hid", "pois");
     function cards(list) { return '<div class="poigrid">' + list.map(function (a) {
       var wcv = String(a.wheelchair || "").toLowerCase(), wcIcon = (wcv === "yes" || wcv === "designated" || wcv === "limited") ? WC_YES.replace('aria-hidden="true"', 'role="img" aria-label="' + (wcv === "limited" ? "Partly wheelchair accessible" : "Wheelchair accessible") + '"') : wcv === "no" ? WC_NO.replace('aria-hidden="true"', 'role="img" aria-label="Not wheelchair accessible"') : "";
-      var k = poiKind(a);
-      return '<article class="poitile poicard"' + (a.OBJECTID != null ? ' data-oid="' + a.OBJECTID + '"' : '') + '><div class="pimg"><span class="pph">' + esc(k ? k.label : "") + '</span></div><div class="pbody"><span class="pname"><span>' + esc(poiName(a)) + '</span>' + wcIcon + '</span>' +
+      var k = poiKind(a), ik = poiIconKey(a, k), ic = ICONS[ik] || ICONS.pin;
+      return '<article class="poitile poicard"' + (a.OBJECTID != null ? ' data-oid="' + a.OBJECTID + '"' : '') + '><div class="pimg"><div class="pmedia" style="background:' + ic[1] + '"><span class="picon">' + poiIconHTML(ik) + '</span></div><span class="pkind">' + esc(k ? k.label : "Place") + '</span></div><div class="pbody"><span class="pname"><span>' + esc(poiName(a)) + '</span>' + wcIcon + '</span>' +
         (a.OBJECTID != null && S.webmap ? '<button type="button" class="pill poibtn" data-oid="' + a.OBJECTID + '" aria-label="Show ' + esc(poiName(a)) + ' on the map">Show on map</button>' : '') + '</div></article>'; }).join("") + '</div>'; }
     w.innerHTML = '<h2>Places to see.</h2><p class="evnote">Landmarks, museums and historic sites in ' + esc(P) + ', plus emergency services. The list comes from OpenStreetMap volunteers, so it may be incomplete. Each place shows its hours, parking and wheelchair access when that is known.</p>' +
       (S.webmap ? '<div class="poimapwrap"><div id="poiMap" class="poimap" role="region" aria-label="Map of the places listed below"></div><p id="poiStatus" class="evnote" role="status" aria-live="polite">Select &ldquo;Show on the map&rdquo; on any place below to find it here.</p></div>' : '') +
@@ -1335,8 +1389,8 @@ var EVENT_SOURCES = [
         if (!ph || myLoad !== S.loadId) return;
         S.poiPhotos[a.OBJECTID] = ph;
         var card = w.querySelector('.poicard[data-oid="' + a.OBJECTID + '"]');
-        var box = card && card.querySelector(".pimg");
-        if (box) box.innerHTML = '<img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><span class="pcredit">Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a></span>';
+        var box = card && card.querySelector(".pmedia");
+        if (box) box.style.background = "#EFE9D6"; box.innerHTML = '<img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><span class="pcredit">Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + '</a></span>';
       }).catch(function () {});
     });
     var ev = story.querySelector('[data-hid="events"]'); ev = ev && ev.closest(".scene");
