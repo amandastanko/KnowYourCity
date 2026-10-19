@@ -235,6 +235,11 @@ button{font:inherit;color:inherit}
 .poicard.sel{outline:4px solid var(--ink);outline-offset:3px;background:#FFF6CC}
 .poibtn{align-self:flex-start;margin-top:auto;font:700 15px var(--f-body);color:var(--ink)}
 .poibtn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.poiphoto{margin:-4px -6px 4px;border-radius:10px;overflow:hidden;border:2px solid var(--ink);background:#e9e5d8}
+.poiphoto img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
+.poiphoto figcaption{font-size:12px;line-height:1.3;padding:5px 8px;background:#fff;overflow-wrap:anywhere}
+.poiphoto a{text-decoration:underline}
+.poipop .poiphoto{margin:0 0 4px}
 .poiwrap h3{font:800 clamp(22px,2.6vw,32px) var(--f-display);margin:26px 0 12px}
 .poicard{gap:8px}
 .poicard h4{margin:0;font:800 20px/1.15 var(--f-display)}
@@ -1166,6 +1171,36 @@ var EVENT_SOURCES = [
     if (url) out += '<a href="' + esc(url) + '" target="_blank" rel="noopener">Website for ' + esc(nm) + ' (opens in a new tab)</a>';
     return out;
   }
+  // A photo for a place: Commons photos taken within ~75 m of the point whose title, description or categories also mention the place's name.
+  var NAME_GENERIC = /^(the|of|and|for|park|museum|library|station|street|road|avenue|center|centre|historic|historical|site|building|memorial|monument|statue|public|art|city|old|new|first|school|church|hall|house|point|viewpoint|gallery|association|society|hotel|visitor|information|mural)$/;
+  function nameTokens(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean); }
+  async function placePhoto(a) {
+    if (a.__x == null) return null;
+    var toks = nameTokens(poiName(a)), sig = toks.filter(function (t) { return t.length >= 3 && !NAME_GENERIC.test(t); });
+    var need = sig.length >= 3 ? 2 : (sig.length ? 1 : Math.min(2, toks.length)), pool = sig.length ? sig : toks;
+    if (!pool.length) return null;
+    var j;
+    try { j = await getJSON("https://commons.wikimedia.org/w/api.php?action=query&generator=geosearch&ggsnamespace=6&ggsradius=75&ggslimit=30&ggscoord=" + a.__y + "%7C" + a.__x + "&prop=imageinfo&iiprop=url%7Cextmetadata%7Cmime%7Csize&iiurlwidth=480&format=json&origin=*"); }
+    catch (e) { return null; }
+    var pages = (j.query && j.query.pages) || {}, best = null;
+    Object.keys(pages).forEach(function (k) {
+      var pg = pages[k], ii = pg.imageinfo && pg.imageinfo[0]; if (!ii || !ii.extmetadata || ii.mime !== "image/jpeg" || ii.width < 500) return;
+      var m = ii.extmetadata, lic = plainText(m.LicenseShortName && m.LicenseShortName.value);
+      if (!OK_LICENSE.test(lic) || /NC|ND/i.test(lic)) return;
+      var title = plainText(m.ObjectName && m.ObjectName.value) || pg.title.replace(/^File:/, "").replace(/\.[a-z]+$/i, "").replace(/_/g, " "), desc = plainText(m.ImageDescription && m.ImageDescription.value);
+      var cats = plainText(m.Categories && m.Categories.value).replace(/\|/g, " ");
+      if (PHOTO_SKIP.test(title) || !K.isNeutralText(title) || !K.isNeutralText(desc)) return;
+      var text = " " + nameTokens(title + " " + desc + " " + cats).join(" ") + " ";
+      var hits = pool.filter(function (t) { return text.indexOf(" " + t + " ") > -1; }).length;
+      if (hits < need) return;
+      var score = hits * 100 - (pg.index || 0);
+      if (!best || score > best.score) best = { score: score, url: ii.thumburl || ii.url, title: title.length > 90 ? title.slice(0, 88) + "…" : title, author: plainText(m.Artist && m.Artist.value).slice(0, 48) || "Unknown author", license: lic, page: ii.descriptionurl };
+    });
+    return best;
+  }
+  function placePhotoHTML(ph) {
+    return '<figure class="poiphoto"><img src="' + esc(ph.url) + '" alt="' + esc(ph.title) + '" loading="lazy"><figcaption>Photo: ' + esc(ph.author) + ', <a href="' + esc(ph.page) + '" target="_blank" rel="noopener">' + esc(ph.license) + ' (opens in a new tab)</a></figcaption></figure>';
+  }
   function inRings(lon, lat, rings) {
     var inside = false;
     rings.forEach(function (r) { for (var i = 0, j = r.length - 1; i < r.length; j = i++) { var xi = r[i][0], yi = r[i][1], xj = r[j][0], yj = r[j][1]; if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside; } });
@@ -1180,7 +1215,7 @@ var EVENT_SOURCES = [
     await l.load();
     var byIds = oids.length > 0 && !(all && (S.poiTruncated || oids.length > 1500));
     l.minScale = 0; l.popupEnabled = true; l.renderer = POI_SYMBOL;
-    l.popupTemplate = { title: function (f) { return poiName(f.graphic.attributes); }, content: function (f) { var d = document.createElement("div"); d.className = "poipop"; d.innerHTML = poiDetailsHTML(f.graphic.attributes, false); return d; } };
+    l.popupTemplate = { title: function (f) { return poiName(f.graphic.attributes); }, content: function (f) { var d = document.createElement("div"); d.className = "poipop"; var ph = S.poiPhotos && S.poiPhotos[f.graphic.attributes.OBJECTID]; d.innerHTML = (ph ? placePhotoHTML(ph) : "") + poiDetailsHTML(f.graphic.attributes, false); return d; } };
     if (byIds) { l.definitionExpression = "OBJECTID IN (" + oids.join(",") + ")"; l.visible = true; }
     else if (all && oids.length && S.pendingPoly && modules.FeatureFilter) {
       // Too many points to list by ID: use the category query and clip to the place boundary on the map
@@ -1224,16 +1259,22 @@ var EVENT_SOURCES = [
   }
   async function showOnPoiMap(oid) {
     var box = document.getElementById("poiMap"), it = (S.poiItems || []).filter(function (a) { return a.OBJECTID === oid; })[0]; if (!box || !it) return;
-    var st = document.getElementById("poiStatus");
+    var st = document.getElementById("poiStatus"), nm = poiName(it);
+    function say(t) { if (st) st.textContent = t; }
     markPoiCard(oid, false);
     box.closest(".poimapwrap").scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
-    try {
-      var view = await ensurePoiMap(box), l = S.poiLayer;
-      if (st) st.textContent = "Showing " + poiName(it) + " on the map.";
-      view.popup.close();
-      await view.goTo({ center: [it.__x, it.__y], zoom: 17 }, { duration: 700 }).catch(function () {});
-      if (l) { var r = await l.queryFeatures({ where: "OBJECTID = " + oid, outFields: ["*"], returnGeometry: true }); var g = r.features && r.features[0]; if (g) view.openPopup({ features: [g], location: g.geometry }); }
-    } catch (e) { console.info("Couldn't show that place on the map:", e.message); }
+    var view; try { view = await ensurePoiMap(box); } catch (e) { say("The map isn't available right now."); return; }
+    var l = S.poiLayer, g = null;
+    // Find the map feature itself so the popup and highlight use the real thing
+    try { if (l) { var r = await l.queryFeatures({ where: "OBJECTID = " + oid, outFields: ["*"], returnGeometry: true, outSpatialReference: view.spatialReference }); g = r.features && r.features[0]; } }
+    catch (e) { console.warn("Looking up the place on the map failed:", e); }
+    var target = g && g.geometry ? g.geometry : [it.__x, it.__y];
+    try { if (view.popup) view.popup.close(); } catch (e) {}
+    try { await Promise.race([view.goTo({ target: target, zoom: 17 }, { duration: 700 }), new Promise(function (res) { setTimeout(res, 2500); })]); }
+    catch (e) { if (!e || e.name !== "AbortError") { console.warn("Zooming to the place failed:", e); try { view.center = Array.isArray(target) ? target : target; view.zoom = 17; } catch (e2) {} } }
+    try { if (g) view.openPopup({ features: [g], location: g.geometry }); } catch (e) { console.warn("Opening the popup failed:", e); }
+    try { if (g && l) { var lv = await view.whenLayerView(l); if (S.poiHl) S.poiHl.remove(); S.poiHl = lv.highlight(g); } } catch (e) {}
+    say("Showing " + nm + " on the map.");
   }
   async function loadPois(myLoad) {
     var rg = S.rings; if (!rg) return;
@@ -1272,6 +1313,16 @@ var EVENT_SOURCES = [
     });
     var mapBox = w.querySelector("#poiMap");
     if (mapBox) { if ("IntersectionObserver" in window) { var mio = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { mio.disconnect(); ensurePoiMap(mapBox); } }, { rootMargin: "500px" }); mio.observe(mapBox); } else ensurePoiMap(mapBox); }
+    S.poiPhotos = {};
+    see.forEach(function (a) {
+      if (a.OBJECTID == null) return;
+      placePhoto(a).then(function (ph) {
+        if (!ph || myLoad !== S.loadId) return;
+        S.poiPhotos[a.OBJECTID] = ph;
+        var card = w.querySelector('.poicard[data-oid="' + a.OBJECTID + '"]');
+        if (card) card.insertAdjacentHTML("afterbegin", placePhotoHTML(ph));
+      }).catch(function () {});
+    });
     var ev = story.querySelector('[data-hid="events"]'); ev = ev && ev.closest(".scene");
     var nxt = ev && ev.nextElementSibling, after = nxt && nxt.querySelector('[data-hid="weather"]') ? nxt : ev;
     if (after) after.insertAdjacentElement("afterend", sc); else story.insertBefore(sc, story.children[2] || null);
@@ -1715,7 +1766,7 @@ var EVENT_SOURCES = [
   async function loadPlace(feature) {
     var myLoad = ++S.loadId, a = feature.attributes;
     if (S.poiView) { try { S.poiView.destroy(); } catch (e) {} }
-    S.poiView = null; S.poiMapP = null; S.poiLayer = null; S.poiOids = null; S.poiAllOids = null; S.poiTruncated = false; S.poiItems = [];
+    S.poiView = null; S.poiMapP = null; S.poiLayer = null; S.poiPhotos = {}; S.poiOids = null; S.poiAllOids = null; S.poiTruncated = false; S.poiItems = [];
     S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.photos = []; S.img = null; S.wikiUrl = null;
     history.replaceState(null, "", "?place=" + a.GEOID);
     $("#loading").classList.remove("gone");
