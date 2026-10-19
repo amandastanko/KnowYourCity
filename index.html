@@ -210,6 +210,26 @@ button{font:inherit;color:inherit}
 .evlist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .evlist li{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 14px}
 .evlist time{font-weight:800;margin-right:8px}
+.nmwrap h3{font:800 clamp(22px,2.6vw,32px) var(--f-display);margin:30px 0 12px}
+.ntgrid{display:grid;grid-template-columns:minmax(240px,420px) 1fr;gap:28px;align-items:start}
+.nametag{background:#fff;border:3px solid var(--ink);border-radius:18px;overflow:hidden;box-shadow:6px 6px 0 var(--ink);transform:rotate(-2deg);text-align:center}
+.nthello{background:#E5484D;color:#fff;padding:12px 10px 8px;border-bottom:3px solid var(--ink)}
+.nthello b{display:block;font:800 clamp(34px,5vw,56px)/1 var(--f-display);letter-spacing:-.02em}
+.nthello span{font:700 17px var(--f-body)}
+.ntname{padding:34px 16px 38px;font:800 clamp(34px,5.4vw,68px)/1 var(--f-display);letter-spacing:-.03em;color:var(--ink);overflow-wrap:anywhere}
+.ntrows{margin:0;display:grid;gap:12px}
+.ntrows>div{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 16px;display:grid;gap:2px}
+.ntrows dt{font:700 14px var(--f-body);opacity:.75}
+.ntrows dd{margin:0;font:800 clamp(19px,2vw,24px)/1.2 var(--f-display)}
+.ntimgs{display:flex;gap:16px;flex-wrap:wrap;margin:22px 0 0}
+.ntimgs figure{margin:0;background:#fff;border:3px solid var(--ink);border-radius:12px;padding:8px;text-align:center;font-size:13px;font-weight:700}
+.ntimgs img{display:block;height:84px;width:auto;max-width:160px;object-fit:contain;margin:0 auto 4px}
+.ntpeople{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.ntpeople li{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 14px;display:grid;gap:2px}
+.ntpeople b{font:800 18px/1.15 var(--f-display);text-decoration:underline}
+.ntpeople a{color:var(--ink)}
+.ntpeople span{font-size:14px;line-height:1.3}
+@media (max-width:760px){.ntgrid{grid-template-columns:1fr}}
 .wxwrap{max-width:1100px;margin:0 auto;padding:6vh 0 4vh;color:var(--ink)}
 .wxwrap>h2{font:800 clamp(34px,5.4vw,76px)/.95 var(--f-display);letter-spacing:-.035em;margin:0 0 .3em}
 .wxnow{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:0 0 22px}
@@ -769,11 +789,11 @@ var EVENT_SOURCES = [
     var out = { sentences: [], nearby: [], img: null, url: null, title: null };
     try {
       var j = await getJSON("https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrlimit=1&gsrsearch=" + encodeURIComponent(label) +
-        "&prop=extracts|pageimages|info&inprop=url&exintro=1&explaintext=1&piprop=thumbnail&pithumbsize=500&format=json&origin=*");
+        "&prop=extracts|pageimages|info|pageprops&ppprop=wikibase_item&inprop=url&exintro=1&explaintext=1&piprop=thumbnail&pithumbsize=500&format=json&origin=*");
       var pages = j.query && j.query.pages, p = pages && pages[Object.keys(pages)[0]];
       if (p && p.title && p.title.toLowerCase().indexOf(base.toLowerCase()) !== -1) {
         out.sentences = K.factSentences(p.extract, 4);
-        out.img = p.thumbnail && p.thumbnail.source; out.url = p.fullurl; out.title = p.title;
+        out.img = p.thumbnail && p.thumbnail.source; out.url = p.fullurl; out.title = p.title; out.qid = p.pageprops && p.pageprops.wikibase_item;
       }
     } catch (e) {}
     try {
@@ -1117,6 +1137,75 @@ var EVENT_SOURCES = [
     }
     sc.appendChild(w);
     if (anchor) anchor.insertAdjacentElement("afterend", sc); else story.insertBefore(sc, story.children[2] || null);
+  }
+
+
+  // ---------- Name card (Wikidata): nickname, what residents are called, namesake, and so on ----------
+  var NC_SKIP = /murder|killer|criminal|convicted|terroris|gangster|mobster|politic|senator|congress|governor|mayor|legislat|lobbyist|activist|judge|diplomat|military|general\b|candidate|party/i;
+  function wdVals(claims, prop) {
+    var arr = (claims && claims[prop]) || [];
+    arr = arr.filter(function (c) { return c.rank !== "deprecated" && c.mainsnak && c.mainsnak.datavalue; });
+    arr.sort(function (x, y) { return (y.rank === "preferred" ? 1 : 0) - (x.rank === "preferred" ? 1 : 0); });
+    return arr.map(function (c) { return c.mainsnak.datavalue.value; });
+  }
+  function wdText(vals) {
+    var en = vals.filter(function (v) { return v && v.text && /^en/.test(v.language || ""); });
+    return en.map(function (v) { return String(v.text).trim(); }).filter(function (t) { return t && K.isNeutralText(t); });
+  }
+  async function loadNameCard(myLoad) {
+    var qid = S.qid, P = S.name; if (!qid || !/^Q\d+$/.test(qid)) return;
+    var ent = null, people = [];
+    var spq = 'SELECT ?p ?pLabel ?d ?sl WHERE { ?p wdt:P19 wd:' + qid + '; wdt:P31 wd:Q5; wikibase:sitelinks ?sl. FILTER(?sl >= 5) ' +
+      'FILTER NOT EXISTS { ?p wdt:P106 wd:Q82955 } FILTER NOT EXISTS { ?p wdt:P102 ?party } FILTER NOT EXISTS { ?p wdt:P39 ?pos } ' +
+      'OPTIONAL { ?p schema:description ?d. FILTER(LANG(?d) = "en") } SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } } ORDER BY DESC(?sl) LIMIT 14';
+    try {
+      var r = await Promise.all([
+        getJSON("https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + qid + "&props=claims&format=json&origin=*"),
+        getJSON("https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(spq)).catch(function (e) { console.info("Notable people unavailable:", e.message); return null; })
+      ]);
+      ent = r[0].entities && r[0].entities[qid];
+      if (r[1] && r[1].results) people = r[1].results.bindings.map(function (b) { return { name: b.pLabel && b.pLabel.value, desc: b.d && b.d.value, id: b.p && b.p.value.split("/").pop() }; })
+        .filter(function (x) { return x.name && !/^Q\d+$/.test(x.name) && x.desc && K.isNeutralText(x.name + " " + x.desc) && !NC_SKIP.test(x.desc); }).slice(0, 6);
+    } catch (e) { console.info("Name card unavailable:", e.message); return; }
+    if (myLoad !== S.loadId || !ent || !ent.claims) return;
+    var c = ent.claims, rows = [];
+    var nick = wdText(wdVals(c, "P1449")).slice(0, 3), motto = wdText(wdVals(c, "P1451"))[0], demo = wdText(wdVals(c, "P1549"))[0];
+    var found = wdVals(c, "P571")[0], yr = found && found.time && found.precision >= 9 ? parseInt(String(found.time).slice(1, 5), 10) : null;
+    var el0 = wdVals(c, "P2044")[0], ft = null;
+    if (el0 && el0.amount != null) { var amt = parseFloat(el0.amount), unit = String(el0.unit || ""); ft = /Q11573$/.test(unit) ? amt * 3.28084 : /Q3710$/.test(unit) ? amt : null; }
+    var ids = wdVals(c, "P138").slice(0, 1).concat(wdVals(c, "P190").slice(0, 5)).map(function (v) { return v && v.id; }).filter(Boolean);
+    var labels = {};
+    if (ids.length) {
+      try {
+        var lj = await getJSON("https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + ids.join("|") + "&props=labels&languages=en&format=json&origin=*");
+        Object.keys(lj.entities || {}).forEach(function (k) { var l = lj.entities[k].labels && lj.entities[k].labels.en; if (l) labels[k] = l.value; });
+      } catch (e) {}
+    }
+    if (myLoad !== S.loadId) return;
+    var named = (wdVals(c, "P138")[0] || {}).id, namedL = named && labels[named];
+    var sisters = wdVals(c, "P190").map(function (v) { return v && labels[v.id]; }).filter(function (t) { return t && t !== P; }).slice(0, 5);
+    if (nick.length) rows.push(["Nickname", nick.join(", ")]);
+    if (demo) rows.push(["Residents are called", demo + (/s$/i.test(demo) ? "" : "s")]);
+    if (namedL && namedL !== P && K.isNeutralText(namedL)) rows.push(["Named after", namedL]);
+    if (motto) rows.push(["Motto", "“" + motto + "”"]);
+    if (yr && yr > 1000 && yr <= new Date().getFullYear()) rows.push(["Founded", String(yr)]);
+    if (ft != null && isFinite(ft)) rows.push(["Elevation", "About " + Math.round(ft).toLocaleString() + " feet above sea level"]);
+    if (sisters.length) rows.push(["Sister cities", sisters.join(", ")]);
+    var imgs = [["P41", "City flag"], ["P158", "City seal"]].map(function (pr) {
+      var v = wdVals(c, pr[0])[0]; return typeof v === "string" && /\.(svg|png|jpe?g|gif)$/i.test(v) ? '<figure><img src="https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(v) + '?width=220" onerror="this.closest(\'figure\').remove()" alt="' + pr[1] + ' of ' + esc(P) + '" loading="lazy"><figcaption>' + pr[1] + '</figcaption></figure>' : "";
+    }).join("");
+    if (!rows.length && !people.length) return;
+    var sc = scene("lilac", "The name card"), w = el("div", "evwrap nmwrap"); w.setAttribute("data-hid", "namecard");
+    w.innerHTML = '<h2>What\'s in a name?</h2>' +
+      '<div class="ntgrid"><div class="nametag"><div class="nthello"><b>Hello</b><span>my name is</span></div><div class="ntname">' + esc(P) + '</div></div>' +
+      (rows.length ? '<dl class="ntrows">' + rows.map(function (r) { return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>'; }).join("") + '</dl>' : '') + '</div>' +
+      (imgs ? '<div class="ntimgs">' + imgs + '</div>' : '') +
+      (people.length ? '<h3>Born in ' + esc(P) + '</h3><ul class="ntpeople">' + people.map(function (x) { return '<li><a href="https://www.wikidata.org/wiki/' + esc(x.id) + '" target="_blank" rel="noopener"><b>' + esc(x.name) + '</b></a><span>' + esc(x.desc.charAt(0).toUpperCase() + x.desc.slice(1)) + '</span></li>'; }).join("") + '</ul>' : '') +
+      '<p class="wxsrc">From <a href="https://www.wikidata.org/wiki/' + esc(qid) + '" target="_blank" rel="noopener">Wikidata</a>, which volunteers keep up to date, so some facts may be missing.</p>';
+    sc.appendChild(w);
+    S.SAY.namecard = demo ? "People from " + P + " are called " + demo + (/s$/i.test(demo) ? "." : "s.") : nick.length ? P + " is nicknamed " + nick[0] + "." : "Here's a little about the name " + P + ".";
+    var story = $("#story"), t = story.querySelector(".cards-title"), at = t && t.closest(".scene");
+    if (at) at.insertAdjacentElement("afterend", sc); else story.insertBefore(sc, story.children[2] || null);
   }
 
   // ---------- Places to see (OpenStreetMap points of interest) ----------
@@ -1841,7 +1930,7 @@ var EVENT_SOURCES = [
     var myLoad = ++S.loadId, a = feature.attributes;
     if (S.poiView) { try { S.poiView.destroy(); } catch (e) {} }
     S.poiView = null; S.poiMapP = null; S.poiLayer = null; S.poiPhotos = {}; S.poiOids = null; S.poiAllOids = null; S.poiTruncated = false; S.poiItems = [];
-    S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.photos = []; S.img = null; S.wikiUrl = null;
+    S.qid = null; S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.photos = []; S.img = null; S.wikiUrl = null;
     history.replaceState(null, "", "?place=" + a.GEOID);
     $("#loading").classList.remove("gone");
     $("#placeName").textContent = a.BASENAME || a.NAME;
@@ -1870,7 +1959,7 @@ var EVENT_SOURCES = [
     var w = await wikiP;
     S.photos = (await photoP) || [];
     if (myLoad !== S.loadId) return;
-    S.img = w.img; S.wikiUrl = w.url;
+    S.img = w.img; S.wikiUrl = w.url; S.qid = w.qid || null;
     var facts = w.sentences.map(addGrowth).concat(w.nearby.sort(function () { return Math.random() - 0.5; }).slice(0, 3));
     try {
       var pop = K.findItem(S.items, ["sex and age", "total population"]), popV = pop && K.getVals(S.pl, pop.base).e;
@@ -1878,7 +1967,7 @@ var EVENT_SOURCES = [
     } catch (e) {}
     S.facts = facts;
     buildStory();
-    loadWeather(center, myLoad); loadPois(myLoad);
+    loadNameCard(myLoad); loadWeather(center, myLoad); loadPois(myLoad);
     $("#loading").classList.add("gone");
     setTimeout(function () { sched(); }, 200);
   }
