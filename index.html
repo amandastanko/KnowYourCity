@@ -2626,7 +2626,7 @@ var EVENT_SOURCES = [
   var OK_LICENSE = /^(CC[ -]BY(-SA)?( |$)|CC0|Public domain|PD)/i;
   function plainText(html) { var d = document.createElement("div"); d.innerHTML = html || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); }
   // Is a point inside the place's boundary? (rings are lon/lat, even-odd rule)
-  function inRings(rings, x, y) {
+  function pointInRings(rings, x, y) {
     var inside = false;
     (rings || []).forEach(function (r) {
       for (var i = 0, j = r.length - 1; i < r.length; j = i++) {
@@ -2658,7 +2658,7 @@ var EVENT_SOURCES = [
     cands.forEach(function (cd) {
       var pg = cd.pg, ii = pg.imageinfo && pg.imageinfo[0]; if (!ii || !ii.extmetadata) return;
       // A photo found by its location must have been taken inside this place's boundary, not just nearby (a neighbouring city is a different place).
-      if (cd.src === 0) { var co = pg.coordinates && pg.coordinates[0]; if (!co || !inRings(rings, co.lon, co.lat)) return; }
+      if (cd.src === 0) { var co = pg.coordinates && pg.coordinates[0]; if (!co || !pointInRings(rings, co.lon, co.lat)) return; }
       if (ii.mime !== "image/jpeg" || ii.width < 800 || ii.height < 450) return;
       var ratio = ii.width / ii.height; if (ratio < 1.1 || ratio > 2.3) return;
       var m = ii.extmetadata, lic = plainText(m.LicenseShortName && m.LicenseShortName.value);
@@ -2697,7 +2697,7 @@ var EVENT_SOURCES = [
       var gp = (g.query && g.query.pages) || {};
       Object.keys(gp).forEach(function (k) {
         var pg = gp[k]; if (!pg.extract || pg.title === out.title) return;
-        var wc = pg.coordinates && pg.coordinates[0]; if (rings && (!wc || !inRings(rings, wc.lon, wc.lat))) return;   // inside this place only
+        var wc = pg.coordinates && pg.coordinates[0]; if (rings && (!wc || !pointInRings(rings, wc.lon, wc.lat))) return;   // inside this place only
         if (!K.isNeutralText(pg.title)) return;
         var first = K.factSentences(pg.extract, 1)[0] || (pg.extract.length < 200 && K.isNeutralText(pg.extract) ? pg.extract : "");
         if (first) out.nearby.push("Right nearby: " + pg.title + ". " + first);
