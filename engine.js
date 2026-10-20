@@ -172,8 +172,8 @@
     if (c.type === "pct") return (v >= 10 ? v.toFixed(0) : v.toFixed(1)) + "%";
     var u = unitFor(c.item);
     if (u === "$") return "$" + fmtNumber(v, 0);
-    if (u === "min") return v.toFixed(1) + " min";
-    if (u === "yrs") return v.toFixed(1) + (api.lang === "es" ? " años" : api.lang === "fr" ? " ans" : " yrs");
+    if (u === "min") return v.toFixed(1) + (api.lang === "vi" ? " phút" : " min");
+    if (u === "yrs") return v.toFixed(1) + (api.lang === "es" ? " años" : api.lang === "fr" ? " ans" : api.lang === "vi" ? " tuổi" : " yrs");
     if (u === "ppl") return v.toFixed(2);
     return fmtNumber(v, v < 100 ? 1 : 0);
   }
@@ -345,6 +345,7 @@
   function shareWords(p, g) {
     if (api.lang === "es") return shareWordsEs(p, g);
     if (api.lang === "fr") return { t: usFr(p).replace(/^./, function (m) { return m.toUpperCase(); }), of: false };
+    if (api.lang === "vi") return { t: shareVi(p, true).replace(/^./, function (m) { return m.toUpperCase(); }), of: false };
     if (p >= 97) return { t: "Nearly all", of: true };
     for (var i = 0; i < FRACTIONS.length; i++) {
       if (Math.abs(p - FRACTIONS[i][0] * 100) <= 2) return { t: FRACTIONS[i][1], of: !!FRACTIONS[i][2] };
@@ -356,6 +357,14 @@
 
   // r = place / U.S. for a share of people or things.
   function relCommon(r) {
+    if (api.lang === "vi") {
+      if (r >= 1.8) return "phổ biến gấp khoảng " + trimNum(r) + " lần";
+      if (r >= 1.15) return "phổ biến hơn khoảng " + Math.round((r - 1) * 100) + "%";
+      if (r > 0.87) return "phổ biến gần như nhau";
+      if (r > 0.5) return "ít phổ biến hơn khoảng " + Math.round((1 - r) * 100) + "%";
+      var nv = Math.round(1 / r);
+      return "chỉ phổ biến bằng khoảng " + (nv === 2 ? "một nửa" : nv === 3 ? "một phần ba" : nv === 4 ? "một phần tư" : "1/" + nv);
+    }
     if (api.lang === "fr") {
       if (r >= 1.8) return "environ " + trimNum(r) + " fois plus courant";
       if (r >= 1.15) return "environ " + Math.round((r - 1) * 100) + "% plus courant";
@@ -381,6 +390,14 @@
   }
   // r = place / U.S. for a dollar amount, age, time...
   function relAbove(r) {
+    if (api.lang === "vi") {
+      if (r >= 1.8) return "cao gấp khoảng " + trimNum(r) + " lần mức cả nước";
+      if (r >= 1.15) return "cao hơn mức cả nước khoảng " + Math.round((r - 1) * 100) + "%";
+      if (r > 0.87) return "gần bằng mức cả nước";
+      if (r > 0.5) return "thấp hơn mức cả nước khoảng " + Math.round((1 - r) * 100) + "%";
+      var nv = Math.round(1 / r);
+      return "chỉ bằng khoảng " + (nv === 2 ? "một nửa" : "1/" + nv) + " mức cả nước";
+    }
     if (api.lang === "fr") {
       if (r >= 1.8) return "représente environ " + trimNum(r) + " fois le chiffre national";
       if (r >= 1.15) return "se situe environ " + Math.round((r - 1) * 100) + "% au-dessus du chiffre national";
@@ -447,6 +464,31 @@
     }
     return { main: FR_MARK + main, cmp: FR_MARK + cmp };
   }
+
+  /* Vietnamese: no plural or agreement, so a share reads "Khoảng 1 trong 4 người ở X ..." / "Khoảng một nửa số người ..." / "Gần như tất cả ...".
+     The spec's vi piece is { subj, pred }. The leading \u2060 marks text that is already Vietnamese, so the page can format its numbers (1.234,5). */
+  function shareVi(p, bare) {
+    if (p >= 97) return "gần như tất cả";
+    for (var i = 0; i < FRACTIONS.length; i++) {
+      if (Math.abs(p - FRACTIONS[i][0] * 100) <= 2) { var f = FR_FRACS[FRACTIONS[i][1]]; return f ? "khoảng " + f[0] + " trong " + f[1] : "khoảng một nửa" + (bare ? "" : " số"); }
+    }
+    if (p >= 10) return "khoảng " + Math.round(p) + " trong 100";
+    if (p >= 0.5) return "khoảng 1 trong " + Math.round(100 / p);
+    return "ít hơn 1 trong 200";
+  }
+  function sentenceVi(c, spec, place) {
+    var vi = spec.vi || {}, fill = function (s) { return String(s || "").replace(/\{P\}/g, place); }, main, cmp;
+    if (spec.main) main = spec.main(c, place);
+    else main = shareVi(c.p).replace(/^./, function (m) { return m.toUpperCase(); }) + " " + fill(vi.subj) + " " + fill(vi.pred) + ".";
+    if (spec.cmp) cmp = spec.cmp(c, place);
+    else if (c.type === "pct") {
+      var clearGap = c.sig && (c.ratio >= 1.15 || c.ratio <= 0.87);
+      cmp = "Trên toàn nước Mỹ, con số này là " + shareVi(c.pus, true) + (clearGap ? ", nên ở " + place + " nhóm này " + relCommon(c.ratio) + "." : ", nên " + place + " rất giống Hoa Kỳ ở điểm này.");
+    } else {
+      cmp = (spec.usWordVi || "Mức cả nước") + " là " + fmt(c, c.pus) + ", nên " + place + " " + (c.sig ? relAbove(c.ratio) : "gần bằng mức cả nước") + ".";
+    }
+    return { main: FR_MARK + main, cmp: FR_MARK + cmp };
+  }
   function sentenceEs(c, spec, place) {
     var es = spec.es || {}, fill = function (s) { return String(s).replace(/\{P\}/g, place); }, main, cmp;
     if (spec.main) main = spec.main(c, place);
@@ -468,6 +510,7 @@
   function sentence(c, spec, place) {
     if (api.lang === "es") return sentenceEs(c, spec, place);
     if (api.lang === "fr") return sentenceFr(c, spec, place);
+    if (api.lang === "vi") return sentenceVi(c, spec, place);
     var fill = function (s) { return String(s).replace(/\{P\}/g, place); };
     var main, cmp;
     if (spec.main) main = spec.main(c, place);

@@ -541,6 +541,7 @@ i.sw{border-width:3px}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
   .dots i.on{opacity:1}
 }
+html[lang="vi"]{--f-body:"Be Vietnam Pro","Atkinson Hyperlegible",system-ui,sans-serif}
 </style>
 </head>
 <body>
@@ -613,7 +614,7 @@ i.sw{border-width:3px}
 <script src="engine.js"></script>
 <script>
 // Map widgets (zoom buttons, popups, the compare bar) speak the page's language. The choice is the ?lang= link, or the one saved earlier.
-(function () { var l = "en"; try { var q = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("kyc_lang") || "").slice(0, 2); if (q === "es" || q === "fr") l = q; } catch (e) {} window.dojoConfig = { locale: l }; })();
+(function () { var l = "en"; try { var q = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("kyc_lang") || "").slice(0, 2); if (q === "es" || q === "fr" || q === "vi") l = q; } catch (e) {} window.dojoConfig = { locale: l }; if (l === "vi") { var fl = document.createElement("link"); fl.rel = "stylesheet"; fl.href = "https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700&display=swap"; document.head.appendChild(fl); } })();
 </script>
 <script src="https://js.arcgis.com/4.33/"></script>
 <script>
@@ -683,13 +684,13 @@ var EVENT_SOURCES = [
    * a phrase with {name} slots is a template, and anything not in the table stays in English.
    * Sentences built from Census numbers get their Spanish word order in engine.js.
    * ==================================================================== */
-  var LANGS = { en: "English", es: "Español", fr: "Français" };
+  var LANGS = { en: "English", es: "Español", fr: "Français", vi: "Tiếng Việt" };
   var LANG = (function () {
     var q = (qs.get("lang") || "").slice(0, 2).toLowerCase(), s = safeGet("kyc_lang").slice(0, 2);
     if (LANGS[q]) { safeSet("kyc_lang", q); return q; }
     return LANGS[s] ? s : "en";
   })();
-  var ES = LANG === "es", FR = LANG === "fr", XL = ES || FR, LOCALE = ES ? "es-US" : FR ? "fr-FR" : "en-US";
+  var ES = LANG === "es", FR = LANG === "fr", VI = LANG === "vi", XL = ES || FR || VI, LOCALE = ES ? "es-US" : FR ? "fr-FR" : VI ? "vi-VN" : "en-US";
   K.lang = LANG; document.documentElement.lang = LANG;
   var DICT_ES = {
     // --- page chrome ---
@@ -1651,7 +1652,494 @@ var EVENT_SOURCES = [
     "Census data, compared with the U.S.": "Données du recensement, comparées aux États-Unis.",
     "Know Your City": "Connaissez votre ville"
   };
-  var DICT_TX = ES ? DICT_ES : FR ? DICT_FR : {}, CODE_TX = ES ? CODE_ES : FR ? CODE_FR : {};
+  var DICT_VI = {
+    // --- page chrome ---
+    "Know Your City": "Hiểu rõ thành phố của bạn",
+    "Homie is knocking on doors for the numbers…": "Homie đang đi gõ cửa để lấy số liệu…",
+    "Homie: on": "Homie: bật",
+    "Homie: off": "Homie: tắt",
+    "Show or hide Homie": "Hiện hoặc ẩn Homie",
+    "Homie, a friendly little house. Click for a hello.": "Homie, một ngôi nhà nhỏ thân thiện. Bấm vào để chào nhau.",
+    "Search for a place": "Tìm một địa điểm",
+    "Search for another place": "Tìm một địa điểm khác",
+    "Search any U.S. town or city": "Tìm bất kỳ thị trấn hay thành phố nào ở Hoa Kỳ",
+    "Type a town or city": "Nhập tên thị trấn hoặc thành phố",
+    "About {n} people live here. Scroll down and Homie will show you around.": "Khoảng {n} người sống ở đây. Hãy cuộn xuống và Homie sẽ dẫn bạn đi tham quan.",
+    "Scroll down and Homie will show you around.": "Hãy cuộn xuống và Homie sẽ dẫn bạn đi tham quan.",
+    "Scroll to start": "Cuộn xuống để bắt đầu",
+    "Drag to move. Click, then scroll to zoom.": "Kéo để di chuyển. Bấm vào bản đồ, rồi cuộn để phóng to hoặc thu nhỏ.",
+    "On this page": "Trên trang này",
+    "Jump to a section": "Chuyển đến một phần",
+    "What stands out in {P}": "Điều nổi bật ở {P}",
+    "Higher than the U.S.:": "Cao hơn Hoa Kỳ:",
+    "Lower than the U.S.:": "Thấp hơn Hoa Kỳ:",
+    "higher than the U.S.": "cao hơn Hoa Kỳ",
+    "lower than the U.S.": "thấp hơn Hoa Kỳ",
+    "lower than the U.S. The arrows show direction only. They don't say whether a number is good or bad.": "thấp hơn Hoa Kỳ. Mũi tên chỉ cho biết hướng, không cho biết một con số là tốt hay xấu.",
+    "The arrows show direction only. They don't say whether a number is good or bad.": "Mũi tên chỉ cho biết hướng, không cho biết một con số là tốt hay xấu.",
+    "Share": "Chia sẻ",
+    "Share a link to {x}": "Chia sẻ liên kết đến {x}",
+    "Link copied": "Đã sao chép liên kết",
+    "Link to {x} copied.": "Đã sao chép liên kết đến {x}.",
+    "Copy this link:": "Sao chép liên kết này:",
+    "Close": "Đóng",
+    "Surprise me": "Bất ngờ cho tôi",
+    "Pick another place.": "Chọn một địa điểm khác.",
+
+    // --- section names ---
+    "Name card": "Thẻ tên",
+    "The name card": "Thẻ tên",
+    "Events": "Sự kiện",
+    "Weather": "Thời tiết",
+    "Places to see": "Nơi nên ghé thăm",
+    "Parks and trees": "Công viên và cây xanh",
+    "Then and now": "Xưa và nay",
+    "Schools and colleges": "Trường học và đại học",
+    "Cap and gown": "Mũ và áo cử nhân",
+    "The price of a home": "Giá một ngôi nhà",
+    "Who owns the homes": "Ai sở hữu những ngôi nhà",
+    "What sets {P} apart": "Điều làm {P} khác biệt",
+    "Under each roof": "Dưới mỗi mái nhà",
+    "The homes": "Những ngôi nhà",
+    "Who lives in {P}": "Ai sống ở {P}",
+    "What kinds of households live in {P}": "Những loại hộ gia đình nào sống ở {P}",
+    "this section": "phần này",
+    "Work and money": "Công việc và tiền bạc",
+    "Backgrounds and languages": "Nguồn gốc và ngôn ngữ",
+    "Postcards from {P}": "Bưu thiếp từ {P}",
+    "Happening in {P}": "Đang diễn ra ở {P}",
+    "The weather in {P}": "Thời tiết ở {P}",
+    "Places in {P}": "Địa điểm ở {P}",
+    "Parks and trees in {P}": "Công viên và cây xanh ở {P}",
+    "Schools in {P}": "Trường học ở {P}",
+    "Then and now in {P}": "Xưa và nay ở {P}",
+
+    // --- name card ---
+    "What's in a name?": "Một cái tên có gì?",
+    "Hello": "Xin chào",
+    "my name is": "tên tôi là",
+    "That's what people from {P} are called.": "Đó là cách gọi người đến từ {P}.",
+    "Nickname": "Biệt danh",
+    "Named after": "Được đặt tên theo",
+    "Founded": "Thành lập",
+    "Elevation": "Độ cao",
+    "About {n} feet above sea level": "Cao khoảng {n} feet so với mực nước biển",
+    "City flag": "Cờ thành phố",
+    "City seal": "Ấn thành phố",
+    "Sister cities": "Thành phố kết nghĩa",
+    "Born in {P}": "Sinh ra ở {P}",
+    "From": "Từ",
+    ", which volunteers keep up to date, so some facts may be missing.": ", do các tình nguyện viên cập nhật, nên có thể thiếu một vài thông tin.",
+    "Enlarge the {x}": "Phóng to {x}",
+    "city flag of {P}": "cờ thành phố {P}",
+    "city seal of {P}": "ấn thành phố {P}",
+    "City flag of {P}": "Cờ thành phố {P}",
+    "City seal of {P}": "Ấn thành phố {P}",
+    "People from {P} are called {x}.": "Người đến từ {P} được gọi là {x}.",
+    "{P} is nicknamed {x}.": "{P} có biệt danh là {x}.",
+    "Here's a little about the name {P}.": "Đôi điều về cái tên {P}.",
+
+    // --- events ---
+    "Get out and about.": "Ra ngoài khám phá nào.",
+    "Here is where {P} lists its events and permits.": "Đây là nơi {P} đăng các sự kiện và giấy phép.",
+    "{P} doesn't have a single events feed that I know of, so here is a search to start with.": "Theo tôi biết, {P} không có một nguồn sự kiện chung, nên đây là một lượt tìm kiếm để bạn bắt đầu.",
+    "Each link says how the information is provided.": "Mỗi liên kết cho biết thông tin được cung cấp theo cách nào.",
+    "City calendar": "Lịch của thành phố",
+    "Community calendar": "Lịch cộng đồng",
+    "Permit info": "Thông tin giấy phép",
+    "Open data feed": "Nguồn dữ liệu mở",
+    "Web page": "Trang web",
+    "Live feed shown here": "Nguồn trực tiếp hiển thị tại đây",
+    "Web search": "Tìm kiếm trên web",
+    "Search results": "Kết quả tìm kiếm",
+    "Search for events in {P}": "Tìm sự kiện ở {P}",
+    "City of {P} calendar": "Lịch của thành phố {P}",
+    "Special events and permits": "Sự kiện đặc biệt và giấy phép",
+    "About {P} events": "Về các sự kiện ở {P}",
+    "Want to get out and about? Here is where to find what's happening in {P}.": "Muốn ra ngoài khám phá? Đây là nơi bạn xem {P} đang có gì.",
+
+    // --- weather ---
+    "What's the weather like?": "Thời tiết thế nào?",
+    "Right now": "Ngay bây giờ",
+    "Tonight": "Tối nay",
+    "Today": "Hôm nay",
+    "{n}% chance of rain": "Khả năng mưa {n}%",
+    "Forecast:": "Dự báo:",
+    "National Weather Service": "Cơ quan Thời tiết Quốc gia",
+    "National Weather Service web page": "Trang web của Cơ quan Thời tiết Quốc gia",
+    "Forecast": "Dự báo",
+    "Forecast for {P}": "Dự báo cho {P}",
+    ". Big number is the high, small number is the low.": ". Số lớn là nhiệt độ cao nhất, số nhỏ là nhiệt độ thấp nhất.",
+    "The forecast didn't load just now.": "Dự báo vừa rồi chưa tải được.",
+    "The National Weather Service has the latest for {P}.": "Cơ quan Thời tiết Quốc gia có thông tin mới nhất cho {P}.",
+    "{a} in {P}: {f}, wind {w}.": "{a} ở {P}: {f}, gió {w}.",
+    "{a} to {b} mph": "{a} đến {b} mph",
+    "It's {t} degrees and {f} in {P}.": "Ở {P} hiện là {t} độ, {f}.",
+    "Here's the next few days.": "Đây là vài ngày tới.",
+    "I couldn't load the forecast, but the weather service link has it.": "Tôi không tải được dự báo, nhưng liên kết của cơ quan thời tiết có thông tin này.",
+
+    // --- places to see ---
+    "Places to see.": "Nơi nên ghé thăm.",
+    "Landmarks, museums and historic sites in {P}, plus emergency services.": "Danh thắng, bảo tàng và di tích lịch sử ở {P}, cùng các dịch vụ khẩn cấp.",
+    "The list comes from OpenStreetMap volunteers, so it may be incomplete.": "Danh sách do các tình nguyện viên OpenStreetMap đóng góp, nên có thể chưa đầy đủ.",
+    "Each place shows its hours, parking and wheelchair access when that is known.": "Mỗi địa điểm hiển thị giờ mở cửa, chỗ đậu xe và lối đi cho xe lăn khi có thông tin.",
+    "Select “Show on the map” on any place below to find it here.": "Chọn “Xem trên bản đồ” ở bất kỳ địa điểm nào bên dưới để tìm nó ở đây.",
+    "Landmarks and history": "Danh thắng và lịch sử",
+    "Emergency and safety": "Khẩn cấp và an toàn",
+    "Map of the places listed below": "Bản đồ các địa điểm được liệt kê bên dưới",
+    "Show on map": "Xem trên bản đồ",
+    "Show district on map": "Xem khu học chánh trên bản đồ",
+    "Show {x} on the map": "Xem {x} trên bản đồ",
+    "Showing {x} on the map.": "Đang hiển thị {x} trên bản đồ.",
+    "Here are some places worth a visit in {P}, and where to find emergency services.": "Đây là vài nơi đáng ghé thăm ở {P}, và nơi tìm các dịch vụ khẩn cấp.",
+    "Photo: {a},": "Ảnh: {a},",
+    "Photo: {a}": "Ảnh: {a}",
+    "Unknown author": "Không rõ tác giả",
+    "Unnamed place": "Địa điểm chưa có tên",
+    "Unnamed park": "Công viên chưa có tên",
+    "Attraction": "Điểm tham quan",
+    "Museum": "Bảo tàng",
+    "Zoo": "Sở thú",
+    "Theme park": "Công viên giải trí",
+    "Aquarium": "Thủy cung",
+    "Viewpoint": "Điểm ngắm cảnh",
+    "Gallery": "Phòng trưng bày",
+    "Public art": "Nghệ thuật công cộng",
+    "Castle": "Lâu đài",
+    "Monument": "Đài tưởng niệm",
+    "Fort": "Pháo đài",
+    "Memorial": "Đài tưởng niệm",
+    "Historic building": "Công trình lịch sử",
+    "Ruins": "Tàn tích",
+    "Archaeological site": "Di chỉ khảo cổ",
+    "Historic ship": "Tàu lịch sử",
+    "Historic site": "Di tích lịch sử",
+    "Visitor information": "Thông tin du lịch",
+    "Visitor centre": "Trung tâm du khách",
+    "Fire station": "Trạm cứu hỏa",
+    "Ambulance station": "Trạm xe cứu thương",
+    "Coast Guard": "Lực lượng Tuần duyên",
+    "Mountain rescue": "Cứu hộ trên núi",
+    "Lifeguard": "Nhân viên cứu hộ",
+    "Disaster response": "Ứng phó thảm họa",
+    "Emergency assembly point": "Điểm tập trung khẩn cấp",
+    "Emergency shelter": "Nơi trú ẩn khẩn cấp",
+    "First aid": "Sơ cứu",
+    "Hospital": "Bệnh viện",
+    "Police": "Cảnh sát",
+    "Wheelchair accessible": "Xe lăn đi được",
+    "Partly wheelchair accessible": "Xe lăn đi được một phần",
+    "Not wheelchair accessible": "Xe lăn không đi được",
+    "Open 24 hours, every day": "Mở cửa 24 giờ, mỗi ngày",
+    "Address:": "Địa chỉ:",
+    "Hours:": "Giờ mở cửa:",
+    "Parking:": "Chỗ đậu xe:",
+    "Also called:": "Còn gọi là:",
+    "Website": "Trang web",
+    "Website for {x}": "Trang web của {x}",
+    "Surface lot": "Bãi đậu xe ngoài trời",
+    "Parking garage": "Nhà để xe nhiều tầng",
+    "Underground garage": "Hầm đậu xe",
+    "Street parking": "Đậu xe bên đường",
+    "Parking available": "Có chỗ đậu xe",
+    "No parking": "Không có chỗ đậu xe",
+    "Rooftop parking": "Bãi đậu xe trên mái",
+    "Garage boxes": "Ô để xe riêng",
+    "(Spanish)": "(tiếng Tây Ban Nha)",
+    "(French)": "(tiếng Pháp)",
+    "(Vietnamese)": "(tiếng Việt)",
+
+    // --- parks and trees ---
+    "Parks and trees.": "Công viên và cây xanh.",
+    "{n} parks cover about {a} acres, or about {x} acres for every 1,000 people.": "{n} công viên rộng khoảng {a} mẫu Anh, tức khoảng {x} mẫu Anh trên mỗi 1,000 người.",
+    "{n} parks cover about {a} acres.": "{n} công viên rộng khoảng {a} mẫu Anh.",
+    "1 park covers about {a} acres, or about {x} acres for every 1,000 people.": "1 công viên rộng khoảng {a} mẫu Anh, tức khoảng {x} mẫu Anh trên mỗi 1,000 người.",
+    "1 park covers about {a} acres.": "1 công viên rộng khoảng {a} mẫu Anh.",
+    "Source: The Trust for Public Land's ParkServe.": "Nguồn: ParkServe của The Trust for Public Land.",
+    "parks": "công viên",
+    "acres of parks": "mẫu Anh công viên",
+    "of the city's land": "diện tích đất của thành phố",
+    "tree cover in parks": "độ che phủ cây trong công viên",
+    "Share of each park shaded by trees, seen from above": "Phần diện tích mỗi công viên được tán cây che phủ, nhìn từ trên cao",
+    "Select “Show on map” on a park to find it here.": "Chọn “Xem trên bản đồ” ở một công viên để tìm nó ở đây.",
+    "Select “Show on map” on a district or college to find it here.": "Chọn “Xem trên bản đồ” ở một khu học chánh hoặc trường đại học để tìm nó ở đây.",
+    "Select “Show district on map” to find it here.": "Chọn “Xem khu học chánh trên bản đồ” để tìm nó ở đây.",
+    "The biggest parks": "Những công viên lớn nhất",
+    "Map of parks in {P}": "Bản đồ công viên ở {P}",
+    "{n} acres": "{n} mẫu Anh",
+    "{n}% tree cover": "{n}% được cây che phủ",
+    "Open to the public": "Mở cửa cho công chúng",
+    "Limited access": "Hạn chế ra vào",
+    "Not open to the public": "Không mở cửa cho công chúng",
+    "{n} playgrounds": "{n} sân chơi",
+    "1 playground": "1 sân chơi",
+    "Has trails": "Có đường mòn",
+    "Tree cover: {n} percent of the park": "Độ che phủ cây: {n} phần trăm diện tích công viên",
+    "Size:": "Diện tích:",
+    "Tree cover:": "Độ che phủ cây:",
+    "Access:": "Ra vào:",
+    "Playgrounds:": "Sân chơi:",
+    "Trails:": "Đường mòn:",
+    "Run by:": "Do đơn vị quản lý:",
+    "Local park": "Công viên địa phương",
+    "Regional park": "Công viên vùng",
+    "Neighborhood park": "Công viên khu phố",
+    "Pocket park": "Công viên nhỏ",
+    "Natural area": "Khu thiên nhiên",
+    "This park": "Công viên này",
+    "Tree cover across the whole city": "Độ che phủ cây trên toàn thành phố",
+    "About {p}% of {P} is covered by tree canopy, as seen from above in {y}.": "Khoảng {p}% diện tích {P} được tán cây che phủ, nhìn từ trên cao vào năm {y}.",
+    "Inside its parks it is about {p}%.": "Trong các công viên, con số này là khoảng {p}%.",
+    "Tree cover is about the same as in {y}.": "Độ che phủ cây gần như giống năm {y}.",
+    "In {y} it was about {p}%, so it has gone up by about {d} percentage points.": "Năm {y} con số này khoảng {p}%, nên đã tăng khoảng {d} điểm phần trăm.",
+    "In {y} it was about {p}%, so it has gone down by about {d} percentage points.": "Năm {y} con số này khoảng {p}%, nên đã giảm khoảng {d} điểm phần trăm.",
+    "About {p}% of {P} is covered by tree canopy.": "Khoảng {p}% diện tích {P} được tán cây che phủ.",
+    "About {p}% of the ground in {P}'s parks is covered by tree canopy.": "Khoảng {p}% mặt đất trong các công viên của {P} được tán cây che phủ.",
+    "{P} has {n} parks covering about {a} acres.": "{P} có {n} công viên rộng khoảng {a} mẫu Anh.",
+    "{P} has 1 park covering about {a} acres.": "{P} có 1 công viên rộng khoảng {a} mẫu Anh.",
+    "Each bar is the average of every 30-meter square inside the city limits, so streets, roofs and open ground count as no trees.": "Mỗi cột là mức trung bình của mọi ô vuông 30 mét trong ranh giới thành phố, nên đường phố, mái nhà và đất trống đều được tính là không có cây.",
+    "The numbers come from the U.S. Forest Service and are modeled from satellite pictures, so small differences from year to year are best treated as estimates.": "Các con số đến từ Cơ quan Lâm nghiệp Hoa Kỳ và được mô hình hóa từ ảnh vệ tinh, nên những khác biệt nhỏ giữa các năm chỉ nên xem là ước tính.",
+    "Tree cover in {P} by year: {x}.": "Độ che phủ cây ở {P} theo năm: {x}.",
+    "U.S. Forest Service": "Cơ quan Lâm nghiệp Hoa Kỳ",
+
+    // --- then and now ---
+    "Then and now.": "Xưa và nay.",
+    "Drag the bar on the map to compare two aerial photos of {P}.": "Kéo thanh trên bản đồ để so sánh hai ảnh chụp từ trên cao của {P}.",
+    "Pick any two dates.": "Chọn hai ngày bất kỳ.",
+    "The photos come from Esri World Imagery Wayback.": "Các ảnh đến từ Esri World Imagery Wayback.",
+    "Each date is when that version was released, so the photos themselves can be a little older.": "Mỗi ngày là lúc phiên bản đó được phát hành, nên bản thân các bức ảnh có thể cũ hơn một chút.",
+    "Left side": "Bên trái",
+    "Right side": "Bên phải",
+    "Find an address": "Tìm một địa chỉ",
+    "Search": "Tìm kiếm",
+    "Street, city, state": "Đường, thành phố, tiểu bang",
+    "Looking for the dates when the photo changed here.": "Đang tìm những ngày ảnh ở đây có thay đổi.",
+    "Drag the bar to see how {P} looks from above, then and now.": "Kéo thanh để xem {P} nhìn từ trên cao ngày xưa và hôm nay.",
+    "Aerial photos of {P} from two dates, with a bar you can drag to compare them": "Ảnh chụp từ trên cao của {P} ở hai thời điểm, với một thanh bạn có thể kéo để so sánh",
+    "Full screen": "Toàn màn hình",
+    "Exit full screen": "Thoát toàn màn hình",
+    "Type a street address, like 123 Main St.": "Nhập địa chỉ đường phố, ví dụ 123 Main St.",
+    "Looking up {q}...": "Đang tìm {q}...",
+    "We couldn't find that address. Try adding the city and state.": "Chúng tôi không tìm thấy địa chỉ đó. Hãy thử thêm thành phố và tiểu bang.",
+    "Address search isn't available right now.": "Hiện chưa dùng được tính năng tìm địa chỉ.",
+    "Showing {a}. {b} is on the left and {c} is on the right.": "Đang hiển thị {a}. {b} ở bên trái và {c} ở bên phải.",
+    "Showing {a} on the left and {b} on the right.": "Đang hiển thị {a} ở bên trái và {b} ở bên phải.",
+    "{n} dates here have a different photo.": "{n} ngày ở đây có ảnh khác.",
+
+    // --- schools ---
+    "Schools and colleges.": "Trường học và đại học.",
+    "School districts don't follow city limits, so the districts below are the ones that run a school in {P}.": "Các khu học chánh không theo ranh giới thành phố, nên các khu bên dưới là những khu có điều hành một trường ở {P}.",
+    "A district may serve other places too.": "Một khu học chánh cũng có thể phục vụ những nơi khác.",
+    "Plus {x} with a school here.": "Ngoài ra còn {x} có trường ở đây.",
+    "Data is from the National Center for Education Statistics.": "Dữ liệu từ Trung tâm Thống kê Giáo dục Quốc gia.",
+    "{n} of its schools are in {P}.": "{n} trường của khu này nằm ở {P}.",
+    "1 of its schools is in {P}.": "1 trường của khu này nằm ở {P}.",
+    "{n} has about {r} students for each teacher.": "{n} có khoảng {r} học sinh cho mỗi giáo viên.",
+    "Each yellow dot is a student, and the dark dot is one teacher.": "Mỗi chấm vàng là một học sinh, và chấm tối là một giáo viên.",
+    "This counts every teacher on staff, so it is not the same as class size.": "Con số này tính mọi giáo viên trong biên chế, nên không giống với sĩ số lớp.",
+    "{n} has about {r} students.": "{n} có khoảng {r} học sinh.",
+    "{n} runs schools here.": "{n} điều hành các trường ở đây.",
+    "Here are the schools and colleges in {P}.": "Đây là các trường học và đại học ở {P}.",
+    "This district": "Khu học chánh này",
+    "U.S.": "Hoa Kỳ",
+    "students": "học sinh",
+    "schools": "trường",
+    "teachers": "giáo viên",
+    "Public school": "Trường công lập",
+    "Private school": "Trường tư thục",
+    "College or university": "Cao đẳng hoặc đại học",
+    "School district": "Khu học chánh",
+    "{P} boundary": "Ranh giới {P}",
+    "Colleges and universities": "Cao đẳng và đại học",
+    "Map of schools and colleges in {P}": "Bản đồ trường học và đại học ở {P}",
+    "Students:": "Học sinh:",
+    "Schools:": "Trường:",
+    "Students per teacher:": "Học sinh mỗi giáo viên:",
+    "Grades:": "Các lớp:",
+    "Offers up to:": "Đào tạo đến:",
+    "Offers up to {x}": "Đào tạo đến {x}",
+    "Enrolls {x}": "Có {x}",
+    "Call {x}": "Gọi {x}",
+    "Public 4-year": "Công lập 4 năm",
+    "Private 4-year": "Tư thục 4 năm",
+    "For-profit 4-year": "Vì lợi nhuận 4 năm",
+    "Public 2-year": "Công lập 2 năm",
+    "Private 2-year": "Tư thục 2 năm",
+    "For-profit 2-year": "Vì lợi nhuận 2 năm",
+    "Public, short-term": "Công lập, ngắn hạn",
+    "Private, short-term": "Tư thục, ngắn hạn",
+    "For-profit, short-term": "Vì lợi nhuận, ngắn hạn",
+    "a certificate (under 1 year)": "chứng chỉ (dưới 1 năm)",
+    "a certificate (1 to 2 years)": "chứng chỉ (1 đến 2 năm)",
+    "an associate's degree": "bằng cao đẳng (associate)",
+    "a 2-to-4-year award": "chứng nhận 2 đến 4 năm",
+    "a bachelor's degree": "bằng cử nhân",
+    "a postbaccalaureate certificate": "chứng chỉ sau cử nhân",
+    "a master's degree": "bằng thạc sĩ",
+    "a post-master's certificate": "chứng chỉ sau thạc sĩ",
+    "a doctor's degree": "bằng tiến sĩ",
+    "under 1,000 students": "dưới 1,000 sinh viên",
+    "1,000 to 4,999 students": "1,000 đến 4,999 sinh viên",
+    "5,000 to 9,999 students": "5,000 đến 9,999 sinh viên",
+    "10,000 to 19,999 students": "10,000 đến 19,999 sinh viên",
+    "20,000 or more students": "từ 20,000 sinh viên trở lên",
+    "Historically Black college or university": "Trường đại học dành cho người da đen có truyền thống lịch sử",
+    "Tribal college": "Trường cao đẳng của bộ tộc bản địa",
+    "Land-grant university": "Đại học được cấp đất (land-grant)",
+    "Regular local school district": "Khu học chánh địa phương thông thường",
+    "A regular school district that runs its own schools.": "Một khu học chánh thông thường tự điều hành các trường của mình.",
+    "A local school district that is part of a larger group of districts.": "Một khu học chánh địa phương thuộc một nhóm các khu lớn hơn.",
+    "An office that supports a group of districts.": "Một văn phòng hỗ trợ một nhóm các khu học chánh.",
+    "A regional agency that serves schools.": "Một cơ quan vùng phục vụ các trường học.",
+    "A state-run education agency.": "Một cơ quan giáo dục do tiểu bang điều hành.",
+    "A federally run education agency.": "Một cơ quan giáo dục do liên bang điều hành.",
+    "A charter school district.": "Một khu học chánh trường bán công (charter).",
+    "An education agency.": "Một cơ quan giáo dục.",
+    "A district for specialized public schools.": "Một khu học chánh cho các trường công lập chuyên biệt.",
+    "preschool": "mẫu giáo nhỏ",
+    "kindergarten": "mẫu giáo lớn",
+    "Preschool": "Mẫu giáo nhỏ",
+    "Kindergarten": "Mẫu giáo lớn",
+    "{n}th grade": "lớp {n}",
+    "{n}st grade": "lớp {n}",
+    "{n}nd grade": "lớp {n}",
+    "{n}rd grade": "lớp {n}",
+    "{n} public schools": "{n} trường công lập",
+    "1 public school": "1 trường công lập",
+    "{n} private schools": "{n} trường tư thục",
+    "1 private school": "1 trường tư thục",
+    "{n} colleges and universities": "{n} trường cao đẳng và đại học",
+    "1 college or university": "1 trường cao đẳng hoặc đại học",
+    "{n} other districts": "{n} khu học chánh khác",
+    "1 other district": "1 khu học chánh khác",
+    "a small city": "một thành phố nhỏ",
+    "a midsize city": "một thành phố cỡ vừa",
+    "a large city": "một thành phố lớn",
+    "a small suburb": "một vùng ngoại ô nhỏ",
+    "a midsize suburb": "một vùng ngoại ô cỡ vừa",
+    "a large suburb": "một vùng ngoại ô lớn",
+    "a town close to a city": "một thị trấn gần thành phố",
+    "a town farther from a city": "một thị trấn cách thành phố khá xa",
+    "a town far from any city": "một thị trấn xa mọi thành phố",
+    "a rural area close to a city": "một vùng nông thôn gần thành phố",
+    "a rural area farther from a city": "một vùng nông thôn cách thành phố khá xa",
+    "a rural area far from any city": "một vùng nông thôn xa mọi thành phố",
+    "a town": "một thị trấn",
+    "a rural area": "một vùng nông thôn",
+
+    // --- the data sections ---
+    "{n} of every 100": "{n} trong mỗi 100",
+    "{a} figure": "Số liệu của {a}",
+    "U.S. figure": "Số liệu của Hoa Kỳ",
+    "Which degrees are they?": "Đó là những bằng cấp nào?",
+    "Associate's degree": "Bằng cao đẳng (associate)",
+    "Bachelor's degree": "Bằng cử nhân",
+    "Graduate or professional degree": "Bằng sau đại học hoặc chuyên môn",
+    "Married-couple households": "Hộ gia đình vợ chồng",
+    "Female householder, no spouse or partner present": "Chủ hộ là nữ, không có vợ/chồng hoặc bạn đời",
+    "Male householder, no spouse or partner present": "Chủ hộ là nam, không có vợ/chồng hoặc bạn đời",
+    "Households headed by a woman, no spouse present": "Hộ do phụ nữ làm chủ, không có vợ/chồng",
+    "Households headed by a man, no spouse present": "Hộ do nam giới làm chủ, không có vợ/chồng",
+    "One-person households": "Hộ một người",
+    "Who owns their home, by kind of household": "Ai sở hữu nhà của mình, theo loại hộ gia đình",
+    "homeowner households headed by a woman, no spouse present": "hộ sở hữu nhà do phụ nữ làm chủ, không có vợ/chồng",
+    "homeowner households headed by a man, no spouse present": "hộ sở hữu nhà do nam giới làm chủ, không có vợ/chồng",
+    "Each house stands for {n} households.": "Mỗi ngôi nhà tượng trưng cho {n} hộ gia đình.",
+    "For every 100 homeowner households headed by a man with no spouse present, how many are headed by a woman?": "Cứ mỗi 100 hộ sở hữu nhà do nam giới làm chủ và không có vợ/chồng, có bao nhiêu hộ do phụ nữ làm chủ?",
+    "Owned by a woman, no spouse present": "Do phụ nữ làm chủ, không có vợ/chồng",
+    "Owned by a man, no spouse present": "Do nam giới làm chủ, không có vợ/chồng",
+    "How people in {P} get to work": "Người dân ở {P} đi làm bằng cách nào",
+    "The staircase of diplomas in {P}": "Nấc thang bằng cấp ở {P}",
+    "The white dotted line marks {s}.": "Đường chấm trắng đánh dấu {s}.",
+    "The dashed line marks the U.S. figure for each step.": "Đường nét đứt đánh dấu số liệu của Hoa Kỳ cho từng nấc.",
+    "drive to work alone": "tự lái xe đi làm",
+    "work from home": "làm việc tại nhà",
+    "take public transportation to work": "đi làm bằng phương tiện công cộng",
+    "walk to work": "đi bộ đi làm",
+    "Solid tick: U.S. figure, {a}": "Vạch liền: số liệu của Hoa Kỳ, {a}",
+    "Photo: {a}, {b}": "Ảnh: {a}, {b}",
+    "About {a} people live per square mile here, across roughly {b} square miles of land.": "Khoảng {a} người sống trên mỗi dặm vuông ở đây, trên diện tích đất khoảng {b} dặm vuông.",
+
+    // --- footer ---
+    "Facts only.": "Chỉ có dữ kiện.",
+    "Know Your City describes places and compares them with the U.S. average.": "Hiểu rõ thành phố của bạn mô tả các địa điểm và so sánh chúng với mức trung bình của Hoa Kỳ.",
+    "Know Your City describes places and compares them with the U.S. average and with {s}.": "Hiểu rõ thành phố của bạn mô tả các địa điểm và so sánh chúng với mức trung bình của Hoa Kỳ và của {s}.",
+    "It doesn't rank places, judge what's good or bad, or use political data.": "Trang không xếp hạng các địa điểm, không đánh giá điều gì tốt hay xấu và không dùng dữ liệu chính trị.",
+    "Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.": "Trong mỗi phần, các dữ kiện được xếp từ khác mức trung bình của Hoa Kỳ nhiều nhất đến gần mức đó nhất, và các phần cũng được sắp xếp theo cách tương tự.",
+    "Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501.": "Số liệu: Cục Điều tra Dân số Hoa Kỳ, ước tính 5 năm của Khảo sát Cộng đồng Hoa Kỳ (2020-2024), Hồ sơ dữ liệu DP02-DP05 và Bảng chuyên đề S2501.",
+    "A gap only counts as real when it is larger than the survey's margin of error (95% level).": "Một chênh lệch chỉ được coi là có thật khi lớn hơn biên độ sai số của khảo sát (mức tin cậy 95%).",
+    "Boundaries: Census TIGERweb.": "Ranh giới: Census TIGERweb.",
+    "Photos: Wikimedia Commons contributors, credited on each card.": "Ảnh: những người đóng góp cho Wikimedia Commons, được ghi nguồn trên từng thẻ.",
+    "Stories:": "Câu chuyện:",
+    "(CC BY-SA). Weather:": "(CC BY-SA). Thời tiết:",
+    ". Map:": ". Bản đồ:",
+    ". Aerial photos over time:": ". Ảnh chụp từ trên cao qua các thời kỳ:",
+    ". Parks:": ". Công viên:",
+    ". Tree cover:": ". Độ che phủ cây:",
+    ". Places:": ". Địa điểm:",
+
+    // --- Homie ---
+    "Hi, I'm Homie! Scroll down and I'll show you around {P}.": "Chào bạn, mình là Homie! Hãy cuộn xuống và mình sẽ dẫn bạn đi tham quan {P}.",
+    "Hi! Scroll down and I'll point things out.": "Chào bạn! Hãy cuộn xuống và mình sẽ chỉ cho bạn xem.",
+    "Look at this!": "Nhìn này!",
+    "Check it out:": "Xem thử nhé:",
+    "Ooh, this one:": "Ồ, cái này nè:",
+    "Here's something:": "Có cái này nè:",
+    "Take a look:": "Xem thử đi:",
+    "Here's another look at {P}.": "Thêm một góc nhìn khác về {P}.",
+    "Quick scenery break in {P}!": "Nghỉ ngắm cảnh một chút ở {P}!",
+    "Another view around {P}.": "Một góc nhìn khác quanh {P}.",
+    "Still in {P}. Look at that!": "Vẫn ở {P}. Nhìn kìa!",
+    "One more photo from {P}.": "Thêm một bức ảnh từ {P}.",
+    "Here's what it looks like around here.": "Quanh đây trông như thế này.",
+    "A snapshot from a local.": "Một bức ảnh chụp bởi người địa phương.",
+    "Take a look at this view.": "Xem khung cảnh này nhé.",
+    "Somebody took this nearby.": "Có người chụp ảnh này gần đây.",
+    "A little scenery for you.": "Một chút phong cảnh dành cho bạn.",
+    "Here's a story from this place.": "Đây là một câu chuyện từ nơi này.",
+    "Locals might know this one.": "Người địa phương có thể biết chuyện này.",
+    "A little local trivia.": "Một chút kiến thức thú vị của địa phương.",
+    "One more from around town.": "Thêm một chuyện nữa quanh thị trấn.",
+    "This one's from the history books.": "Chuyện này nằm trong sách lịch sử.",
+    "And one more for the road.": "Và thêm một chuyện nữa trước khi đi.",
+    "You're closest to {P}, about {n} miles away.": "Bạn ở gần {P} nhất, cách khoảng {n} dặm.",
+    "You're closest to {P}, about {n} mile away.": "Bạn ở gần {P} nhất, cách khoảng {n} dặm.",
+    "Looks like you're in {P}! Here's your hometown.": "Có vẻ bạn đang ở {P}! Đây là quê hương của bạn.",
+    "Know Your City covers U.S. places. Here's {P}. Search for any U.S. town above.": "Hiểu rõ thành phố của bạn bao gồm các địa điểm ở Hoa Kỳ. Đây là {P}. Hãy tìm bất kỳ thị trấn nào ở Hoa Kỳ ở phía trên.",
+    "I couldn't find a Census Place near you. Here's {P}. Search for any U.S. town above.": "Mình không tìm thấy Địa điểm Điều tra Dân số nào gần bạn. Đây là {P}. Hãy tìm bất kỳ thị trấn nào ở Hoa Kỳ ở phía trên.",
+    "Hmm, I couldn't find that place's boundary.": "Hừm, mình không tìm thấy ranh giới của địa điểm đó.",
+    "Hmm, that spot isn't inside a Census Place. Try a city, town or village.": "Hừm, vị trí đó không nằm trong một Địa điểm Điều tra Dân số. Hãy thử một thành phố, thị trấn hoặc làng.",
+    "The map isn't available right now.": "Hiện chưa dùng được bản đồ.",
+    "That one isn't on the map.": "Địa điểm đó không có trên bản đồ.",
+
+    // --- search and errors ---
+    "No Census places match that. Try the city name, then a comma and the state.": "Không có địa điểm điều tra dân số nào khớp. Hãy thử tên thành phố, rồi dấu phẩy và tiểu bang.",
+    "The numbers didn't load.": "Số liệu chưa tải được.",
+    "If this mentions a Census key, check that it has been activated from the email link, then reload.": "Nếu thông báo này nhắc đến khóa Census, hãy kiểm tra xem khóa đã được kích hoạt từ liên kết trong email chưa, rồi tải lại trang.",
+    "This is taking too long. Check your internet connection and reload.": "Việc này mất quá lâu. Hãy kiểm tra kết nối internet rồi tải lại trang.",
+    "(township)": "(township)"
+  };
+  // Phrases only the code asks for with T(); they are not matched against page text.
+  var CODE_VI = {
+    "{a} through {b}.": "Từ {a} đến {b}.",
+    "Serves {a} only.": "Chỉ dành cho {a}.",
+    "It is based in {x}.": "Nơi này nằm ở {x}.",
+    "{s} averages {r}.": "Trung bình của {s} là {r}.",
+    "The U.S. averages {r}.": "Trung bình của Hoa Kỳ là {r}.",
+    "Inside {P} there are {x}.": "Ở {P} có {x}.",
+    "and": "và",
+    "Census data, compared with the U.S.": "Số liệu điều tra dân số, so sánh với Hoa Kỳ.",
+    "Know Your City": "Hiểu rõ thành phố của bạn"
+  };
+  var FORECASTS_VI = { "Sunny": "Nắng", "Mostly Sunny": "Chủ yếu nắng", "Partly Sunny": "Nắng một phần", "Clear": "Trời quang", "Mostly Clear": "Chủ yếu quang đãng",
+    "Partly Cloudy": "Có mây rải rác", "Mostly Cloudy": "Nhiều mây", "Cloudy": "Có mây", "Overcast": "U ám", "Chance Rain Showers": "Có thể có mưa rào",
+    "Slight Chance Rain Showers": "Khả năng mưa rào thấp", "Rain Showers Likely": "Nhiều khả năng mưa rào", "Rain Showers": "Mưa rào", "Showers": "Mưa rào", "Rain": "Mưa",
+    "Light Rain": "Mưa nhẹ", "Heavy Rain": "Mưa to", "Chance Light Rain": "Có thể có mưa nhẹ", "Showers And Thunderstorms": "Mưa rào và dông",
+    "Chance Showers And Thunderstorms": "Có thể có mưa rào và dông", "Thunderstorms": "Dông", "Slight Chance Thunderstorms": "Khả năng dông thấp",
+    "Chance Thunderstorms": "Có thể có dông", "Patchy Fog": "Sương mù rải rác", "Areas Of Fog": "Có vùng sương mù", "Fog": "Sương mù", "Haze": "Mù khô", "Smoke": "Khói",
+    "Snow": "Tuyết", "Chance Snow": "Có thể có tuyết", "Light Snow": "Tuyết nhẹ", "Snow Showers": "Mưa tuyết rào", "Rain And Snow": "Mưa và tuyết", "Freezing Rain": "Mưa băng",
+    "Sleet": "Mưa tuyết", "Drizzle": "Mưa phùn", "Windy": "Có gió mạnh", "Breezy": "Gió nhẹ", "Isolated Showers": "Mưa rào cục bộ", "Scattered Showers": "Mưa rào rải rác" };
+  var DICT_TX = ES ? DICT_ES : FR ? DICT_FR : VI ? DICT_VI : {}, CODE_TX = ES ? CODE_ES : FR ? CODE_FR : VI ? CODE_VI : {};
   var FORECASTS = { "Sunny": "Soleado", "Mostly Sunny": "Mayormente soleado", "Partly Sunny": "Parcialmente soleado", "Clear": "Despejado", "Mostly Clear": "Mayormente despejado",
     "Partly Cloudy": "Parcialmente nublado", "Mostly Cloudy": "Mayormente nublado", "Cloudy": "Nublado", "Overcast": "Cubierto", "Chance Rain Showers": "Posibles chubascos",
     "Slight Chance Rain Showers": "Leve posibilidad de chubascos", "Rain Showers Likely": "Chubascos probables", "Rain Showers": "Chubascos", "Showers": "Chubascos", "Rain": "Lluvia",
@@ -1668,7 +2156,7 @@ var EVENT_SOURCES = [
     "Chance Thunderstorms": "Risque d'orages", "Patchy Fog": "Brouillard par endroits", "Areas Of Fog": "Zones de brouillard", "Fog": "Brouillard", "Haze": "Brume sèche", "Smoke": "Fumée",
     "Snow": "Neige", "Chance Snow": "Risque de neige", "Light Snow": "Neige légère", "Snow Showers": "Averses de neige", "Rain And Snow": "Pluie et neige", "Freezing Rain": "Pluie verglaçante",
     "Sleet": "Grésil", "Drizzle": "Bruine", "Windy": "Venteux", "Breezy": "Brise", "Isolated Showers": "Averses isolées", "Scattered Showers": "Averses dispersées" };
-  var FC_TX = ES ? FORECASTS : FR ? FORECASTS_FR : {};
+  var FC_TX = ES ? FORECASTS : FR ? FORECASTS_FR : VI ? FORECASTS_VI : {};
   Object.keys(FC_TX).forEach(function (k) { DICT_TX[k] = FC_TX[k]; DICT_TX[k.toLowerCase()] = FC_TX[k].toLowerCase(); });
 
   function interp(s, v) { return v ? String(s).replace(/\{(\w+)\}/g, function (m, k) { return v[k] != null ? v[k] : m; }) : s; }
@@ -1711,6 +2199,8 @@ var EVENT_SOURCES = [
   }
   // French typography: numbers the French way (1 234,5 and 91 000 $), elisions (d'Orlando), contractions (du, au), apostrophes and the space before : ; ? !
   function loc(s, french) {
+    if (VI) return s.replace(/(^|[^\d.,\w])(\d{1,3}(?:,\d{3})+)(?!\d|,\d)/g, function (m, p, n) { return p + n.replace(/,/g, "\u0001"); })
+      .replace(/(^|[^\d.,\w\u0001])(\d+)\.(\d+)(?![\d.])/g, "$1$2,$3").replace(/\u0001/g, ".");
     if (!FR) return s;
     s = s.replace(/(^|[^\d.,\w])(\d{1,3}(?:,\d{3})+)(?!\d|,\d)/g, function (m, p, n) { return p + n.replace(/,/g, "\u202f"); })
       .replace(/(^|[^\d.,\w])(\d+)\.(\d+)(?![\d.])/g, "$1$2,$3")
@@ -1729,7 +2219,7 @@ var EVENT_SOURCES = [
   function tr(str) {
     if (!XL || !str) return str;
     if (!T_EXACT) buildT();
-    if (FR && str.indexOf("\u2060") >= 0) return loc(str.replace(/\u2060/g, ""), true);
+    if ((FR || VI) && str.indexOf("\u2060") >= 0) return loc(str.replace(/\u2060/g, ""), true);
     var m = /^(\s*)([\s\S]*?)(\s*)$/.exec(str), core = m[2]; if (!core) return str;
     var o = trCore(core, 0);
     if (o == null) {
@@ -1739,8 +2229,8 @@ var EVENT_SOURCES = [
         if (any) o = out.join(" ");
       }
     }
-    if (o == null) return FR && /^[\d\s$.,%\u202f\u00a0+\-–×°]*(?:mi|ft|mph|min)?$/i.test(str) ? loc(str, false) : str;
-    return FR ? loc(m[1] + o + m[3], true) : m[1] + o + m[3];
+    if (o == null) return (FR || VI) && /^[\d\s$.,%\u202f\u00a0+\-–×°]*(?:mi|ft|mph|min|phút|tuổi)?$/i.test(str) ? loc(str, false).replace(/(\d)\s?min$/, VI ? "$1 phút" : "$1 min") : str;
+    return FR || VI ? loc(m[1] + o + m[3], true) : m[1] + o + m[3];
   }
   // The English text under a translated element, for things that must not change with the language (section ids).
   function enText(root) {
@@ -1931,6 +2421,57 @@ var EVENT_SOURCES = [
     medAge: { usWordFr: "L'âge médian national" }, avgHH: { usWordFr: "La moyenne nationale" }, perCap: { usWordFr: "Le chiffre national" }, commute: { usWordFr: "La moyenne nationale" }
   };
   if (FR) Object.keys(FR_IND).forEach(function (k) { if (IND[k]) { IND[k].fr = FR_IND[k]; if (FR_IND[k].usWordFr) IND[k].usWordFr = FR_IND[k].usWordFr; } });
+
+  // Vietnamese wording: subj/pred for shares (no plural or agreement), and the custom sentences.
+  var VI_IND = {
+    under18: { subj: "người ở {P}", pred: "dưới 18 tuổi" },
+    age65: { subj: "người ở {P}", pred: "từ 65 tuổi trở lên" },
+    hisp: { subj: "người ở {P}", pred: "là người gốc Tây Ban Nha hoặc Latinh, thuộc mọi chủng tộc" },
+    foreign: { subj: "cư dân của {P}", pred: "sinh ra bên ngoài Hoa Kỳ" },
+    lang: { subj: "cư dân từ 5 tuổi trở lên ở {P}", pred: "nói ở nhà một ngôn ngữ khác tiếng Anh" },
+    alone: { subj: "hộ gia đình ở {P}", pred: "là một người sống một mình" },
+    kids: { subj: "hộ gia đình ở {P}", pred: "có ít nhất một trẻ dưới 18 tuổi" },
+    married: { subj: "hộ gia đình ở {P}", pred: "là các cặp vợ chồng" },
+    hhFemale: { subj: "hộ gia đình ở {P}", pred: "là hộ gia đình do phụ nữ làm chủ, không có vợ/chồng hoặc bạn đời" },
+    hhMale: { subj: "hộ gia đình ở {P}", pred: "là hộ gia đình do nam giới làm chủ, không có vợ/chồng hoặc bạn đời" },
+    own: { subj: "nhà có người ở tại {P}", pred: "do chính chủ sở hữu sinh sống" },
+    vacant: { subj: "ngôi nhà ở {P}", pred: "đang bỏ trống" },
+    singleFam: { subj: "ngôi nhà ở {P}", pred: "là nhà riêng biệt dành cho một gia đình" },
+    noCar: { subj: "hộ gia đình ở {P}", pred: "không có phương tiện đi lại nào" },
+    ownF: { subj: "hộ do phụ nữ làm chủ, không có vợ/chồng ở {P}", pred: "thuộc sở hữu của những người sống ở đó" },
+    ownM: { subj: "hộ do nam giới làm chủ, không có vợ/chồng ở {P}", pred: "thuộc sở hữu của những người sống ở đó" },
+    own1p: { subj: "hộ một người ở {P}", pred: "thuộc sở hữu của người sống ở đó" },
+    ownMC: { subj: "hộ vợ chồng ở {P}", pred: "thuộc sở hữu của cặp vợ chồng sống ở đó" },
+    poverty: { subj: "người ở {P}", pred: "sống dưới mức nghèo của liên bang" },
+    drive: { subj: "người đi làm ở {P}", pred: "tự lái xe đi làm" },
+    wfh: { subj: "người đi làm ở {P}", pred: "làm việc tại nhà" },
+    transit: { subj: "người đi làm ở {P}", pred: "đi làm bằng phương tiện công cộng" },
+    walk: { subj: "người đi làm ở {P}", pred: "đi bộ đi làm" },
+    capAll: { subj: "người trưởng thành từ 25 tuổi trở lên ở {P}", pred: "có bằng đại học: associate, cử nhân hoặc sau đại học" },
+    hs: { subj: "người trưởng thành từ 25 tuổi trở lên ở {P}", pred: "có ít nhất bằng tốt nghiệp trung học phổ thông" },
+    capAssoc: { subj: "người trưởng thành từ 25 tuổi trở lên ở {P}", pred: "có bằng cao đẳng (associate) là trình độ học vấn cao nhất" },
+    capBach: { subj: "người trưởng thành từ 25 tuổi trở lên ở {P}", pred: "có bằng cử nhân là trình độ học vấn cao nhất" },
+    capGrad: { subj: "người trưởng thành từ 25 tuổi trở lên ở {P}", pred: "có bằng sau đại học hoặc bằng chuyên môn" },
+    medAge: { usWordVi: "Độ tuổi trung vị của cả nước" }, avgHH: { usWordVi: "Mức trung bình của cả nước" }, perCap: { usWordVi: "Mức của cả nước" }, commute: { usWordVi: "Mức trung bình của cả nước" }
+  };
+  if (VI) {
+    Object.keys(VI_IND).forEach(function (k) { if (IND[k]) { IND[k].vi = VI_IND[k]; if (VI_IND[k].usWordVi) IND[k].usWordVi = VI_IND[k].usWordVi; } });
+    var vm = function (k, f) { IND[k].main = function (c, P) { return "⁠" + f(c, P); }; };
+    vm("medAge", function (c, P) { return "Một nửa số người ở " + P + " dưới " + K.trimNum(c.p) + " tuổi và nửa còn lại lớn tuổi hơn."; });
+    vm("mix", function (c, P) { return "Nếu chọn ngẫu nhiên hai cư dân của " + P + ", khả năng nguồn gốc chủng tộc hoặc sắc tộc của họ khác nhau là khoảng " + Math.round(c.p) + " trên 100 (theo các nhóm phân loại của Điều tra Dân số)."; });
+    IND.mix.cmp = function (c, P) { var d = c.p - c.pus; return "⁠" + "Khả năng này trên toàn nước Mỹ là khoảng " + Math.round(c.pus) + " trên 100, nên " + P + " " + (Math.abs(d) < 3 ? "gần bằng mức cả nước" : d > 0 ? "cao hơn mức cả nước" : "thấp hơn mức cả nước") + "."; };
+    vm("avgHH", function (c, P) { return "Hộ gia đình trung bình ở " + P + " có " + K.fmt(c, c.p) + " người."; });
+    vm("value", function (c, P) { return "Ngôi nhà điển hình (trung vị) ở " + P + " có giá trị " + K.fmt(c, c.p) + "."; });
+    vm("rentVal", function (c, P) { return "Tiền thuê nhà điển hình (trung vị) ở " + P + " là " + K.fmt(c, c.p) + " mỗi tháng."; });
+    vm("ownFM", function (c, P) {
+      if (c.nW != null && c.nM != null) return "Ở " + P + ", khoảng " + K.approxCount(c.nW) + " hộ sở hữu nhà do phụ nữ làm chủ và không có vợ/chồng, và khoảng " + K.approxCount(c.nM) + " hộ do nam giới làm chủ.";
+      return "Trong số các hộ gia đình không có vợ/chồng, cứ 1 hộ sở hữu nhà do nam giới làm chủ thì " + P + " có khoảng " + K.trimNum(c.p) + " hộ do phụ nữ làm chủ.";
+    });
+    IND.ownFM.cmp = function (c, P) { return "⁠" + "Trên toàn nước Mỹ, tỷ lệ này là khoảng " + K.trimNum(c.pus) + " trên 1, nên khoảng cách ở " + P + " " + (c.sig ? (c.p > c.pus ? "rộng hơn" : "hẹp hơn") : "gần như giống nhau") + "."; };
+    vm("income", function (c, P) { return "Hộ gia đình điển hình (trung vị) ở " + P + " có thu nhập " + K.fmt(c, c.p) + " mỗi năm."; });
+    vm("perCap", function (c, P) { return "Nếu chia đều cho mọi cư dân, thu nhập ở " + P + " tương đương " + K.fmt(c, c.p) + " mỗi năm cho mỗi người."; });
+    vm("commute", function (c, P) { return "Thời gian đi làm trung bình ở " + P + " là khoảng " + Math.round(c.p) + " phút mỗi chiều."; });
+  }
 
   /* ---------- state ---------- */
   K.approxCount = function (n) {
@@ -2408,6 +2949,7 @@ var EVENT_SOURCES = [
     if (r.spec.custom === "mix") { gap = Math.abs(c.p - c.st) >= 3; higher = c.p > c.st; }
     else { gap = cs.sig && (cs.ratio >= 1.15 || cs.ratio <= 0.87); higher = cs.ratio > 1; }
     var val = r.spec.custom === "fm" ? "about " + K.trimNum(c.st) + " to 1" : r.spec.custom === "mix" ? "about " + Math.round(c.st) + " in 100" : K.fmt(c, c.st);
+    if (VI) return "\u2060" + "Ở tiểu bang " + SN + ", con số này là " + (r.spec.custom === "fm" ? "khoảng " + K.trimNum(c.st) + " trên 1" : r.spec.custom === "mix" ? "khoảng " + Math.round(c.st) + " trên 100" : val) + ", nên " + P + " " + (gap ? (higher ? "cao hơn" : "thấp hơn") : "gần bằng") + " mức của tiểu bang.";
     if (FR) return "\u2060" + "Dans l'État de " + SN + ", le chiffre est " + (r.spec.custom === "fm" ? "d'environ " + K.trimNum(c.st) + " pour 1" : r.spec.custom === "mix" ? "d'environ " + Math.round(c.st) + " sur 100" : val) + ", donc " + P + " est " + (gap ? (higher ? "supérieur" : "inférieur") : "comparable") + " à celui de l'État.";
     if (ES) return "En " + SN + " la cifra es " + (r.spec.custom === "fm" ? "de alrededor de " + K.trimNum(c.st) + " a 1" : r.spec.custom === "mix" ? "de alrededor de " + Math.round(c.st) + " en 100" : val) + ", así que " + P + " está " + (gap ? (higher ? "por encima de" : "por debajo de") : "a la par de") + " " + SN + ".";
     return "In " + SN + " the figure is " + val + ", so " + P + " is " + (gap ? (higher ? "higher than" : "lower than") : "about the same as") + " " + SN + ".";
@@ -3417,9 +3959,9 @@ var EVENT_SOURCES = [
   }
   // A small picture to go with a shared link: the place, the section and its one-line fact, in the app's look.
   async function shareCard(label, line) {
-    try { await Promise.all([document.fonts.load('800 60px "Bricolage Grotesque"'), document.fonts.load('700 30px "Atkinson Hyperlegible"')]); } catch (e) {}
+    try { await Promise.all([document.fonts.load('800 60px "Bricolage Grotesque"'), document.fonts.load('700 30px "Atkinson Hyperlegible"')].concat(VI ? [document.fonts.load('700 30px "Be Vietnam Pro"')] : [])); } catch (e) {}
     var W = 1200, H = 630, cv = document.createElement("canvas"); cv.width = W; cv.height = H; var g = cv.getContext("2d"), INK = "#1E1B4B";
-    var D = '"Bricolage Grotesque", system-ui, sans-serif', B = '"Atkinson Hyperlegible", system-ui, sans-serif';
+    var D = '"Bricolage Grotesque", system-ui, sans-serif', B = (VI ? '"Be Vietnam Pro", ' : '') + '"Atkinson Hyperlegible", system-ui, sans-serif';
     function rr(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
     function wrap(t, x, y, maxW, lh, maxLines) {
       var words = String(t).split(/\s+/), ln = "", n = 0;
