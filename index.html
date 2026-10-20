@@ -301,6 +301,12 @@ button{font:inherit;color:inherit}
 .wbframe{position:relative}
 .wbcap{position:absolute;top:14px;z-index:5;pointer-events:none;background:var(--ink);color:#fff;font:700 15px var(--f-body);padding:6px 14px;border-radius:999px;max-width:44%}
 .wbcap.l{left:14px}.wbcap.r{right:14px}
+.pkwrap .pknums{margin:6px 0 24px}
+.pkwrap h3{font:800 clamp(22px,2.6vw,32px) var(--f-display);margin:30px 0 12px}
+.pkcan{display:flex;align-items:center;gap:8px}
+.pkbar{flex:0 0 64px;height:10px;border-radius:999px;background:#E3EBD9;border:2px solid var(--ink);overflow:hidden;display:block}
+.pkbar i{display:block;height:100%;background:#3FA34D}
+.pktile.sel{outline:4px solid var(--ink);outline-offset:3px;background:#FFF6CC}
 .jump[hidden]{display:none}
 .jump{max-width:1180px;margin:0 auto;padding:6px clamp(18px,6vw,90px) clamp(40px,7vh,80px)}
 .jumpcard{background:#fff;border:4px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--ink);padding:clamp(18px,3vw,30px)}
@@ -1854,6 +1860,131 @@ var EVENT_SOURCES = [
     S.SAY.schools = d0 ? (properName(d0.LEA_NAME) + (okNum(d0.MEMBER) ? " has about " + fmtN(d0.MEMBER) + " students." : " runs schools here.")) : "Here are the schools and colleges in " + P + ".";
   }
 
+  /* ---------- Parks and trees (The Trust for Public Land, ParkServe) ---------- */
+  var PARKS = { url: "https://server7.tplgis.org/arcgis7/rest/services/ParkServe/ParkServe_Shareable/MapServer/0" };
+  var parkDomains = null;
+  async function parkDomainMap() {
+    if (parkDomains) return parkDomains;
+    var j = await getJSON(PARKS.url + "?f=json"), out = {};
+    (j.fields || []).forEach(function (f) { if (f.domain && f.domain.codedValues) { var m = {}; f.domain.codedValues.forEach(function (c) { m[c.code] = c.name; }); out[String(f.name).toLowerCase()] = m; } });
+    return (parkDomains = out);
+  }
+  function pk(a, k) { var v = a[k]; return v === undefined ? a[k.toUpperCase()] : v; }
+  function parkKind(a) { var d = S.parkDom && S.parkDom.park_designation, v = pk(a, "park_designation"); return properName(String((d && d[v]) || v || "Park")); }
+  function parkAccess(a) {
+    var d = S.parkDom && S.parkDom.park_access, v = pk(a, "park_access"), t = String((d && d[v]) || ""); if (!t) return "";
+    if (/^open/i.test(t)) return "Open to the public"; if (/restrict|limit/i.test(t)) return "Limited access"; if (/no public|closed|private/i.test(t)) return "Not open to the public"; return t;
+  }
+  function parkFacts(a) {
+    var f = [], ac = +pk(a, "park_size_acres"), can = pk(a, "canopy_pct"), pg = +pk(a, "playground_count"), tr = String(pk(a, "trails_yn") || "");
+    if (ac > 0) f.push([ac < 10 ? ac.toFixed(1).replace(/\.0$/, "") : fmtN(ac), "acres"]);
+    return { acres: ac, canopy: can != null && isFinite(+can) ? +can : null, access: parkAccess(a), playgrounds: pg > 0 ? pg : 0, trails: /^y/i.test(tr) };
+  }
+  function parkPopup(a) {
+    var p = parkFacts(a), d = document.createElement("div"); d.className = "poipop";
+    var mgr = pk(a, "park_local_manager");
+    d.innerHTML = '<span class="evtag">' + esc(parkKind(a)) + '</span><dl>' +
+      (p.acres > 0 ? "<div><dt>Size: </dt><dd>" + esc(p.acres < 10 ? p.acres.toFixed(1) : fmtN(p.acres)) + " acres</dd></div>" : "") +
+      (p.canopy != null ? "<div><dt>Tree cover: </dt><dd>" + esc(Math.round(p.canopy)) + "% of the park</dd></div>" : "") +
+      (p.access ? "<div><dt>Access: </dt><dd>" + esc(p.access) + "</dd></div>" : "") +
+      (p.playgrounds ? "<div><dt>Playgrounds: </dt><dd>" + esc(p.playgrounds) + "</dd></div>" : "") + (p.trails ? "<div><dt>Trails: </dt><dd>Yes</dd></div>" : "") +
+      (mgr ? "<div><dt>Run by: </dt><dd>" + esc(properName(mgr)) + "</dd></div>" : "") + "</dl>";
+    return d;
+  }
+  function ensureParkMap(box) {
+    if (S.parkMapP) return S.parkMapP;
+    S.parkMapP = (async function () {
+      await needMaps();
+      if (!modules.MapView || !modules.FeatureLayer || !modules.Map || !S.geoid) throw new Error("parks map not available");
+      var map = CFG.ARCGIS_KEY ? new modules.Map({ basemap: "arcgis/community" }) : new modules.Map({ layers: [new modules.WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
+      var lyr = new modules.FeatureLayer({ url: PARKS.url, outFields: ["*"], definitionExpression: "park_place_fips = '" + S.geoid + "'", copyright: "© The Trust for Public Land",
+        renderer: { type: "simple", symbol: { type: "simple-fill", color: [56, 168, 0, 0.55], outline: { color: [30, 27, 75, 1], width: 1 } } },
+        popupTemplate: { title: function (f) { return properName(pk(f.graphic.attributes, "park_name") || "Park"); }, content: function (f) { return parkPopup(f.graphic.attributes); } } });
+      map.add(lyr); S.parkLayer = lyr;
+      var view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 12, ui: { components: ["zoom", "attribution"] },
+        popup: { collapseEnabled: true, dockEnabled: false }, navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
+      S.parkView = view;
+      view.on("click", function () { view.navigation.mouseWheelZoomEnabled = true; });
+      box.addEventListener("mouseleave", function () { view.navigation.mouseWheelZoomEnabled = false; });
+      await view.when();
+      var poly = S.pendingPoly;
+      if (poly && modules.Graphic) {
+        view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [0, 0, 0, 0], outline: { color: "#1E1B4B", width: 3.5 } } }));
+        view.goTo(poly.extent.expand(1.2), { duration: 0 }).catch(function () {});
+      }
+      return view;
+    })();
+    S.parkMapP.catch(function (e) { console.info("Parks map unavailable:", e.message); var w = box.closest(".poimapwrap"); if (w) w.hidden = true; document.querySelectorAll(".pkbtn").forEach(function (b) { b.hidden = true; }); });
+    return S.parkMapP;
+  }
+  async function showOnParkMap(oid) {
+    var box = document.getElementById("parkMap"); if (!box) return;
+    var st = document.getElementById("parkStatus");
+    function say(t) { if (st) st.textContent = t; }
+    document.querySelectorAll(".pktile.sel").forEach(function (c) { c.classList.remove("sel"); c.removeAttribute("aria-current"); });
+    var card = document.querySelector('.pktile[data-oid="' + oid + '"]'); if (card) { card.classList.add("sel"); card.setAttribute("aria-current", "true"); }
+    box.closest(".poimapwrap").scrollIntoView({ block: "center", behavior: (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) ? "auto" : "smooth" });
+    var view; try { view = await ensureParkMap(box); } catch (e) { say("The map isn't available right now."); return; }
+    var g = null;
+    try { var r = await S.parkLayer.queryFeatures({ where: "objectid = " + (+oid), outFields: ["*"], returnGeometry: true, outSpatialReference: view.spatialReference }); g = r.features && r.features[0]; }
+    catch (e) { console.warn("Looking up the park failed:", e); }
+    if (!g) { say("That one isn't on the map."); return; }
+    var name = properName(pk(g.attributes, "park_name") || "This park");
+    try { if (view.popup) view.popup.close(); } catch (e) {}
+    try { await Promise.race([view.goTo(g.geometry.extent.expand(2.2), { duration: 700 }), new Promise(function (res) { setTimeout(res, 2500); })]); } catch (e) { if (!e || e.name !== "AbortError") console.warn("Zooming failed:", e); }
+    try { view.openPopup({ features: [g], location: g.geometry.extent.center }); } catch (e) { console.warn("Opening the popup failed:", e); }
+    try { var lv = await view.whenLayerView(S.parkLayer); if (S.parkHl) S.parkHl.remove(); S.parkHl = lv.highlight(g); } catch (e) {}
+    say("Showing " + name + " on the map.");
+  }
+  async function loadParks(myLoad) {
+    var gid = S.geoid; if (!PARKS.url || !/^\d{7}$/.test(gid || "")) return;
+    var rows = [];
+    try {
+      S.parkDom = await parkDomainMap().catch(function () { return {}; });
+      for (var off = 0; off < 3000; off += 1000) {
+        var j = await getJSON(PARKS.url + "/query?where=" + encodeURIComponent("park_place_fips='" + gid + "'") + "&outFields=objectid,park_name,park_designation,park_size_acres,park_access,canopy_pct,playground_count,trails_yn,park_local_manager&returnGeometry=false&orderByFields=" + encodeURIComponent("park_size_acres DESC") + "&resultOffset=" + off + "&resultRecordCount=1000&f=json");
+        if (j.error) throw new Error(j.error.message || "parks query error");
+        (j.features || []).forEach(function (f) { rows.push(f.attributes); });
+        if (!j.exceededTransferLimit) break;
+      }
+    } catch (e) { console.info("Parks unavailable:", e.message); return; }
+    if (myLoad !== S.loadId || !rows.length || gid !== S.geoid) return;
+    var P = S.name, acres = 0, cw = 0, cA = 0;
+    rows.forEach(function (r) { var a = +pk(r, "park_size_acres"), c = pk(r, "canopy_pct"); if (a > 0) { acres += a; if (c != null && isFinite(+c)) { cw += a * c; cA += a; } } });
+    var landAc = S.curAttrs && +S.curAttrs.AREALAND ? +S.curAttrs.AREALAND / 4046.856 : 0, share = landAc && acres ? acres / landAc * 100 : 0;
+    var pop = K.findItem(S.items, ["sex and age", "total population"]), popV = pop && K.getVals(S.pl, pop.base).e, per1k = popV > 0 ? acres / popV * 1000 : 0;
+    var canopy = cA > 0 ? cw / cA : null;
+    function pct(x) { return x < 1 ? x.toFixed(1) : String(Math.round(x)); }
+    var sum = esc(P) + " has " + plural(rows.length, "park") + " in the Trust for Public Land's park data, covering about " + fmtN(acres) + " acres." +
+      (share >= 0.05 ? " That is about " + pct(share) + "% of the city's land." : "") + (per1k >= 0.05 ? " It works out to about " + (per1k < 10 ? per1k.toFixed(1) : fmtN(per1k)) + " acres of park for every 1,000 residents." : "") +
+      (canopy != null ? " Across these parks, about " + pct(canopy) + "% of the ground is covered by tree canopy." : "");
+    var nums = [["parks", fmtN(rows.length)], ["acres of parks", fmtN(acres)]];
+    if (share >= 0.05) nums.push(["of the city's land", pct(share) + "%"]); if (canopy != null) nums.push(["tree cover in parks", pct(canopy) + "%"]);
+    var shown = rows.slice(0, 8);
+    function tile(a) {
+      var p = parkFacts(a), oid = pk(a, "objectid"), nm = properName(pk(a, "park_name") || "Unnamed park"), ic = ICONS.tree;
+      return '<article class="poitile pktile" data-oid="' + esc(oid) + '"><div class="pimg"><div class="pmedia" style="background:' + ic[1] + '"><span class="picon">' + poiIconHTML("tree") + '</span></div><span class="pkind">' + esc(parkKind(a)) + '</span></div>' +
+        '<div class="pbody"><span class="pname"><span>' + esc(nm) + '</span></span><div class="pfacts">' + (p.acres > 0 ? '<span>' + esc(p.acres < 10 ? p.acres.toFixed(1) : fmtN(p.acres)) + ' acres</span>' : '') +
+        (p.canopy != null ? '<span class="pkcan"><span class="pkbar" role="img" aria-label="Tree cover: ' + Math.round(p.canopy) + ' percent of the park"><i style="width:' + Math.max(2, Math.min(100, p.canopy)) + '%"></i></span>' + Math.round(p.canopy) + '% tree cover</span>' : '') +
+        (p.access ? '<span>' + esc(p.access) + '</span>' : '') + (p.playgrounds ? '<span>' + plural(p.playgrounds, "playground") + '</span>' : '') + (p.trails ? '<span>Has trails</span>' : '') + '</div>' +
+        '<div class="pbtns"><button type="button" class="pill poibtn pkbtn" data-oid="' + esc(oid) + '" aria-label="Show ' + esc(nm) + ' on the map">Show on map</button></div></div></article>';
+    }
+    var sc = scene("leaf", "Parks and trees in " + P), w = el("div", "evwrap pkwrap"); w.setAttribute("data-hid", "parks");
+    w.innerHTML = '<h2>Parks and trees.</h2><p class="evnote">' + sum + ' Park data is from The Trust for Public Land\'s ParkServe. Tree cover is the share of each park shaded by tree canopy, seen from above.</p>' +
+      '<dl class="dnums pknums">' + nums.map(function (n) { return "<div><dd>" + esc(n[1]) + "</dd><dt>" + esc(n[0]) + "</dt></div>"; }).join("") + '</dl>' +
+      '<div class="poimapwrap"><div id="parkMap" class="poimap" role="region" aria-label="Map of parks in ' + esc(P) + '"></div>' +
+      '<p id="parkStatus" class="evnote" role="status" aria-live="polite">Select &ldquo;Show on map&rdquo; on a park to find it here.</p></div>' +
+      '<h3>The biggest parks</h3><div class="poigrid">' + shown.map(tile).join("") + '</div>' + (rows.length > shown.length ? '<p class="evnote">Showing ' + shown.length + ' of ' + rows.length + '. The rest are on the map.</p>' : '');
+    sc.appendChild(w);
+    w.addEventListener("click", function (e) { var b = e.target.closest(".pkbtn"); if (b) showOnParkMap(b.getAttribute("data-oid")); });
+    var mapBox = w.querySelector("#parkMap");
+    if (mapBox) { if ("IntersectionObserver" in window) { var mio = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { mio.disconnect(); ensureParkMap(mapBox); } }, { rootMargin: "500px" }); mio.observe(mapBox); } else ensureParkMap(mapBox); }
+    var story = $("#story"), prev = null;
+    ["pois", "weather", "events", "namecard"].some(function (id) { var n = story.querySelector('[data-hid="' + id + '"]'); prev = n && n.closest(".scene"); return !!prev; });
+    if (prev) prev.insertAdjacentElement("afterend", sc); else story.insertBefore(sc, story.children[2] || null);
+    S.SAY.parks = canopy != null ? "About " + pct(canopy) + "% of the ground in " + P + "'s parks is covered by tree canopy." : P + " has " + plural(rows.length, "park") + " covering about " + fmtN(acres) + " acres.";
+  }
+
   /* ---------- Then and now: Esri World Imagery Wayback ---------- */
   var WAYBACK_CFG = "https://s3-us-west-2.amazonaws.com/config.maptiles.arcgis.com/waybackconfig.json", wbReleases = null;
   async function wbList() {
@@ -1988,7 +2119,7 @@ var EVENT_SOURCES = [
 
   /* ---------- Share links: every section gets an id and a Share button ---------- */
   var JUMP = (function () { try { return decodeURIComponent(location.hash.replace(/^#/, "")); } catch (e) { return ""; } })(), jumpMoved = false, jumpTimer = null, shareTimer = null;
-  var NAMED_SECTIONS = ["namecard", "weather", "events", "pois", "schools", "wayback"];
+  var NAMED_SECTIONS = ["namecard", "weather", "events", "pois", "parks", "schools", "wayback"];
   var ICON_SHARE = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3A4.5 4.5 0 0 0 11 19.4l1.1-1.1" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function slugify(s) { return String(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
   function sectionInfo(sc) {
@@ -2045,13 +2176,11 @@ var EVENT_SOURCES = [
   function orderSections() {
     var story = $("#story"); if (!story) return;
     function sec(id) { var n = story.querySelector('[data-hid="' + id + '"]'); return n && n.closest(".scene"); }
-    var p = sec("pois"), wb = sec("wayback"), sch = sec("schools");
-    if (wb && p && p.nextElementSibling !== wb) p.insertAdjacentElement("afterend", wb);
-    var anchor = wb || p;
-    if (sch && anchor && anchor.nextElementSibling !== sch) anchor.insertAdjacentElement("afterend", sch);
+    var chain = [sec("pois"), sec("parks"), sec("wayback"), sec("schools")].filter(Boolean);
+    for (var i = 1; i < chain.length; i++) if (chain[i - 1].nextElementSibling !== chain[i]) chain[i - 1].insertAdjacentElement("afterend", chain[i]);
   }
   // "On this page": what stands out, then a chip for each titled section, in page order.
-  var JUMP_LABEL = { namecard: "Name card", events: "Events", weather: "Weather", pois: "Places to see", wayback: "Then and now", schools: "Schools and colleges" };
+  var JUMP_LABEL = { namecard: "Name card", events: "Events", weather: "Weather", pois: "Places to see", parks: "Parks and trees", wayback: "Then and now", schools: "Schools and colleges" };
   function buildJump() {
     var nav = $("#jump"), story = $("#story"); if (!nav || !story) return;
     var items = [], seen = {};
@@ -2232,7 +2361,7 @@ var EVENT_SOURCES = [
     var foot = el("div", "foot");
     foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
       '<p>Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.</p>' +
-      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>. Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Aerial photos over time: <a href="https://livingatlas.arcgis.com/wayback/" target="_blank" rel="noopener">Esri World Imagery Wayback</a>. Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
+      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>. Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Aerial photos over time: <a href="https://livingatlas.arcgis.com/wayback/" target="_blank" rel="noopener">Esri World Imagery Wayback</a>. Parks: <a href="https://www.tpl.org/park-data-downloads" target="_blank" rel="noopener">ParkServe, The Trust for Public Land</a>. Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
     end.appendChild(foot);
     story.appendChild(end);
     var chips = $("#chips", end);
@@ -2550,6 +2679,7 @@ var EVENT_SOURCES = [
     var myLoad = ++S.loadId, a = feature.attributes;
     if (S.poiView) { try { S.poiView.destroy(); } catch (e) {} }
     if (S.wbView) { try { S.wbView.destroy(); } catch (e) {} } S.wbView = null;
+    if (S.parkView) { try { S.parkView.destroy(); } catch (e) {} } S.parkView = null; S.parkMapP = null; S.parkLayer = null; S.parkHl = null;
     if (S.schoolView) { try { S.schoolView.destroy(); } catch (e) {} }
     S.schoolView = null; S.schoolMapP = null; S.schoolWM = null; S.sch = null; S.schoolHl = null;
     S.poiView = null; S.poiMapP = null; S.poiLayer = null; S.poiPhotos = {}; S.poiOids = null; S.poiAllOids = null; S.poiTruncated = false; S.poiItems = [];
@@ -2594,6 +2724,7 @@ var EVENT_SOURCES = [
     S.facts = facts;
     buildStory();
     loadNameCard(myLoad); loadWeather(center, myLoad); loadPois(myLoad);
+    loadParks(myLoad).catch(function (e) { console.info("Parks unavailable:", e && e.message); });
     loadSchools(myLoad).catch(function () {});
     loadWayback(myLoad).catch(function (e) { console.info("Then and now unavailable:", e && e.message); });
     $("#loading").classList.add("gone");
@@ -2604,9 +2735,9 @@ var EVENT_SOURCES = [
   function startMap() {
     if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); modulesDone(); return; }
     try {
-      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home", "esri/widgets/Swipe"],
-        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home, Swipe) {
-          modules.Swipe = Swipe;
+      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home", "esri/widgets/Swipe", "esri/layers/FeatureLayer"],
+        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home, Swipe, FeatureLayer) {
+          modules.Swipe = Swipe; modules.FeatureLayer = FeatureLayer;
           modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter; modules.Viewpoint = Viewpoint;
           modulesDone();
           var wmId = WEBMAP.id || qs.get("webmap") || "", map;
