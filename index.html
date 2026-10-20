@@ -363,8 +363,8 @@ button{font:inherit;color:inherit}
 .sharebtn{position:absolute;top:clamp(14px,3vh,28px);right:clamp(14px,3vw,40px);z-index:6;display:flex;align-items:center;gap:7px;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:999px;padding:6px 15px 6px 11px;font:700 15px var(--f-body);cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
 .sharebtn:hover{background:#FFD23F}
 .sharebtn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-.langrow{display:flex;gap:8px;margin:0 0 14px}
-.langrow .pill{padding:5px 14px;font-size:15px}
+.langrow{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.langrow .pill{padding:5px 14px;font-size:15px;white-space:nowrap}
 .langrow .pill[aria-pressed="true"]{background:var(--ink);color:#fff}
 .poicard{cursor:default}
 .poicard[data-oid]{cursor:pointer}
