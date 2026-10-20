@@ -542,6 +542,9 @@ i.sw{border-width:3px}
   .dots i.on{opacity:1}
 }
 html[lang="vi"]{--f-body:"Be Vietnam Pro","Atkinson Hyperlegible",system-ui,sans-serif}
+.trmodes{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:8px 0 0;padding:0}
+.trmodes li{background:#fff;border:3px solid var(--ink);border-radius:999px;padding:4px 14px;font-weight:700}
+.trmodes b{margin-left:8px;font-family:var(--f-display)}
 </style>
 </head>
 <body>
@@ -771,6 +774,28 @@ var EVENT_SOURCES = [
     "Born in {P}": "Nacidos en {P}",
     "Grew up in {P}": "Crecieron en {P}",
     "Co-founder and president of Esri, the mapping software company.": "Cofundador y presidente de Esri, la empresa de software de mapas.",
+    "Getting around": "Cómo moverse",
+    "Getting around in {P}": "Cómo moverse en {P}",
+    "Getting around.": "Cómo moverse.",
+    "{n} public transit stops are listed in {P}, about {d} per square mile.": "En {P} figuran {n} paradas de transporte público, unas {d} por milla cuadrada.",
+    "{n} public transit stops are listed in {P}.": "En {P} figuran {n} paradas de transporte público.",
+    "1 public transit stop is listed in {P}.": "En {P} figura 1 parada de transporte público.",
+    "No public transit stops are listed in {P} in this data.": "En estos datos no figura ninguna parada de transporte público en {P}.",
+    "Source: U.S. Department of Transportation, National Transit Map.": "Fuente: Departamento de Transporte de EE. UU., National Transit Map.",
+    "Stops come from schedule data that transit agencies publish, so service that is not in that data is not counted.": "Las paradas provienen de los datos de horarios que publican las agencias de transporte, por lo que el servicio que no figura en esos datos no se cuenta.",
+    "This counts stops, not how often vehicles come.": "Esto cuenta paradas, no la frecuencia con la que pasan los vehículos.",
+    "transit stops": "paradas de transporte público",
+    "stops per square mile": "paradas por milla cuadrada",
+    "workers who take public transit": "trabajadores que usan el transporte público",
+    "households with no vehicle": "hogares sin vehículo",
+    "Kinds of stops:": "Tipos de paradas:",
+    "Bus": "Autobús",
+    "Light rail": "Tren ligero",
+    "Subway": "Metro",
+    "Train": "Tren",
+    "Ferry": "Transbordador",
+    "Other": "Otro",
+    "Here is a look at public transit in {P}.": "Un vistazo al transporte público en {P}.",
     "From": "Fuente:",
     ", which volunteers keep up to date, so some facts may be missing.": ", que mantienen voluntarios, así que puede faltar algún dato.",
     "Enlarge the {x}": "Ampliar: {x}",
@@ -1254,6 +1279,28 @@ var EVENT_SOURCES = [
     "Born in {P}": "Nés à {P}",
     "Grew up in {P}": "Ont grandi à {P}",
     "Co-founder and president of Esri, the mapping software company.": "Cofondateur et président d'Esri, l'entreprise de logiciels de cartographie.",
+    "Getting around": "Se déplacer",
+    "Getting around in {P}": "Se déplacer à {P}",
+    "Getting around.": "Se déplacer.",
+    "{n} public transit stops are listed in {P}, about {d} per square mile.": "{n} arrêts de transport en commun sont répertoriés à {P}, soit environ {d} par mile carré.",
+    "{n} public transit stops are listed in {P}.": "{n} arrêts de transport en commun sont répertoriés à {P}.",
+    "1 public transit stop is listed in {P}.": "1 arrêt de transport en commun est répertorié à {P}.",
+    "No public transit stops are listed in {P} in this data.": "Aucun arrêt de transport en commun n'est répertorié à {P} dans ces données.",
+    "Source: U.S. Department of Transportation, National Transit Map.": "Source : Département des Transports des États-Unis, National Transit Map.",
+    "Stops come from schedule data that transit agencies publish, so service that is not in that data is not counted.": "Les arrêts proviennent des données d'horaires publiées par les agences de transport ; un service absent de ces données n'est donc pas compté.",
+    "This counts stops, not how often vehicles come.": "Cela compte les arrêts, pas la fréquence des passages.",
+    "transit stops": "arrêts de transport en commun",
+    "stops per square mile": "arrêts par mile carré",
+    "workers who take public transit": "travailleurs qui prennent les transports en commun",
+    "households with no vehicle": "ménages sans véhicule",
+    "Kinds of stops:": "Types d'arrêts :",
+    "Bus": "Bus",
+    "Light rail": "Métro léger",
+    "Subway": "Métro",
+    "Train": "Train",
+    "Ferry": "Ferry",
+    "Other": "Autre",
+    "Here is a look at public transit in {P}.": "Un aperçu des transports en commun à {P}.",
     "From": "Source :",
     ", which volunteers keep up to date, so some facts may be missing.": ", tenu à jour par des bénévoles ; certaines informations peuvent donc manquer.",
     "Enlarge the {x}": "Agrandir : {x}",
@@ -1734,6 +1781,28 @@ var EVENT_SOURCES = [
     "Born in {P}": "Sinh ra ở {P}",
     "Grew up in {P}": "Lớn lên ở {P}",
     "Co-founder and president of Esri, the mapping software company.": "Đồng sáng lập và chủ tịch của Esri, công ty phần mềm bản đồ.",
+    "Getting around": "Di chuyển",
+    "Getting around in {P}": "Di chuyển ở {P}",
+    "Getting around.": "Di chuyển.",
+    "{n} public transit stops are listed in {P}, about {d} per square mile.": "{P} có {n} điểm dừng phương tiện công cộng trong dữ liệu, khoảng {d} điểm dừng trên mỗi dặm vuông.",
+    "{n} public transit stops are listed in {P}.": "{P} có {n} điểm dừng phương tiện công cộng trong dữ liệu.",
+    "1 public transit stop is listed in {P}.": "{P} có 1 điểm dừng phương tiện công cộng trong dữ liệu.",
+    "No public transit stops are listed in {P} in this data.": "Dữ liệu này không liệt kê điểm dừng phương tiện công cộng nào ở {P}.",
+    "Source: U.S. Department of Transportation, National Transit Map.": "Nguồn: Bộ Giao thông Vận tải Hoa Kỳ, National Transit Map.",
+    "Stops come from schedule data that transit agencies publish, so service that is not in that data is not counted.": "Các điểm dừng lấy từ dữ liệu lịch trình do các cơ quan vận tải công bố, nên dịch vụ không có trong dữ liệu đó sẽ không được tính.",
+    "This counts stops, not how often vehicles come.": "Số liệu này đếm điểm dừng, không phải mức độ thường xuyên của các chuyến xe.",
+    "transit stops": "điểm dừng phương tiện công cộng",
+    "stops per square mile": "điểm dừng trên mỗi dặm vuông",
+    "workers who take public transit": "người đi làm bằng phương tiện công cộng",
+    "households with no vehicle": "hộ gia đình không có phương tiện",
+    "Kinds of stops:": "Loại điểm dừng:",
+    "Bus": "Xe buýt",
+    "Light rail": "Đường sắt nhẹ",
+    "Subway": "Tàu điện ngầm",
+    "Train": "Tàu hỏa",
+    "Ferry": "Phà",
+    "Other": "Khác",
+    "Here is a look at public transit in {P}.": "Đây là cái nhìn về phương tiện công cộng ở {P}.",
     "From": "Từ",
     ", which volunteers keep up to date, so some facts may be missing.": ", do các tình nguyện viên cập nhật, nên có thể thiếu một vài thông tin.",
     "Enlarge the {x}": "Phóng to {x}",
@@ -3825,6 +3894,76 @@ var EVENT_SOURCES = [
     S.SAY.parks = canopy != null ? "About " + pct(canopy) + "% of the ground in " + P + "'s parks is covered by tree canopy." : P + " has " + plural(rows.length, "park") + " covering about " + fmtN(acres) + " acres.";
   }
 
+
+  /* ---------- Getting around: public transit stops (U.S. DOT National Transit Map) ---------- */
+  var TRANSIT = { url: "https://services.arcgis.com/xOi1kZaI0eWDREZv/ArcGIS/rest/services/NTAD_National_Transit_Map_Stops/FeatureServer/0/query" };
+  async function postForm(url, params) {
+    var ctl = new AbortController(), tm = setTimeout(function () { ctl.abort(); }, 25000), r;
+    var body = Object.keys(params).map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]); }).join("&");
+    try { r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body, signal: ctl.signal }); }
+    catch (e) { throw new Error(e.name === "AbortError" ? "Timed out waiting for " + url.split("?")[0] : "Couldn't reach " + url.split("?")[0] + " (" + e.message + ")"); }
+    finally { clearTimeout(tm); }
+    if (!r.ok) throw new Error("HTTP " + r.status + " from " + url.split("?")[0]);
+    var j = await r.json(); if (j.error) throw new Error(j.error.message || "transit query error");
+    return j;
+  }
+  // The map data says what kind of stop it is in words; map those words to a few plain kinds.
+  var TRANSIT_ORDER = ["Bus", "Light rail", "Subway", "Train", "Ferry", "Other"];
+  function transitKinds(text) {
+    var out = {}, parts = String(text || "").toLowerCase().split(/[,;\/&]| and /);
+    parts.forEach(function (t) {
+      t = t.trim(); if (!t) return;
+      var k = /ferry|boat/.test(t) ? "Ferry" : /subway|metro|underground/.test(t) ? "Subway" : /light\s*rail|tram|streetcar|street car|trolley/.test(t) ? "Light rail" :
+        /monorail|cable|funicular|gondola|aerial|tramway/.test(t) ? "Other" : /commuter|heavy rail|intercity|amtrak|rail|train/.test(t) ? "Train" : /bus/.test(t) ? "Bus" : "Other";
+      out[k] = 1;
+    });
+    return Object.keys(out).length ? out : { Other: 1 };
+  }
+  async function transitStops(rings) {
+    var base = { where: "(parent_station IS NULL OR parent_station = '')", geometry: JSON.stringify({ rings: rings, spatialReference: { wkid: 4326 } }), geometryType: "esriGeometryPolygon",
+      inSR: "4326", spatialRel: "esriSpatialRelIntersects", returnGeometry: "false", f: "json" }, groups = [], total = 0;
+    try {   // counts by kind, worked out by the server
+      var j = await postForm(TRANSIT.url, Object.assign({}, base, { groupByFieldsForStatistics: "stop_type_text", outStatistics: JSON.stringify([{ statisticType: "count", onStatisticField: "OBJECTID", outStatisticFieldName: "n" }]) }));
+      (j.features || []).forEach(function (f) { var n = +f.attributes.n || 0; if (n) { groups.push({ t: f.attributes.stop_type_text, n: n }); total += n; } });
+      if (j.features) return { groups: groups, total: total };
+    } catch (e) { console.info("Transit statistics unavailable, counting stops one by one:", e.message); }
+    var tally = {}; total = 0; groups = [];
+    for (var off = 0; off < 10000; off += 2000) {   // fallback: fetch the stops and count them here
+      var k = await postForm(TRANSIT.url, Object.assign({}, base, { outFields: "stop_type_text", resultOffset: off, resultRecordCount: 2000 }));
+      (k.features || []).forEach(function (f) { var t = f.attributes.stop_type_text || ""; tally[t] = (tally[t] || 0) + 1; total++; });
+      if (!k.exceededTransferLimit) break;
+    }
+    Object.keys(tally).forEach(function (t) { groups.push({ t: t, n: tally[t] }); });
+    return { groups: groups, total: total };
+  }
+  async function loadTransit(myLoad) {
+    var gid = S.geoid, rings = S.rings; if (!rings || !gid) return;
+    var res = await transitStops(rings);
+    if (myLoad !== S.loadId || gid !== S.geoid) return;
+    var P = S.name, n = res.total, kinds = {};
+    res.groups.forEach(function (g) { var ks = transitKinds(g.t); Object.keys(ks).forEach(function (k) { kinds[k] = (kinds[k] || 0) + g.n; }); });
+    var sqmi = S.curAttrs && +S.curAttrs.AREALAND ? +S.curAttrs.AREALAND / 2589988.11 : 0, dens = sqmi > 0.2 ? n / sqmi : 0;
+    function d1(x) { return x < 10 ? x.toFixed(1) : fmtN(x); }
+    function pct(x) { return x < 1 ? x.toFixed(1) : String(Math.round(x)); }
+    var sum = n === 0 ? "No public transit stops are listed in " + P + " in this data." : n === 1 ? "1 public transit stop is listed in " + P + "." :
+      fmtN(n) + " public transit stops are listed in " + P + (dens >= 0.05 ? ", about " + d1(dens) + " per square mile." : ".");
+    var nums = [];
+    if (n > 0) { nums.push(["transit stops", fmtN(n)]); if (dens >= 0.05) nums.push(["stops per square mile", d1(dens)]); }
+    var tr = S.R && S.R.transit && S.R.transit.c, nc = S.R && S.R.noCar && S.R.noCar.c;
+    if (tr && tr.p != null) nums.push(["workers who take public transit", pct(tr.p) + "%"]);
+    if (nc && nc.p != null) nums.push(["households with no vehicle", pct(nc.p) + "%"]);
+    var chips = TRANSIT_ORDER.filter(function (k) { return kinds[k]; });
+    var sc = scene("teal", "Getting around in " + P), w = el("div", "evwrap trwrap"); w.setAttribute("data-hid", "transit");
+    w.innerHTML = '<h2>Getting around.</h2><p class="evnote">' + esc(sum) + ' Source: U.S. Department of Transportation, National Transit Map. Stops come from schedule data that transit agencies publish, so service that is not in that data is not counted. This counts stops, not how often vehicles come.</p>' +
+      (nums.length ? '<dl class="dnums trnums">' + nums.map(function (x) { return "<div><dd>" + esc(x[1]) + "</dd><dt>" + esc(x[0]) + "</dt></div>"; }).join("") + '</dl>' : '') +
+      (chips.length ? '<p class="evnote">Kinds of stops:</p><ul class="trmodes">' + chips.map(function (k) { return '<li><span>' + esc(k) + '</span><b>' + esc(fmtN(kinds[k])) + '</b></li>'; }).join("") + '</ul>' : '');
+    sc.appendChild(w);
+    var story = $("#story"), anchor = null;
+    Array.prototype.some.call(story.children, function (c) { var sg = c.querySelector && c.querySelector(":scope > .sign"); if (sg && enText(sg) === "Work and money") { anchor = c; return true; } return false; });
+    if (anchor) anchor.insertAdjacentElement("beforebegin", sc); else story.appendChild(sc);
+    S.SAY.transit = "Here is a look at public transit in " + P + ".";
+  }
+
   /* ---------- Then and now: Esri World Imagery Wayback ---------- */
   var WAYBACK_CFG = "https://s3-us-west-2.amazonaws.com/config.maptiles.arcgis.com/waybackconfig.json", wbReleases = null;
   async function wbList() {
@@ -3961,7 +4100,7 @@ var EVENT_SOURCES = [
 
   /* ---------- Share links: every section gets an id and a Share button ---------- */
   var JUMP = (function () { try { return decodeURIComponent(location.hash.replace(/^#/, "")); } catch (e) { return ""; } })(), jumpMoved = false, jumpTimer = null, shareTimer = null;
-  var NAMED_SECTIONS = ["namecard", "weather", "events", "pois", "parks", "schools", "wayback"];
+  var NAMED_SECTIONS = ["namecard", "weather", "events", "pois", "parks", "schools", "wayback", "transit"];
   var ICON_SHARE = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3A4.5 4.5 0 0 0 11 19.4l1.1-1.1" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function slugify(s) { return String(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
   function sectionInfo(sc) {
@@ -4071,7 +4210,7 @@ var EVENT_SOURCES = [
     for (var i = 1; i < chain.length; i++) if (chain[i - 1].nextElementSibling !== chain[i]) chain[i - 1].insertAdjacentElement("afterend", chain[i]);
   }
   // "On this page": what stands out, then a chip for each titled section, in page order.
-  var JUMP_LABEL = { namecard: "Name card", events: "Events", weather: "Weather", pois: "Places to see", parks: "Parks and trees", wayback: "Then and now", schools: "Schools and colleges" };
+  var JUMP_LABEL = { namecard: "Name card", events: "Events", weather: "Weather", pois: "Places to see", parks: "Parks and trees", wayback: "Then and now", schools: "Schools and colleges", transit: "Getting around" };
   function buildJump() {
     var nav = $("#jump"), story = $("#story"); if (!nav || !story) return;
     var items = [], seen = {};
@@ -4617,6 +4756,7 @@ var EVENT_SOURCES = [
     loadNameCard(myLoad); loadWeather(center, myLoad); loadPois(myLoad);
     loadParks(myLoad).catch(function (e) { console.info("Parks unavailable:", e && e.message); });
     loadSchools(myLoad).catch(function () {});
+    loadTransit(myLoad).catch(function (e) { console.info("Transit unavailable:", e && e.message); });
     loadWayback(myLoad).catch(function (e) { console.info("Then and now unavailable:", e && e.message); });
     $("#loading").classList.add("gone");
     setTimeout(function () { sched(); }, 200);
