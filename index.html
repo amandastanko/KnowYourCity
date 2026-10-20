@@ -363,6 +363,9 @@ button{font:inherit;color:inherit}
 .sharebtn{position:absolute;top:clamp(14px,3vh,28px);right:clamp(14px,3vw,40px);z-index:6;display:flex;align-items:center;gap:7px;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:999px;padding:6px 15px 6px 11px;font:700 15px var(--f-body);cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
 .sharebtn:hover{background:#FFD23F}
 .sharebtn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.langrow{display:flex;gap:8px;margin:0 0 14px}
+.langrow .pill{padding:5px 14px;font-size:15px}
+.langrow .pill[aria-pressed="true"]{background:var(--ink);color:#fff}
 .poicard{cursor:default}
 .poicard[data-oid]{cursor:pointer}
 .poicard:hover{transform:none}
@@ -567,6 +570,7 @@ i.sw{border-width:3px}
 <main>
   <section class="hero" id="hero">
     <div>
+      <p class="langrow" id="langRow" translate="no"></p>
       <h1 id="placeName">&nbsp;</h1>
       <p class="state" id="stateName">&nbsp;</p>
       <p class="line" id="heroLine">Scroll down and Homie will show you around.</p>
@@ -607,6 +611,10 @@ i.sw{border-width:3px}
 </div>
 
 <script src="engine.js"></script>
+<script>
+// Map widgets (zoom buttons, popups, the compare bar) speak the page's language. The choice is the ?lang= link, or the one saved earlier.
+(function () { var l = "en"; try { var q = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("kyc_lang") || "").slice(0, 2); if (q === "es" || q === "fr") l = q; } catch (e) {} window.dojoConfig = { locale: l }; })();
+</script>
 <script src="https://js.arcgis.com/4.33/"></script>
 <script>
 /* ---------- Configuration ---------- */
@@ -671,25 +679,1142 @@ var EVENT_SOURCES = [
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
   /* ====================================================================
+   * Language. English is the source text. Spanish comes from a table of English phrases:
+   * a phrase with {name} slots is a template, and anything not in the table stays in English.
+   * Sentences built from Census numbers get their Spanish word order in engine.js.
+   * ==================================================================== */
+  var LANGS = { en: "English", es: "Español", fr: "Français" };
+  var LANG = (function () {
+    var q = (qs.get("lang") || "").slice(0, 2).toLowerCase(), s = safeGet("kyc_lang").slice(0, 2);
+    if (LANGS[q]) { safeSet("kyc_lang", q); return q; }
+    return LANGS[s] ? s : "en";
+  })();
+  var ES = LANG === "es", FR = LANG === "fr", XL = ES || FR, LOCALE = ES ? "es-US" : FR ? "fr-FR" : "en-US";
+  K.lang = LANG; document.documentElement.lang = LANG;
+  var DICT_ES = {
+    // --- page chrome ---
+    "Know Your City": "Conoce tu ciudad",
+    "Homie is knocking on doors for the numbers…": "Homie está tocando puertas para conseguir los números…",
+    "Homie: on": "Homie: sí",
+    "Homie: off": "Homie: no",
+    "Show or hide Homie": "Mostrar u ocultar a Homie",
+    "Homie, a friendly little house. Click for a hello.": "Homie, una casita simpática. Haz clic para saludar.",
+    "Search for a place": "Buscar un lugar",
+    "Search for another place": "Buscar otro lugar",
+    "Search any U.S. town or city": "Busca cualquier pueblo o ciudad de EE. UU.",
+    "Type a town or city": "Escribe un pueblo o una ciudad",
+    "About {n} people live here. Scroll down and Homie will show you around.": "Aquí viven unas {n} personas. Desplázate hacia abajo y Homie te mostrará los alrededores.",
+    "Scroll down and Homie will show you around.": "Desplázate hacia abajo y Homie te mostrará los alrededores.",
+    "Scroll to start": "Desplázate para empezar",
+    "Drag to move. Click, then scroll to zoom.": "Arrastra para mover. Haz clic y luego desplázate para acercar.",
+    "On this page": "En esta página",
+    "Jump to a section": "Ir a una sección",
+    "What stands out in {P}": "Lo que destaca en {P}",
+    "Higher than the U.S.:": "Más alto que en EE. UU.:",
+    "Lower than the U.S.:": "Más bajo que en EE. UU.:",
+    "higher than the U.S.": "más alto que en EE. UU.",
+    "lower than the U.S.": "más bajo que en EE. UU.",
+    "lower than the U.S. The arrows show direction only. They don't say whether a number is good or bad.": "más bajo que en EE. UU. Las flechas solo muestran la dirección. No dicen si un número es bueno o malo.",
+    "The arrows show direction only. They don't say whether a number is good or bad.": "Las flechas solo muestran la dirección. No dicen si un número es bueno o malo.",
+    "Share": "Compartir",
+    "Share a link to {x}": "Compartir un enlace a {x}",
+    "Link copied": "Enlace copiado",
+    "Link to {x} copied.": "Enlace a {x} copiado.",
+    "Copy this link:": "Copia este enlace:",
+    "Close": "Cerrar",
+    "Surprise me": "Sorpréndeme",
+    "Pick another place.": "Elige otro lugar.",
+
+    // --- section names (chips and signs) ---
+    "Name card": "Tarjeta del nombre",
+    "The name card": "La tarjeta del nombre",
+    "Events": "Eventos",
+    "Weather": "El clima",
+    "Places to see": "Lugares para visitar",
+    "Parks and trees": "Parques y árboles",
+    "Then and now": "Antes y ahora",
+    "Schools and colleges": "Escuelas y universidades",
+    "Cap and gown": "Birrete y toga",
+    "The price of a home": "El precio de una vivienda",
+    "Who owns the homes": "Quién es dueño de las viviendas",
+    "What sets {P} apart": "Lo que distingue a {P}",
+    "Under each roof": "Bajo cada techo",
+    "The homes": "Las viviendas",
+    "Who lives in {P}": "Quién vive en {P}",
+    "What kinds of households live in {P}": "Qué tipos de hogares viven en {P}",
+    "this section": "esta sección",
+    "About {a} people live per square mile here, across roughly {b} square miles of land.": "Viven unas {a} personas por milla cuadrada, en unas {b} millas cuadradas de superficie.",
+    "Work and money": "Trabajo y dinero",
+    "Backgrounds and languages": "Orígenes e idiomas",
+    "Postcards from {P}": "Postales de {P}",
+    "Happening in {P}": "Eventos en {P}",
+    "The weather in {P}": "El clima en {P}",
+    "Places in {P}": "Lugares en {P}",
+    "Parks and trees in {P}": "Parques y árboles en {P}",
+    "Schools in {P}": "Escuelas en {P}",
+    "Then and now in {P}": "Antes y ahora en {P}",
+
+    // --- name card ---
+    "What's in a name?": "¿Qué hay en un nombre?",
+    "Hello": "Hola",
+    "my name is": "mi nombre es",
+    "That's what people from {P} are called.": "Así se llama a las personas de {P}.",
+    "Nickname": "Apodo",
+    "Named after": "Nombrada en honor a",
+    "Founded": "Fundación",
+    "Elevation": "Altitud",
+    "About {n} feet above sea level": "Unos {n} pies sobre el nivel del mar",
+    "City flag": "Bandera de la ciudad",
+    "City seal": "Sello de la ciudad",
+    "Sister cities": "Ciudades hermanas",
+    "Born in {P}": "Nacidos en {P}",
+    "From": "Fuente:",
+    ", which volunteers keep up to date, so some facts may be missing.": ", que mantienen voluntarios, así que puede faltar algún dato.",
+    "Enlarge the {x}": "Ampliar: {x}",
+    "city flag of {P}": "bandera de la ciudad de {P}",
+    "city seal of {P}": "sello de la ciudad de {P}",
+    "City flag of {P}": "Bandera de la ciudad de {P}",
+    "City seal of {P}": "Sello de la ciudad de {P}",
+    "People from {P} are called {x}.": "A las personas de {P} se les llama {x}.",
+    "{P} is nicknamed {x}.": "A {P} se le apoda {x}.",
+    "Here's a little about the name {P}.": "Un poco sobre el nombre {P}.",
+
+    // --- events ---
+    "Get out and about.": "A salir y pasear.",
+    "Here is where {P} lists its events and permits.": "Aquí es donde {P} publica sus eventos y permisos.",
+    "{P} doesn't have a single events feed that I know of, so here is a search to start with.": "{P} no tiene un solo calendario de eventos que yo conozca, así que aquí hay una búsqueda para empezar.",
+    "Each link says how the information is provided.": "Cada enlace indica cómo se ofrece la información.",
+    "City calendar": "Calendario de la ciudad",
+    "Community calendar": "Calendario comunitario",
+    "Permit info": "Información de permisos",
+    "Open data feed": "Datos abiertos",
+    "Web page": "Página web",
+    "Live feed shown here": "Datos en vivo aquí",
+    "Web search": "Búsqueda web",
+    "Search results": "Resultados de búsqueda",
+    "Search for events in {P}": "Buscar eventos en {P}",
+    "City of {P} calendar": "Calendario de la ciudad de {P}",
+    "Special events and permits": "Eventos especiales y permisos",
+    "About {P} events": "Sobre los eventos de {P}",
+    "Want to get out and about? Here is where to find what's happening in {P}.": "¿Quieres salir y pasear? Aquí encuentras qué está pasando en {P}.",
+
+    // --- weather ---
+    "What's the weather like?": "¿Cómo está el clima?",
+    "Right now": "Ahora mismo",
+    "Tonight": "Esta noche",
+    "Today": "Hoy",
+    "{n}% chance of rain": "{n}% de probabilidad de lluvia",
+    "Forecast:": "Pronóstico:",
+    "National Weather Service": "Servicio Meteorológico Nacional",
+    "National Weather Service web page": "Página web del Servicio Meteorológico Nacional",
+    "Forecast": "Pronóstico",
+    "Forecast for {P}": "Pronóstico para {P}",
+    ". Big number is the high, small number is the low.": ". El número grande es la máxima y el pequeño es la mínima.",
+    "The forecast didn't load just now.": "El pronóstico no se cargó en este momento.",
+    "The National Weather Service has the latest for {P}.": "El Servicio Meteorológico Nacional tiene lo más reciente para {P}.",
+    "{a} to {b} mph": "{a} a {b} mph",
+    "{a} in {P}: {f}, wind {w}.": "{a} en {P}: {f}, viento de {w}.",
+    "It's {t} degrees and {f} in {P}.": "Hay {t} grados y {f} en {P}.",
+    "Here's the next few days.": "Aquí están los próximos días.",
+    "I couldn't load the forecast, but the weather service link has it.": "No pude cargar el pronóstico, pero el enlace del servicio meteorológico lo tiene.",
+
+    // --- places to see ---
+    "Places to see.": "Lugares para visitar.",
+    "Landmarks, museums and historic sites in {P}, plus emergency services.": "Sitios emblemáticos, museos y lugares históricos en {P}, además de servicios de emergencia.",
+    "The list comes from OpenStreetMap volunteers, so it may be incomplete.": "La lista viene de voluntarios de OpenStreetMap, así que puede estar incompleta.",
+    "Each place shows its hours, parking and wheelchair access when that is known.": "Cada lugar muestra su horario, estacionamiento y acceso en silla de ruedas cuando se conocen.",
+    "Select “Show on the map” on any place below to find it here.": "Selecciona “Mostrar en el mapa” en cualquier lugar de abajo para encontrarlo aquí.",
+    "Landmarks and history": "Sitios emblemáticos e historia",
+    "Emergency and safety": "Emergencias y seguridad",
+    "Map of the places listed below": "Mapa de los lugares de abajo",
+    "Show on map": "Mostrar en el mapa",
+    "Show district on map": "Mostrar el distrito en el mapa",
+    "Show {x} on the map": "Mostrar {x} en el mapa",
+    "Showing {x} on the map.": "Mostrando {x} en el mapa.",
+    "Here are some places worth a visit in {P}, and where to find emergency services.": "Aquí tienes lugares que vale la pena visitar en {P} y dónde encontrar servicios de emergencia.",
+    "Photo: {a},": "Foto: {a},",
+    "Photo: {a}": "Foto: {a}",
+    "Unknown author": "Autor desconocido",
+    "Unnamed place": "Lugar sin nombre",
+    "Unnamed park": "Parque sin nombre",
+    "Attraction": "Atracción",
+    "Museum": "Museo",
+    "Zoo": "Zoológico",
+    "Theme park": "Parque temático",
+    "Aquarium": "Acuario",
+    "Viewpoint": "Mirador",
+    "Gallery": "Galería",
+    "Public art": "Arte público",
+    "Castle": "Castillo",
+    "Monument": "Monumento",
+    "Fort": "Fuerte",
+    "Memorial": "Memorial",
+    "Historic building": "Edificio histórico",
+    "Ruins": "Ruinas",
+    "Archaeological site": "Sitio arqueológico",
+    "Historic ship": "Barco histórico",
+    "Historic site": "Sitio histórico",
+    "Visitor information": "Información para visitantes",
+    "Visitor centre": "Centro de visitantes",
+    "Fire station": "Estación de bomberos",
+    "Ambulance station": "Estación de ambulancias",
+    "Coast Guard": "Guardia Costera",
+    "Mountain rescue": "Rescate de montaña",
+    "Lifeguard": "Salvavidas",
+    "Disaster response": "Respuesta a desastres",
+    "Emergency assembly point": "Punto de reunión de emergencia",
+    "Emergency shelter": "Refugio de emergencia",
+    "First aid": "Primeros auxilios",
+    "Hospital": "Hospital",
+    "Police": "Policía",
+    "Wheelchair accessible": "Accesible en silla de ruedas",
+    "Partly wheelchair accessible": "Parcialmente accesible en silla de ruedas",
+    "Not wheelchair accessible": "No accesible en silla de ruedas",
+    "Open 24 hours, every day": "Abierto las 24 horas, todos los días",
+    "Address:": "Dirección:",
+    "Hours:": "Horario:",
+    "Parking:": "Estacionamiento:",
+    "Also called:": "También se llama:",
+    "Website": "Sitio web",
+    "Website for {x}": "Sitio web de {x}",
+    "Surface lot": "Estacionamiento al aire libre",
+    "Parking garage": "Garaje de estacionamiento",
+    "Underground garage": "Garaje subterráneo",
+    "Street parking": "Estacionamiento en la calle",
+    "Parking available": "Hay estacionamiento",
+    "No parking": "Sin estacionamiento",
+    "Rooftop parking": "Estacionamiento en la azotea",
+    "Garage boxes": "Garajes individuales",
+    "(Spanish)": "(español)",
+    "(French)": "(francés)",
+
+    // --- parks and trees ---
+    "Parks and trees.": "Parques y árboles.",
+    "{n} parks cover about {a} acres, or about {x} acres for every 1,000 people.": "{n} parques cubren unos {a} acres, o unos {x} acres por cada 1,000 personas.",
+    "{n} parks cover about {a} acres.": "{n} parques cubren unos {a} acres.",
+    "1 park covers about {a} acres, or about {x} acres for every 1,000 people.": "1 parque cubre unos {a} acres, o unos {x} acres por cada 1,000 personas.",
+    "1 park covers about {a} acres.": "1 parque cubre unos {a} acres.",
+    "Source: The Trust for Public Land's ParkServe.": "Fuente: ParkServe, de The Trust for Public Land.",
+    "parks": "parques",
+    "acres of parks": "acres de parques",
+    "of the city's land": "del terreno de la ciudad",
+    "tree cover in parks": "cobertura de árboles en los parques",
+    "Share of each park shaded by trees, seen from above": "Parte de cada parque con sombra de árboles, vista desde arriba",
+    "Select “Show on map” on a park to find it here.": "Selecciona “Mostrar en el mapa” en un parque para encontrarlo aquí.",
+    "Select “Show on map” on a district or college to find it here.": "Selecciona “Mostrar en el mapa” en un distrito o universidad para encontrarlo aquí.",
+    "Select “Show district on map” to find it here.": "Selecciona “Mostrar el distrito en el mapa” para encontrarlo aquí.",
+    "The biggest parks": "Los parques más grandes",
+    "Map of parks in {P}": "Mapa de los parques de {P}",
+    "{n} acres": "{n} acres",
+    "{n}% tree cover": "{n}% de cobertura de árboles",
+    "Open to the public": "Abierto al público",
+    "Limited access": "Acceso limitado",
+    "Not open to the public": "No abierto al público",
+    "{n} playgrounds": "{n} parques infantiles",
+    "1 playground": "1 parque infantil",
+    "Has trails": "Tiene senderos",
+    "Tree cover: {n} percent of the park": "Cobertura de árboles: {n} por ciento del parque",
+    "Size:": "Tamaño:",
+    "Tree cover:": "Cobertura de árboles:",
+    "Access:": "Acceso:",
+    "Playgrounds:": "Parques infantiles:",
+    "Trails:": "Senderos:",
+    "Run by:": "Administrado por:",
+    "Local park": "Parque local",
+    "Regional park": "Parque regional",
+    "Neighborhood park": "Parque de barrio",
+    "Pocket park": "Parque pequeño",
+    "Natural area": "Área natural",
+    "This park": "Este parque",
+    "Tree cover across the whole city": "Cobertura de árboles en toda la ciudad",
+    "About {p}% of {P} is covered by tree canopy, as seen from above in {y}.": "Alrededor del {p}% de {P} está cubierto por la copa de los árboles, visto desde arriba en {y}.",
+    "Inside its parks it is about {p}%.": "Dentro de sus parques es de alrededor del {p}%.",
+    "Tree cover is about the same as in {y}.": "La cobertura de árboles es casi igual que en {y}.",
+    "In {y} it was about {p}%, so it has gone up by about {d} percentage points.": "En {y} era de alrededor del {p}%, así que ha subido unos {d} puntos porcentuales.",
+    "In {y} it was about {p}%, so it has gone down by about {d} percentage points.": "En {y} era de alrededor del {p}%, así que ha bajado unos {d} puntos porcentuales.",
+    "About {p}% of {P} is covered by tree canopy.": "Alrededor del {p}% de {P} está cubierto por la copa de los árboles.",
+    "About {p}% of the ground in {P}'s parks is covered by tree canopy.": "Alrededor del {p}% del suelo de los parques de {P} está cubierto por la copa de los árboles.",
+    "{P} has {n} parks covering about {a} acres.": "{P} tiene {n} parques que cubren unos {a} acres.",
+    "{P} has 1 park covering about {a} acres.": "{P} tiene 1 parque que cubre unos {a} acres.",
+    "Each bar is the average of every 30-meter square inside the city limits, so streets, roofs and open ground count as no trees.": "Cada barra es el promedio de todos los cuadros de 30 metros dentro de los límites de la ciudad, así que las calles, los techos y el terreno abierto cuentan como sin árboles.",
+    "The numbers come from the U.S. Forest Service and are modeled from satellite pictures, so small differences from year to year are best treated as estimates.": "Los números vienen del Servicio Forestal de EE. UU. y se calculan con imágenes de satélite, así que las pequeñas diferencias de un año a otro conviene tomarlas como estimaciones.",
+    "Tree cover in {P} by year: {x}.": "Cobertura de árboles en {P} por año: {x}.",
+    "U.S. Forest Service": "Servicio Forestal de EE. UU.",
+
+    // --- then and now ---
+    "Then and now.": "Antes y ahora.",
+    "Drag the bar on the map to compare two aerial photos of {P}.": "Arrastra la barra del mapa para comparar dos fotos aéreas de {P}.",
+    "Pick any two dates.": "Elige dos fechas cualesquiera.",
+    "The photos come from Esri World Imagery Wayback.": "Las fotos vienen de Esri World Imagery Wayback.",
+    "Each date is when that version was released, so the photos themselves can be a little older.": "Cada fecha es cuando se publicó esa versión, así que las fotos pueden ser un poco más antiguas.",
+    "Left side": "Lado izquierdo",
+    "Right side": "Lado derecho",
+    "Find an address": "Buscar una dirección",
+    "Search": "Buscar",
+    "Street, city, state": "Calle, ciudad, estado",
+    "Looking for the dates when the photo changed here.": "Buscando las fechas en que cambió la foto aquí.",
+    "Drag the bar to see how {P} looks from above, then and now.": "Arrastra la barra para ver cómo se ve {P} desde arriba, antes y ahora.",
+    "Aerial photos of {P} from two dates, with a bar you can drag to compare them": "Fotos aéreas de {P} de dos fechas, con una barra que puedes arrastrar para compararlas",
+    "Full screen": "Pantalla completa",
+    "Exit full screen": "Salir de pantalla completa",
+    "Type a street address, like 123 Main St.": "Escribe una dirección, como 123 Main St.",
+    "Looking up {q}...": "Buscando {q}...",
+    "We couldn't find that address. Try adding the city and state.": "No pudimos encontrar esa dirección. Prueba agregando la ciudad y el estado.",
+    "Address search isn't available right now.": "La búsqueda de direcciones no está disponible en este momento.",
+    "Showing {a}. {b} is on the left and {c} is on the right.": "Mostrando {a}. {b} está a la izquierda y {c} a la derecha.",
+    "Showing {a} on the left and {b} on the right.": "Mostrando {a} a la izquierda y {b} a la derecha.",
+    "{n} dates here have a different photo.": "{n} fechas aquí tienen una foto distinta.",
+
+    // --- schools ---
+    "Schools and colleges.": "Escuelas y universidades.",
+    "School districts don't follow city limits, so the districts below are the ones that run a school in {P}.": "Los distritos escolares no siguen los límites de la ciudad, así que los distritos de abajo son los que administran una escuela en {P}.",
+    "A district may serve other places too.": "Un distrito puede atender también otros lugares.",
+    "Plus {x} with a school here.": "Además, hay {x} con una escuela aquí.",
+    "Data is from the National Center for Education Statistics.": "Los datos son del Centro Nacional de Estadísticas de Educación.",
+    "{n} public schools": "{n} escuelas públicas",
+    "1 public school": "1 escuela pública",
+    "{n} private schools": "{n} escuelas privadas",
+    "1 private school": "1 escuela privada",
+    "{n} colleges and universities": "{n} universidades y colegios universitarios",
+    "1 college or university": "1 universidad o colegio universitario",
+    "{n} other districts": "{n} otros distritos",
+    "1 other district": "1 otro distrito",
+    "{n} of its schools are in {P}.": "{n} de sus escuelas están en {P}.",
+    "1 of its schools is in {P}.": "1 de sus escuelas está en {P}.",
+    "{n} has about {r} students for each teacher.": "{n} tiene unos {r} estudiantes por docente.",
+    "The U.S. averages {r}.": "El promedio de EE. UU. es {r}.",
+    "Each yellow dot is a student, and the dark dot is one teacher.": "Cada punto amarillo es un estudiante y el punto oscuro es un docente.",
+    "This counts every teacher on staff, so it is not the same as class size.": "Esto cuenta a todos los docentes del personal, así que no es lo mismo que el tamaño de la clase.",
+    "{n} has about {r} students.": "{n} tiene unos {r} estudiantes.",
+    "{n} runs schools here.": "{n} administra escuelas aquí.",
+    "Here are the schools and colleges in {P}.": "Aquí están las escuelas y universidades de {P}.",
+    "This district": "Este distrito",
+    "U.S.": "EE. UU.",
+    "students": "estudiantes",
+    "schools": "escuelas",
+    "teachers": "docentes",
+    "Public school": "Escuela pública",
+    "Private school": "Escuela privada",
+    "College or university": "Universidad o colegio universitario",
+    "School district": "Distrito escolar",
+    "{P} boundary": "Límite de {P}",
+    "Colleges and universities": "Universidades y colegios universitarios",
+    "Map of schools and colleges in {P}": "Mapa de escuelas y universidades de {P}",
+    "Students:": "Estudiantes:",
+    "Schools:": "Escuelas:",
+    "Students per teacher:": "Estudiantes por docente:",
+    "Grades:": "Grados:",
+    "Offers up to:": "Ofrece hasta:",
+    "Offers up to {x}": "Ofrece hasta {x}",
+    "Enrolls {x}": "Matrícula: {x}",
+    "Call {x}": "Llamar al {x}",
+    "Public 4-year": "Pública de 4 años",
+    "Private 4-year": "Privada de 4 años",
+    "For-profit 4-year": "Con fines de lucro de 4 años",
+    "Public 2-year": "Pública de 2 años",
+    "Private 2-year": "Privada de 2 años",
+    "For-profit 2-year": "Con fines de lucro de 2 años",
+    "Public, short-term": "Pública, de corta duración",
+    "Private, short-term": "Privada, de corta duración",
+    "For-profit, short-term": "Con fines de lucro, de corta duración",
+    "a certificate (under 1 year)": "un certificado (menos de 1 año)",
+    "a certificate (1 to 2 years)": "un certificado (de 1 a 2 años)",
+    "an associate's degree": "un título de asociado",
+    "a 2-to-4-year award": "un diploma de 2 a 4 años",
+    "a bachelor's degree": "una licenciatura",
+    "a postbaccalaureate certificate": "un certificado posterior a la licenciatura",
+    "a master's degree": "una maestría",
+    "a post-master's certificate": "un certificado posterior a la maestría",
+    "a doctor's degree": "un doctorado",
+    "under 1,000 students": "menos de 1,000 estudiantes",
+    "1,000 to 4,999 students": "de 1,000 a 4,999 estudiantes",
+    "5,000 to 9,999 students": "de 5,000 a 9,999 estudiantes",
+    "10,000 to 19,999 students": "de 10,000 a 19,999 estudiantes",
+    "20,000 or more students": "20,000 estudiantes o más",
+    "Historically Black college or university": "Universidad históricamente negra",
+    "Tribal college": "Universidad tribal",
+    "Land-grant university": "Universidad de concesión de tierras",
+    "Regular local school district": "Distrito escolar local regular",
+    "A regular school district that runs its own schools.": "Un distrito escolar regular que administra sus propias escuelas.",
+    "A local school district that is part of a larger group of districts.": "Un distrito escolar local que forma parte de un grupo más grande de distritos.",
+    "An office that supports a group of districts.": "Una oficina que apoya a un grupo de distritos.",
+    "A regional agency that serves schools.": "Una agencia regional que atiende a las escuelas.",
+    "A state-run education agency.": "Una agencia de educación estatal.",
+    "A federally run education agency.": "Una agencia de educación federal.",
+    "A charter school district.": "Un distrito de escuelas autónomas (charter).",
+    "An education agency.": "Una agencia de educación.",
+    "A district for specialized public schools.": "Un distrito de escuelas públicas especializadas.",
+    "preschool": "preescolar",
+    "kindergarten": "kínder",
+    "Preschool": "preescolar",
+    "Kindergarten": "kínder",
+    "{n}th grade": "{n}.º grado",
+    "{n}st grade": "{n}.º grado",
+    "{n}nd grade": "{n}.º grado",
+    "{n}rd grade": "{n}.º grado",
+    "a small city": "una ciudad pequeña",
+    "a midsize city": "una ciudad mediana",
+    "a large city": "una ciudad grande",
+    "a small suburb": "un suburbio pequeño",
+    "a midsize suburb": "un suburbio mediano",
+    "a large suburb": "un suburbio grande",
+    "a town close to a city": "un pueblo cerca de una ciudad",
+    "a town farther from a city": "un pueblo más alejado de una ciudad",
+    "a town far from any city": "un pueblo lejos de cualquier ciudad",
+    "a rural area close to a city": "una zona rural cerca de una ciudad",
+    "a rural area farther from a city": "una zona rural más alejada de una ciudad",
+    "a rural area far from any city": "una zona rural lejos de cualquier ciudad",
+    "a town": "un pueblo",
+    "a rural area": "una zona rural",
+
+    // --- the data sections ---
+    "{n} of every 100": "{n} de cada 100",
+    "{a} figure": "Cifra de {a}",
+    "U.S. figure": "Cifra de EE. UU.",
+    "Which degrees are they?": "¿Qué títulos son?",
+    "Associate's degree": "Título de asociado",
+    "Bachelor's degree": "Licenciatura",
+    "Graduate or professional degree": "Posgrado o título profesional",
+    "Married-couple households": "Hogares de parejas casadas",
+    "Female householder, no spouse or partner present": "Mujer jefa de hogar, sin cónyuge ni pareja",
+    "Male householder, no spouse or partner present": "Hombre jefe de hogar, sin cónyuge ni pareja",
+    "Households headed by a woman, no spouse present": "Hogares con una mujer al frente, sin cónyuge",
+    "Households headed by a man, no spouse present": "Hogares con un hombre al frente, sin cónyuge",
+    "One-person households": "Hogares de una persona",
+    "Who owns their home, by kind of household": "Quién es dueño de su vivienda, según el tipo de hogar",
+    "homeowner households headed by a woman, no spouse present": "hogares propietarios con una mujer al frente, sin cónyuge",
+    "homeowner households headed by a man, no spouse present": "hogares propietarios con un hombre al frente, sin cónyuge",
+    "Each house stands for {n} households.": "Cada casa representa {n} hogares.",
+    "For every 100 homeowner households headed by a man with no spouse present, how many are headed by a woman?": "Por cada 100 hogares propietarios con un hombre al frente y sin cónyuge, ¿cuántos tienen una mujer al frente?",
+    "Owned by a woman, no spouse present": "De una mujer, sin cónyuge",
+    "Owned by a man, no spouse present": "De un hombre, sin cónyuge",
+    "How people in {P} get to work": "Cómo llegan al trabajo las personas de {P}",
+    "The staircase of diplomas in {P}": "La escalera de diplomas en {P}",
+    "The white dotted line marks {s}.": "La línea blanca de puntos marca {s}.",
+    "The dashed line marks the U.S. figure for each step.": "La línea discontinua marca la cifra de EE. UU. para cada escalón.",
+    "drive to work alone": "van solos en auto al trabajo",
+    "work from home": "trabajan desde casa",
+    "take public transportation to work": "usan transporte público para ir al trabajo",
+    "walk to work": "van caminando al trabajo",
+    "Solid tick: U.S. figure, {a}": "Marca sólida: cifra de EE. UU., {a}",
+    "Photo: {a}, {b}": "Foto: {a}, {b}",
+
+    // --- footer ---
+    "Facts only.": "Solo hechos.",
+    "Know Your City describes places and compares them with the U.S. average.": "Conoce tu ciudad describe lugares y los compara con el promedio de EE. UU.",
+    "Know Your City describes places and compares them with the U.S. average and with {s}.": "Conoce tu ciudad describe lugares y los compara con el promedio de EE. UU. y con {s}.",
+    "It doesn't rank places, judge what's good or bad, or use political data.": "No clasifica lugares, no juzga qué es bueno o malo ni usa datos políticos.",
+    "Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.": "Dentro de cada sección, los datos van del más distinto al promedio de EE. UU. al más cercano, y las secciones se ordenan igual.",
+    "Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501.": "Números: Oficina del Censo de EE. UU., estimaciones a 5 años de la Encuesta sobre la Comunidad Estadounidense (2020-2024), perfiles de datos DP02-DP05 y tabla temática S2501.",
+    "A gap only counts as real when it is larger than the survey's margin of error (95% level).": "Una diferencia solo cuenta como real cuando es mayor que el margen de error de la encuesta (nivel de 95%).",
+    "Boundaries: Census TIGERweb.": "Límites: Census TIGERweb.",
+    "Photos: Wikimedia Commons contributors, credited on each card.": "Fotos: colaboradores de Wikimedia Commons, con crédito en cada tarjeta.",
+    "Stories:": "Historias:",
+    "(CC BY-SA). Weather:": "(CC BY-SA). Clima:",
+    ". Map:": ". Mapa:",
+    ". Aerial photos over time:": ". Fotos aéreas a lo largo del tiempo:",
+    ". Parks:": ". Parques:",
+    ". Tree cover:": ". Cobertura de árboles:",
+    ". Places:": ". Lugares:",
+
+    // --- Homie ---
+    "Hi, I'm Homie! Scroll down and I'll show you around {P}.": "¡Hola, soy Homie! Desplázate hacia abajo y te mostraré {P}.",
+    "Hi! Scroll down and I'll point things out.": "¡Hola! Desplázate hacia abajo y te iré señalando cosas.",
+    "Look at this!": "¡Mira esto!",
+    "Check it out:": "Échale un vistazo:",
+    "Ooh, this one:": "Oh, esta:",
+    "Here's something:": "Aquí hay algo:",
+    "Take a look:": "Mira:",
+    "Here's another look at {P}.": "Otra mirada a {P}.",
+    "Quick scenery break in {P}!": "¡Una pausa para ver el paisaje en {P}!",
+    "Another view around {P}.": "Otra vista de {P}.",
+    "Still in {P}. Look at that!": "Seguimos en {P}. ¡Mira eso!",
+    "One more photo from {P}.": "Una foto más de {P}.",
+    "Here's what it looks like around here.": "Así se ve por aquí.",
+    "A snapshot from a local.": "Una foto de alguien de aquí.",
+    "Take a look at this view.": "Mira esta vista.",
+    "Somebody took this nearby.": "Alguien tomó esto cerca.",
+    "A little scenery for you.": "Un poco de paisaje para ti.",
+    "Here's a story from this place.": "Una historia de este lugar.",
+    "Locals might know this one.": "Quizás la gente de aquí conoce esta.",
+    "A little local trivia.": "Un dato curioso local.",
+    "One more from around town.": "Una más de por aquí.",
+    "This one's from the history books.": "Esta es de los libros de historia.",
+    "And one more for the road.": "Y una más para el camino.",
+    "You're closest to {P}, about {n} miles away.": "Estás más cerca de {P}, a unas {n} millas.",
+    "You're closest to {P}, about {n} mile away.": "Estás más cerca de {P}, a unas {n} milla.",
+    "Looks like you're in {P}! Here's your hometown.": "¡Parece que estás en {P}! Aquí está tu pueblo.",
+    "Know Your City covers U.S. places. Here's {P}. Search for any U.S. town above.": "Conoce tu ciudad cubre lugares de EE. UU. Aquí está {P}. Busca cualquier pueblo de EE. UU. arriba.",
+    "I couldn't find a Census Place near you. Here's {P}. Search for any U.S. town above.": "No encontré un lugar del Censo cerca de ti. Aquí está {P}. Busca cualquier pueblo de EE. UU. arriba.",
+    "Hmm, I couldn't find that place's boundary.": "Mmm, no pude encontrar el límite de ese lugar.",
+    "Hmm, that spot isn't inside a Census Place. Try a city, town or village.": "Mmm, ese punto no está dentro de un lugar del Censo. Prueba con una ciudad, un pueblo o una aldea.",
+    "The map isn't available right now.": "El mapa no está disponible en este momento.",
+    "That one isn't on the map.": "Esa no está en el mapa.",
+
+    // --- search and errors ---
+    "No Census places match that. Try the city name, then a comma and the state.": "Ningún lugar del Censo coincide. Prueba con el nombre de la ciudad, una coma y el estado.",
+    "The numbers didn't load.": "Los números no se cargaron.",
+    "If this mentions a Census key, check that it has been activated from the email link, then reload.": "Si esto menciona una clave del Censo, comprueba que se activó desde el enlace del correo y luego recarga.",
+    "This is taking too long. Check your internet connection and reload.": "Esto está tardando demasiado. Revisa tu conexión a internet y recarga.",
+    "(township)": "(municipio)"
+  };
+  // Phrases only the code asks for with T(); they are not matched against page text.
+  var CODE_ES = {
+    "{a} through {b}.": "De {a} a {b}.",
+    "Serves {a} only.": "Atiende solo {a}.",
+    "It is based in {x}.": "Tiene su sede en {x}.",
+    "{s} averages {r}.": "{s} tiene un promedio de {r}.",
+    "Inside {P} there {v} {x}.": "Dentro de {P} hay {x}.",
+    "{x} and {y}": "{x} y {y}",
+    "Inside {P} there are {x}.": "Dentro de {P} hay {x}.",
+    "The U.S. averages {r}.": "El promedio de EE. UU. es {r}.",
+    "and": "y",
+    "Census data, compared with the U.S.": "Datos del Censo, comparados con EE. UU.",
+    "Know Your City": "Conoce tu ciudad"
+  };
+
+  var DICT_FR = {
+    // --- page chrome ---
+    "Know Your City": "Connaissez votre ville",
+    "Homie is knocking on doors for the numbers…": "Homie frappe aux portes pour récupérer les chiffres…",
+    "Homie: on": "Homie : oui",
+    "Homie: off": "Homie : non",
+    "Show or hide Homie": "Afficher ou masquer Homie",
+    "Homie, a friendly little house. Click for a hello.": "Homie, une petite maison sympathique. Cliquez pour dire bonjour.",
+    "Search for a place": "Rechercher un lieu",
+    "Search for another place": "Rechercher un autre lieu",
+    "Search any U.S. town or city": "Recherchez n'importe quelle ville des États-Unis",
+    "Type a town or city": "Saisissez le nom d'une ville",
+    "About {n} people live here. Scroll down and Homie will show you around.": "Environ {n} personnes vivent ici. Faites défiler la page et Homie vous fera visiter.",
+    "Scroll down and Homie will show you around.": "Faites défiler la page et Homie vous fera visiter.",
+    "Scroll to start": "Faites défiler pour commencer",
+    "Drag to move. Click, then scroll to zoom.": "Faites glisser pour déplacer la carte. Cliquez, puis faites défiler pour zoomer.",
+    "On this page": "Sur cette page",
+    "Jump to a section": "Aller à une section",
+    "What stands out in {P}": "Ce qui ressort à {P}",
+    "Higher than the U.S.:": "Plus élevé qu'aux États-Unis :",
+    "Lower than the U.S.:": "Plus bas qu'aux États-Unis :",
+    "higher than the U.S.": "plus élevé qu'aux États-Unis",
+    "lower than the U.S.": "plus bas qu'aux États-Unis",
+    "lower than the U.S. The arrows show direction only. They don't say whether a number is good or bad.": "plus bas qu'aux États-Unis. Les flèches indiquent seulement le sens. Elles ne disent pas si un chiffre est bon ou mauvais.",
+    "The arrows show direction only. They don't say whether a number is good or bad.": "Les flèches indiquent seulement le sens. Elles ne disent pas si un chiffre est bon ou mauvais.",
+    "Share": "Partager",
+    "Share a link to {x}": "Partager un lien vers {x}",
+    "Link copied": "Lien copié",
+    "Link to {x} copied.": "Lien vers {x} copié.",
+    "Copy this link:": "Copiez ce lien :",
+    "Close": "Fermer",
+    "Surprise me": "Surprenez-moi",
+    "Pick another place.": "Choisissez un autre lieu.",
+
+    // --- section names ---
+    "Name card": "Carte du nom",
+    "The name card": "La carte du nom",
+    "Events": "Événements",
+    "Weather": "Météo",
+    "Places to see": "Lieux à voir",
+    "Parks and trees": "Parcs et arbres",
+    "Then and now": "Avant et maintenant",
+    "Schools and colleges": "Écoles et universités",
+    "Cap and gown": "Toque et toge",
+    "The price of a home": "Le prix d'un logement",
+    "Who owns the homes": "À qui appartiennent les logements",
+    "What sets {P} apart": "Ce qui distingue {P}",
+    "Under each roof": "Sous chaque toit",
+    "The homes": "Les logements",
+    "Who lives in {P}": "Qui vit à {P}",
+    "What kinds of households live in {P}": "Quels types de ménages vivent à {P}",
+    "this section": "cette section",
+    "Work and money": "Travail et argent",
+    "Backgrounds and languages": "Origines et langues",
+    "Postcards from {P}": "Cartes postales de {P}",
+    "Happening in {P}": "Événements à {P}",
+    "The weather in {P}": "La météo à {P}",
+    "Places in {P}": "Lieux à {P}",
+    "Parks and trees in {P}": "Parcs et arbres à {P}",
+    "Schools in {P}": "Écoles à {P}",
+    "Then and now in {P}": "Avant et maintenant à {P}",
+
+    // --- name card ---
+    "What's in a name?": "Que cache un nom ?",
+    "Hello": "Bonjour",
+    "my name is": "je m'appelle",
+    "That's what people from {P} are called.": "C'est ainsi qu'on appelle les habitants de {P}.",
+    "Nickname": "Surnom",
+    "Named after": "Nommée en l'honneur de",
+    "Founded": "Fondation",
+    "Elevation": "Altitude",
+    "About {n} feet above sea level": "Environ {n} pieds au-dessus du niveau de la mer",
+    "City flag": "Drapeau de la ville",
+    "City seal": "Sceau de la ville",
+    "Sister cities": "Villes jumelées",
+    "Born in {P}": "Nés à {P}",
+    "From": "Source :",
+    ", which volunteers keep up to date, so some facts may be missing.": ", tenu à jour par des bénévoles ; certaines informations peuvent donc manquer.",
+    "Enlarge the {x}": "Agrandir : {x}",
+    "city flag of {P}": "drapeau de la ville de {P}",
+    "city seal of {P}": "sceau de la ville de {P}",
+    "City flag of {P}": "Drapeau de la ville de {P}",
+    "City seal of {P}": "Sceau de la ville de {P}",
+    "People from {P} are called {x}.": "Les habitants de {P} s'appellent {x}.",
+    "{P} is nicknamed {x}.": "{P} est surnommée {x}.",
+    "Here's a little about the name {P}.": "Un petit mot sur le nom {P}.",
+
+    // --- events ---
+    "Get out and about.": "Sortez et profitez.",
+    "Here is where {P} lists its events and permits.": "Voici où {P} publie ses événements et ses autorisations.",
+    "{P} doesn't have a single events feed that I know of, so here is a search to start with.": "{P} n'a pas de calendrier d'événements unique à ma connaissance ; voici donc une recherche pour commencer.",
+    "Each link says how the information is provided.": "Chaque lien indique comment l'information est fournie.",
+    "City calendar": "Calendrier de la ville",
+    "Community calendar": "Calendrier communautaire",
+    "Permit info": "Infos sur les autorisations",
+    "Open data feed": "Données ouvertes",
+    "Web page": "Page web",
+    "Live feed shown here": "Flux en direct affiché ici",
+    "Web search": "Recherche web",
+    "Search results": "Résultats de recherche",
+    "Search for events in {P}": "Rechercher des événements à {P}",
+    "City of {P} calendar": "Calendrier de la ville de {P}",
+    "Special events and permits": "Événements spéciaux et autorisations",
+    "About {P} events": "À propos des événements de {P}",
+    "Want to get out and about? Here is where to find what's happening in {P}.": "Envie de sortir ? Voici où trouver ce qui se passe à {P}.",
+
+    // --- weather ---
+    "What's the weather like?": "Quel temps fait-il ?",
+    "Right now": "En ce moment",
+    "Tonight": "Ce soir",
+    "Today": "Aujourd'hui",
+    "{n}% chance of rain": "{n}% de risque de pluie",
+    "Forecast:": "Prévisions :",
+    "National Weather Service": "Service météorologique national",
+    "National Weather Service web page": "Page web du Service météorologique national",
+    "Forecast": "Prévisions",
+    "Forecast for {P}": "Prévisions pour {P}",
+    ". Big number is the high, small number is the low.": ". Le grand chiffre est le maximum, le petit chiffre est le minimum.",
+    "The forecast didn't load just now.": "Les prévisions ne se sont pas chargées à l'instant.",
+    "The National Weather Service has the latest for {P}.": "Le Service météorologique national a les dernières informations pour {P}.",
+    "{a} in {P}: {f}, wind {w}.": "{a} à {P} : {f}, vent de {w}.",
+    "{a} to {b} mph": "{a} à {b} mph",
+    "It's {t} degrees and {f} in {P}.": "Il fait {t} degrés à {P} ({f}).",
+    "Here's the next few days.": "Voici les prochains jours.",
+    "I couldn't load the forecast, but the weather service link has it.": "Je n'ai pas pu charger les prévisions, mais le lien du service météorologique les a.",
+
+    // --- places to see ---
+    "Places to see.": "Lieux à voir.",
+    "Landmarks, museums and historic sites in {P}, plus emergency services.": "Sites emblématiques, musées et sites historiques à {P}, ainsi que les services d'urgence.",
+    "The list comes from OpenStreetMap volunteers, so it may be incomplete.": "La liste vient de bénévoles d'OpenStreetMap ; elle peut donc être incomplète.",
+    "Each place shows its hours, parking and wheelchair access when that is known.": "Chaque lieu indique ses horaires, son stationnement et son accès en fauteuil roulant lorsqu'ils sont connus.",
+    "Select “Show on the map” on any place below to find it here.": "Sélectionnez « Afficher sur la carte » sur un lieu ci-dessous pour le retrouver ici.",
+    "Landmarks and history": "Sites emblématiques et histoire",
+    "Emergency and safety": "Urgences et sécurité",
+    "Map of the places listed below": "Carte des lieux listés ci-dessous",
+    "Show on map": "Afficher sur la carte",
+    "Show district on map": "Afficher le district sur la carte",
+    "Show {x} on the map": "Afficher {x} sur la carte",
+    "Showing {x} on the map.": "Affichage de {x} sur la carte.",
+    "Here are some places worth a visit in {P}, and where to find emergency services.": "Voici quelques lieux qui valent le détour à {P}, et où trouver les services d'urgence.",
+    "Photo: {a},": "Photo : {a},",
+    "Photo: {a}": "Photo : {a}",
+    "Unknown author": "Auteur inconnu",
+    "Unnamed place": "Lieu sans nom",
+    "Unnamed park": "Parc sans nom",
+    "Attraction": "Attraction",
+    "Museum": "Musée",
+    "Zoo": "Zoo",
+    "Theme park": "Parc à thème",
+    "Aquarium": "Aquarium",
+    "Viewpoint": "Point de vue",
+    "Gallery": "Galerie",
+    "Public art": "Art public",
+    "Castle": "Château",
+    "Monument": "Monument",
+    "Fort": "Fort",
+    "Memorial": "Mémorial",
+    "Historic building": "Bâtiment historique",
+    "Ruins": "Ruines",
+    "Archaeological site": "Site archéologique",
+    "Historic ship": "Navire historique",
+    "Historic site": "Site historique",
+    "Visitor information": "Information touristique",
+    "Visitor centre": "Centre d'accueil des visiteurs",
+    "Fire station": "Caserne de pompiers",
+    "Ambulance station": "Station d'ambulances",
+    "Coast Guard": "Garde côtière",
+    "Mountain rescue": "Secours en montagne",
+    "Lifeguard": "Maître-nageur sauveteur",
+    "Disaster response": "Intervention en cas de catastrophe",
+    "Emergency assembly point": "Point de rassemblement d'urgence",
+    "Emergency shelter": "Abri d'urgence",
+    "First aid": "Premiers secours",
+    "Hospital": "Hôpital",
+    "Police": "Police",
+    "Wheelchair accessible": "Accessible en fauteuil roulant",
+    "Partly wheelchair accessible": "Partiellement accessible en fauteuil roulant",
+    "Not wheelchair accessible": "Non accessible en fauteuil roulant",
+    "Open 24 hours, every day": "Ouvert 24 heures sur 24, tous les jours",
+    "Address:": "Adresse :",
+    "Hours:": "Horaires :",
+    "Parking:": "Stationnement :",
+    "Also called:": "Aussi appelé :",
+    "Website": "Site web",
+    "Website for {x}": "Site web de {x}",
+    "Surface lot": "Parking en surface",
+    "Parking garage": "Parking couvert",
+    "Underground garage": "Parking souterrain",
+    "Street parking": "Stationnement dans la rue",
+    "Parking available": "Stationnement disponible",
+    "No parking": "Pas de stationnement",
+    "Rooftop parking": "Parking sur le toit",
+    "Garage boxes": "Box de garage",
+    "(Spanish)": "(espagnol)",
+    "(French)": "(français)",
+
+    // --- parks and trees ---
+    "Parks and trees.": "Parcs et arbres.",
+    "{n} parks cover about {a} acres, or about {x} acres for every 1,000 people.": "{n} parcs couvrent environ {a} acres, soit environ {x} acres pour 1 000 habitants.",
+    "{n} parks cover about {a} acres.": "{n} parcs couvrent environ {a} acres.",
+    "1 park covers about {a} acres, or about {x} acres for every 1,000 people.": "1 parc couvre environ {a} acres, soit environ {x} acres pour 1 000 habitants.",
+    "1 park covers about {a} acres.": "1 parc couvre environ {a} acres.",
+    "Source: The Trust for Public Land's ParkServe.": "Source : ParkServe, de The Trust for Public Land.",
+    "parks": "parcs",
+    "acres of parks": "acres de parcs",
+    "of the city's land": "du territoire de la ville",
+    "tree cover in parks": "couvert arboré dans les parcs",
+    "Share of each park shaded by trees, seen from above": "Part de chaque parc ombragée par les arbres, vue du ciel",
+    "Select “Show on map” on a park to find it here.": "Sélectionnez « Afficher sur la carte » sur un parc pour le retrouver ici.",
+    "Select “Show on map” on a district or college to find it here.": "Sélectionnez « Afficher sur la carte » sur un district ou un établissement pour le retrouver ici.",
+    "Select “Show district on map” to find it here.": "Sélectionnez « Afficher le district sur la carte » pour le retrouver ici.",
+    "The biggest parks": "Les plus grands parcs",
+    "Map of parks in {P}": "Carte des parcs de {P}",
+    "{n} acres": "{n} acres",
+    "{n}% tree cover": "{n}% de couvert arboré",
+    "Open to the public": "Ouvert au public",
+    "Limited access": "Accès limité",
+    "Not open to the public": "Non ouvert au public",
+    "{n} playgrounds": "{n} aires de jeux",
+    "1 playground": "1 aire de jeux",
+    "Has trails": "Sentiers",
+    "Tree cover: {n} percent of the park": "Couvert arboré : {n} pour cent du parc",
+    "Size:": "Superficie :",
+    "Tree cover:": "Couvert arboré :",
+    "Access:": "Accès :",
+    "Playgrounds:": "Aires de jeux :",
+    "Trails:": "Sentiers :",
+    "Run by:": "Géré par :",
+    "Local park": "Parc local",
+    "Regional park": "Parc régional",
+    "Neighborhood park": "Parc de quartier",
+    "Pocket park": "Mini-parc",
+    "Natural area": "Espace naturel",
+    "This park": "Ce parc",
+    "Tree cover across the whole city": "Couvert arboré dans toute la ville",
+    "About {p}% of {P} is covered by tree canopy, as seen from above in {y}.": "Environ {p}% de {P} est couvert par la canopée des arbres, vu du ciel en {y}.",
+    "Inside its parks it is about {p}%.": "Dans ses parcs, il est d'environ {p}%.",
+    "Tree cover is about the same as in {y}.": "Le couvert arboré est à peu près le même qu'en {y}.",
+    "In {y} it was about {p}%, so it has gone up by about {d} percentage points.": "En {y}, il était d'environ {p}% ; il a donc augmenté d'environ {d} points de pourcentage.",
+    "In {y} it was about {p}%, so it has gone down by about {d} percentage points.": "En {y}, il était d'environ {p}% ; il a donc diminué d'environ {d} points de pourcentage.",
+    "About {p}% of {P} is covered by tree canopy.": "Environ {p}% de {P} est couvert par la canopée des arbres.",
+    "About {p}% of the ground in {P}'s parks is covered by tree canopy.": "Environ {p}% du sol des parcs de {P} est couvert par la canopée des arbres.",
+    "{P} has {n} parks covering about {a} acres.": "{P} compte {n} parcs couvrant environ {a} acres.",
+    "{P} has 1 park covering about {a} acres.": "{P} compte 1 parc couvrant environ {a} acres.",
+    "Each bar is the average of every 30-meter square inside the city limits, so streets, roofs and open ground count as no trees.": "Chaque barre est la moyenne de tous les carrés de 30 mètres à l'intérieur des limites de la ville ; les rues, les toits et les terrains dégagés comptent donc comme sans arbres.",
+    "The numbers come from the U.S. Forest Service and are modeled from satellite pictures, so small differences from year to year are best treated as estimates.": "Les chiffres viennent du Service forestier des États-Unis et sont modélisés à partir d'images satellites ; il vaut mieux considérer les petites différences d'une année à l'autre comme des estimations.",
+    "Tree cover in {P} by year: {x}.": "Couvert arboré à {P} par année : {x}.",
+    "U.S. Forest Service": "Service forestier des États-Unis",
+
+    // --- then and now ---
+    "Then and now.": "Avant et maintenant.",
+    "Drag the bar on the map to compare two aerial photos of {P}.": "Faites glisser la barre sur la carte pour comparer deux photos aériennes de {P}.",
+    "Pick any two dates.": "Choisissez deux dates au choix.",
+    "The photos come from Esri World Imagery Wayback.": "Les photos viennent d'Esri World Imagery Wayback.",
+    "Each date is when that version was released, so the photos themselves can be a little older.": "Chaque date est celle de la publication de cette version ; les photos elles-mêmes peuvent donc être un peu plus anciennes.",
+    "Left side": "Côté gauche",
+    "Right side": "Côté droit",
+    "Find an address": "Trouver une adresse",
+    "Search": "Rechercher",
+    "Street, city, state": "Rue, ville, État",
+    "Looking for the dates when the photo changed here.": "Recherche des dates où la photo a changé ici.",
+    "Drag the bar to see how {P} looks from above, then and now.": "Faites glisser la barre pour voir {P} vue du ciel, avant et maintenant.",
+    "Aerial photos of {P} from two dates, with a bar you can drag to compare them": "Photos aériennes de {P} à deux dates, avec une barre à faire glisser pour les comparer",
+    "Full screen": "Plein écran",
+    "Exit full screen": "Quitter le plein écran",
+    "Type a street address, like 123 Main St.": "Saisissez une adresse, par exemple 123 Main St.",
+    "Looking up {q}...": "Recherche de {q}...",
+    "We couldn't find that address. Try adding the city and state.": "Nous n'avons pas trouvé cette adresse. Essayez d'ajouter la ville et l'État.",
+    "Address search isn't available right now.": "La recherche d'adresse n'est pas disponible pour le moment.",
+    "Showing {a}. {b} is on the left and {c} is on the right.": "Affichage de {a}. {b} est à gauche et {c} est à droite.",
+    "Showing {a} on the left and {b} on the right.": "{a} à gauche et {b} à droite.",
+    "{n} dates here have a different photo.": "{n} dates ici ont une photo différente.",
+
+    // --- schools ---
+    "Schools and colleges.": "Écoles et universités.",
+    "School districts don't follow city limits, so the districts below are the ones that run a school in {P}.": "Les districts scolaires ne suivent pas les limites de la ville ; les districts ci-dessous sont donc ceux qui gèrent une école à {P}.",
+    "A district may serve other places too.": "Un district peut aussi desservir d'autres lieux.",
+    "Plus {x} with a school here.": "Il y a aussi {x} avec une école ici.",
+    "Data is from the National Center for Education Statistics.": "Les données proviennent du Centre national des statistiques de l'éducation.",
+    "{n} of its schools are in {P}.": "{n} de ses écoles se trouvent à {P}.",
+    "1 of its schools is in {P}.": "1 de ses écoles se trouve à {P}.",
+    "{n} has about {r} students for each teacher.": "{n} compte environ {r} élèves par enseignant.",
+    "Each yellow dot is a student, and the dark dot is one teacher.": "Chaque point jaune est un élève et le point foncé est un enseignant.",
+    "This counts every teacher on staff, so it is not the same as class size.": "Cela compte tous les enseignants du personnel ; ce n'est donc pas la taille des classes.",
+    "{n} has about {r} students.": "{n} compte environ {r} élèves.",
+    "{n} runs schools here.": "{n} gère des écoles ici.",
+    "Here are the schools and colleges in {P}.": "Voici les écoles et les universités de {P}.",
+    "This district": "Ce district",
+    "U.S.": "É.-U.",
+    "students": "élèves",
+    "schools": "écoles",
+    "teachers": "enseignants",
+    "Public school": "École publique",
+    "Private school": "École privée",
+    "College or university": "Collège ou université",
+    "School district": "District scolaire",
+    "{P} boundary": "Limite de {P}",
+    "Colleges and universities": "Collèges et universités",
+    "Map of schools and colleges in {P}": "Carte des écoles et universités de {P}",
+    "Students:": "Élèves :",
+    "Schools:": "Écoles :",
+    "Students per teacher:": "Élèves par enseignant :",
+    "Grades:": "Niveaux :",
+    "Offers up to:": "Propose jusqu'à :",
+    "Offers up to {x}": "Propose jusqu'à {x}",
+    "Enrolls {x}": "Effectif : {x}",
+    "Call {x}": "Appeler le {x}",
+    "Public 4-year": "Publique, 4 ans",
+    "Private 4-year": "Privée, 4 ans",
+    "For-profit 4-year": "À but lucratif, 4 ans",
+    "Public 2-year": "Publique, 2 ans",
+    "Private 2-year": "Privée, 2 ans",
+    "For-profit 2-year": "À but lucratif, 2 ans",
+    "Public, short-term": "Publique, courte durée",
+    "Private, short-term": "Privée, courte durée",
+    "For-profit, short-term": "À but lucratif, courte durée",
+    "a certificate (under 1 year)": "un certificat (moins d'un an)",
+    "a certificate (1 to 2 years)": "un certificat (1 à 2 ans)",
+    "an associate's degree": "un diplôme d'associé (bac+2)",
+    "a 2-to-4-year award": "un diplôme de 2 à 4 ans",
+    "a bachelor's degree": "une licence",
+    "a postbaccalaureate certificate": "un certificat post-licence",
+    "a master's degree": "un master",
+    "a post-master's certificate": "un certificat post-master",
+    "a doctor's degree": "un doctorat",
+    "under 1,000 students": "moins de 1 000 élèves",
+    "1,000 to 4,999 students": "de 1 000 à 4 999 élèves",
+    "5,000 to 9,999 students": "de 5 000 à 9 999 élèves",
+    "10,000 to 19,999 students": "de 10 000 à 19 999 élèves",
+    "20,000 or more students": "20 000 élèves ou plus",
+    "Historically Black college or university": "Université historiquement noire",
+    "Tribal college": "Collège tribal",
+    "Land-grant university": "Université « land-grant »",
+    "Regular local school district": "District scolaire local ordinaire",
+    "A regular school district that runs its own schools.": "Un district scolaire ordinaire qui gère ses propres écoles.",
+    "A local school district that is part of a larger group of districts.": "Un district scolaire local qui fait partie d'un groupe plus large de districts.",
+    "An office that supports a group of districts.": "Un bureau qui soutient un groupe de districts.",
+    "A regional agency that serves schools.": "Une agence régionale au service des écoles.",
+    "A state-run education agency.": "Une agence d'éducation gérée par l'État.",
+    "A federally run education agency.": "Une agence d'éducation gérée par l'État fédéral.",
+    "A charter school district.": "Un district d'écoles à charte (charter).",
+    "An education agency.": "Une agence d'éducation.",
+    "A district for specialized public schools.": "Un district d'écoles publiques spécialisées.",
+    "preschool": "la maternelle (préscolaire)",
+    "kindergarten": "la grande section (kindergarten)",
+    "Preschool": "préscolaire",
+    "Kindergarten": "kindergarten",
+    "{n}th grade": "{n}e année",
+    "{n}st grade": "{n}re année",
+    "{n}nd grade": "{n}e année",
+    "{n}rd grade": "{n}e année",
+    "{n} public schools": "{n} écoles publiques",
+    "1 public school": "1 école publique",
+    "{n} private schools": "{n} écoles privées",
+    "1 private school": "1 école privée",
+    "{n} colleges and universities": "{n} collèges et universités",
+    "1 college or university": "1 collège ou université",
+    "{n} other districts": "{n} autres districts",
+    "1 other district": "1 autre district",
+    "a small city": "une petite ville",
+    "a midsize city": "une ville moyenne",
+    "a large city": "une grande ville",
+    "a small suburb": "une petite banlieue",
+    "a midsize suburb": "une banlieue de taille moyenne",
+    "a large suburb": "une grande banlieue",
+    "a town close to a city": "une commune proche d'une ville",
+    "a town farther from a city": "une commune plus éloignée d'une ville",
+    "a town far from any city": "une commune loin de toute ville",
+    "a rural area close to a city": "une zone rurale proche d'une ville",
+    "a rural area farther from a city": "une zone rurale plus éloignée d'une ville",
+    "a rural area far from any city": "une zone rurale loin de toute ville",
+    "a town": "une commune",
+    "a rural area": "une zone rurale",
+
+    // --- the data sections ---
+    "{n} of every 100": "{n} sur 100",
+    "{a} figure": "Chiffre de {a}",
+    "U.S. figure": "Chiffre des États-Unis",
+    "Which degrees are they?": "De quels diplômes s'agit-il ?",
+    "Associate's degree": "Diplôme d'associé (bac+2)",
+    "Bachelor's degree": "Licence",
+    "Graduate or professional degree": "Master, doctorat ou diplôme professionnel",
+    "Married-couple households": "Ménages de couples mariés",
+    "Female householder, no spouse or partner present": "Femme chef de ménage, sans conjoint ni partenaire",
+    "Male householder, no spouse or partner present": "Homme chef de ménage, sans conjoint ni partenaire",
+    "Households headed by a woman, no spouse present": "Ménages dirigés par une femme, sans conjoint",
+    "Households headed by a man, no spouse present": "Ménages dirigés par un homme, sans conjoint",
+    "One-person households": "Ménages d'une personne",
+    "Who owns their home, by kind of household": "Qui est propriétaire de son logement, selon le type de ménage",
+    "homeowner households headed by a woman, no spouse present": "ménages propriétaires dirigés par une femme, sans conjoint",
+    "homeowner households headed by a man, no spouse present": "ménages propriétaires dirigés par un homme, sans conjoint",
+    "Each house stands for {n} households.": "Chaque maison représente {n} ménages.",
+    "For every 100 homeowner households headed by a man with no spouse present, how many are headed by a woman?": "Pour 100 ménages propriétaires dirigés par un homme sans conjoint, combien sont dirigés par une femme ?",
+    "Owned by a woman, no spouse present": "À une femme, sans conjoint",
+    "Owned by a man, no spouse present": "À un homme, sans conjoint",
+    "How people in {P} get to work": "Comment les habitants de {P} se rendent au travail",
+    "The staircase of diplomas in {P}": "L'escalier des diplômes à {P}",
+    "The white dotted line marks {s}.": "La ligne blanche en pointillés marque {s}.",
+    "The dashed line marks the U.S. figure for each step.": "La ligne en tirets marque le chiffre des États-Unis pour chaque marche.",
+    "drive to work alone": "se rendent seuls au travail en voiture",
+    "work from home": "travaillent à domicile",
+    "take public transportation to work": "prennent les transports en commun pour aller travailler",
+    "walk to work": "vont travailler à pied",
+    "Solid tick: U.S. figure, {a}": "Repère plein : chiffre des États-Unis, {a}",
+    "Photo: {a}, {b}": "Photo : {a}, {b}",
+    "About {a} people live per square mile here, across roughly {b} square miles of land.": "Environ {a} personnes vivent par mile carré ici, sur quelque {b} miles carrés de terres.",
+
+    // --- footer ---
+    "Facts only.": "Uniquement des faits.",
+    "Know Your City describes places and compares them with the U.S. average.": "Connaissez votre ville décrit des lieux et les compare à la moyenne des États-Unis.",
+    "Know Your City describes places and compares them with the U.S. average and with {s}.": "Connaissez votre ville décrit des lieux et les compare à la moyenne des États-Unis et à {s}.",
+    "It doesn't rank places, judge what's good or bad, or use political data.": "Il ne classe pas les lieux, ne juge pas ce qui est bon ou mauvais et n'utilise pas de données politiques.",
+    "Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.": "Dans chaque section, les faits vont du plus éloigné de la moyenne des États-Unis au plus proche, et les sections sont classées de la même façon.",
+    "Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501.": "Chiffres : Bureau du recensement des États-Unis, estimations sur 5 ans de l'American Community Survey (2020-2024), profils de données DP02-DP05 et tableau thématique S2501.",
+    "A gap only counts as real when it is larger than the survey's margin of error (95% level).": "Un écart n'est considéré comme réel que s'il dépasse la marge d'erreur de l'enquête (niveau de 95%).",
+    "Boundaries: Census TIGERweb.": "Limites : Census TIGERweb.",
+    "Photos: Wikimedia Commons contributors, credited on each card.": "Photos : contributeurs de Wikimedia Commons, crédités sur chaque carte.",
+    "Stories:": "Histoires :",
+    "(CC BY-SA). Weather:": "(CC BY-SA). Météo :",
+    ". Map:": ". Carte :",
+    ". Aerial photos over time:": ". Photos aériennes au fil du temps :",
+    ". Parks:": ". Parcs :",
+    ". Tree cover:": ". Couvert arboré :",
+    ". Places:": ". Lieux :",
+
+    // --- Homie ---
+    "Hi, I'm Homie! Scroll down and I'll show you around {P}.": "Salut, je suis Homie ! Faites défiler la page et je vous ferai visiter {P}.",
+    "Hi! Scroll down and I'll point things out.": "Salut ! Faites défiler la page et je vous montrerai des choses.",
+    "Look at this!": "Regardez ça !",
+    "Check it out:": "Jetez un œil :",
+    "Ooh, this one:": "Oh, celle-ci :",
+    "Here's something:": "Voici quelque chose :",
+    "Take a look:": "Regardez :",
+    "Here's another look at {P}.": "Un autre regard sur {P}.",
+    "Quick scenery break in {P}!": "Petite pause paysage à {P} !",
+    "Another view around {P}.": "Une autre vue des environs de {P}.",
+    "Still in {P}. Look at that!": "Toujours à {P}. Regardez ça !",
+    "One more photo from {P}.": "Encore une photo de {P}.",
+    "Here's what it looks like around here.": "Voici à quoi ça ressemble par ici.",
+    "A snapshot from a local.": "Un cliché pris par un habitant.",
+    "Take a look at this view.": "Regardez cette vue.",
+    "Somebody took this nearby.": "Quelqu'un a pris ceci tout près.",
+    "A little scenery for you.": "Un peu de paysage pour vous.",
+    "Here's a story from this place.": "Une histoire de cet endroit.",
+    "Locals might know this one.": "Les habitants la connaissent peut-être.",
+    "A little local trivia.": "Une petite anecdote locale.",
+    "One more from around town.": "Encore une de la ville.",
+    "This one's from the history books.": "Celle-ci vient des livres d'histoire.",
+    "And one more for the road.": "Et une dernière pour la route.",
+    "You're closest to {P}, about {n} miles away.": "Vous êtes le plus près de {P}, à environ {n} miles.",
+    "You're closest to {P}, about {n} mile away.": "Vous êtes le plus près de {P}, à environ {n} mile.",
+    "Looks like you're in {P}! Here's your hometown.": "On dirait que vous êtes à {P} ! Voici votre ville.",
+    "Know Your City covers U.S. places. Here's {P}. Search for any U.S. town above.": "Connaissez votre ville couvre des lieux des États-Unis. Voici {P}. Recherchez n'importe quelle ville des États-Unis ci-dessus.",
+    "I couldn't find a Census Place near you. Here's {P}. Search for any U.S. town above.": "Je n'ai pas trouvé de lieu du recensement près de vous. Voici {P}. Recherchez n'importe quelle ville des États-Unis ci-dessus.",
+    "Hmm, I couldn't find that place's boundary.": "Hmm, je n'ai pas trouvé les limites de ce lieu.",
+    "Hmm, that spot isn't inside a Census Place. Try a city, town or village.": "Hmm, cet endroit n'est pas dans un lieu du recensement. Essayez une ville ou un village.",
+    "The map isn't available right now.": "La carte n'est pas disponible pour le moment.",
+    "That one isn't on the map.": "Celui-ci n'est pas sur la carte.",
+
+    // --- search and errors ---
+    "No Census places match that. Try the city name, then a comma and the state.": "Aucun lieu du recensement ne correspond. Essayez le nom de la ville, puis une virgule et l'État.",
+    "The numbers didn't load.": "Les chiffres ne se sont pas chargés.",
+    "If this mentions a Census key, check that it has been activated from the email link, then reload.": "Si cela mentionne une clé du recensement, vérifiez qu'elle a été activée depuis le lien de l'e-mail, puis rechargez la page.",
+    "This is taking too long. Check your internet connection and reload.": "Cela prend trop de temps. Vérifiez votre connexion internet et rechargez la page.",
+    "(township)": "(canton)"
+  };
+  // Phrases only the code asks for with T(); they are not matched against page text.
+  var CODE_FR = {
+    "{a} through {b}.": "De {a} à {b}.",
+    "Serves {a} only.": "Accueille uniquement {a}.",
+    "It is based in {x}.": "Il est situé dans {x}.",
+    "{s} averages {r}.": "La moyenne de {s} est de {r}.",
+    "The U.S. averages {r}.": "La moyenne des États-Unis est de {r}.",
+    "Inside {P} there are {x}.": "À {P}, il y a {x}.",
+    "and": "et",
+    "Census data, compared with the U.S.": "Données du recensement, comparées aux États-Unis.",
+    "Know Your City": "Connaissez votre ville"
+  };
+  var DICT_TX = ES ? DICT_ES : FR ? DICT_FR : {}, CODE_TX = ES ? CODE_ES : FR ? CODE_FR : {};
+  var FORECASTS = { "Sunny": "Soleado", "Mostly Sunny": "Mayormente soleado", "Partly Sunny": "Parcialmente soleado", "Clear": "Despejado", "Mostly Clear": "Mayormente despejado",
+    "Partly Cloudy": "Parcialmente nublado", "Mostly Cloudy": "Mayormente nublado", "Cloudy": "Nublado", "Overcast": "Cubierto", "Chance Rain Showers": "Posibles chubascos",
+    "Slight Chance Rain Showers": "Leve posibilidad de chubascos", "Rain Showers Likely": "Chubascos probables", "Rain Showers": "Chubascos", "Showers": "Chubascos", "Rain": "Lluvia",
+    "Light Rain": "Lluvia ligera", "Heavy Rain": "Lluvia fuerte", "Chance Light Rain": "Posible lluvia ligera", "Showers And Thunderstorms": "Chubascos y tormentas eléctricas",
+    "Chance Showers And Thunderstorms": "Posibles chubascos y tormentas eléctricas", "Thunderstorms": "Tormentas eléctricas", "Slight Chance Thunderstorms": "Leve posibilidad de tormentas eléctricas",
+    "Chance Thunderstorms": "Posibles tormentas eléctricas", "Patchy Fog": "Niebla dispersa", "Areas Of Fog": "Zonas de niebla", "Fog": "Niebla", "Haze": "Neblina", "Smoke": "Humo",
+    "Snow": "Nieve", "Chance Snow": "Posible nieve", "Light Snow": "Nieve ligera", "Snow Showers": "Chubascos de nieve", "Rain And Snow": "Lluvia y nieve", "Freezing Rain": "Lluvia helada",
+    "Sleet": "Aguanieve", "Drizzle": "Llovizna", "Windy": "Ventoso", "Breezy": "Con brisa", "Isolated Showers": "Chubascos aislados", "Scattered Showers": "Chubascos dispersos" };
+  var FORECASTS_FR = { "Sunny": "Ensoleillé", "Mostly Sunny": "Plutôt ensoleillé", "Partly Sunny": "Partiellement ensoleillé", "Clear": "Dégagé", "Mostly Clear": "Plutôt dégagé",
+    "Partly Cloudy": "Partiellement nuageux", "Mostly Cloudy": "Plutôt nuageux", "Cloudy": "Nuageux", "Overcast": "Couvert", "Chance Rain Showers": "Risque d'averses",
+    "Slight Chance Rain Showers": "Faible risque d'averses", "Rain Showers Likely": "Averses probables", "Rain Showers": "Averses", "Showers": "Averses", "Rain": "Pluie",
+    "Light Rain": "Pluie légère", "Heavy Rain": "Forte pluie", "Chance Light Rain": "Risque de pluie légère", "Showers And Thunderstorms": "Averses et orages",
+    "Chance Showers And Thunderstorms": "Risque d'averses et d'orages", "Thunderstorms": "Orages", "Slight Chance Thunderstorms": "Faible risque d'orages",
+    "Chance Thunderstorms": "Risque d'orages", "Patchy Fog": "Brouillard par endroits", "Areas Of Fog": "Zones de brouillard", "Fog": "Brouillard", "Haze": "Brume sèche", "Smoke": "Fumée",
+    "Snow": "Neige", "Chance Snow": "Risque de neige", "Light Snow": "Neige légère", "Snow Showers": "Averses de neige", "Rain And Snow": "Pluie et neige", "Freezing Rain": "Pluie verglaçante",
+    "Sleet": "Grésil", "Drizzle": "Bruine", "Windy": "Venteux", "Breezy": "Brise", "Isolated Showers": "Averses isolées", "Scattered Showers": "Averses dispersées" };
+  var FC_TX = ES ? FORECASTS : FR ? FORECASTS_FR : {};
+  Object.keys(FC_TX).forEach(function (k) { DICT_TX[k] = FC_TX[k]; DICT_TX[k.toLowerCase()] = FC_TX[k].toLowerCase(); });
+
+  function interp(s, v) { return v ? String(s).replace(/\{(\w+)\}/g, function (m, k) { return v[k] != null ? v[k] : m; }) : s; }
+  // T("English text {slot}", { slot: value }): the Spanish when the page is in Spanish, otherwise the English.
+  function T(s, v) { return interp(XL ? (DICT_TX[s] != null ? DICT_TX[s] : CODE_TX[s] != null ? CODE_TX[s] : s) : s, v); }
+
+  var T_EXACT = null, T_PATS = null, ABBR = /(?:^|\s)(?:St|Mt|Ft|Dr|Mr|Mrs|Ms|Jr|Sr|U\.S|D\.C|No|Co|Inc|Ave|Blvd|vs|etc|(?:[A-Z]\.)+[A-Z]?)\.?$/;
+  function splitSentences(s) {
+    var out = [], last = 0, re = /([.!?])\s+(?=[A-Z“"'¡¿])/g, m;
+    while ((m = re.exec(s))) {
+      var head = s.slice(last, m.index + 1);
+      if (m[1] === "." && ABBR.test(head)) continue;
+      out.push(head); last = m.index + m[0].length;
+    }
+    out.push(s.slice(last)); return out;
+  }
+  function buildT() {
+    T_EXACT = Object.create(null); T_PATS = [];
+    Object.keys(DICT_TX).forEach(function (k) {
+      if (k.indexOf("{") < 0) { T_EXACT[k] = DICT_TX[k]; return; }
+      var names = [], lit = 0, src = k.replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\{(\w+)\}/g, function (m, n) { names.push(n); return "(.+?)"; });
+      lit = k.replace(/\{\w+\}/g, "").length;
+      T_PATS.push({ re: new RegExp("^" + src + "$"), names: names, out: DICT_TX[k], pre: k.split("{")[0], lit: lit });
+    });
+    T_PATS.sort(function (a, b) { return b.lit - a.lit; });
+  }
+  function trCore(s, depth) {
+    var e = T_EXACT[s]; if (e != null) return e;
+    for (var i = 0; i < T_PATS.length; i++) {
+      var p = T_PATS[i]; if (p.pre && s.indexOf(p.pre) !== 0) continue;
+      var m = p.re.exec(s); if (!m) continue;
+      var ok = true, v = {};
+      for (var j = 0; j < p.names.length; j++) {
+        var raw = m[j + 1]; if (splitSentences(raw).length > 1) { ok = false; break; }
+        var t2 = depth < 2 ? trCore(raw, depth + 1) : null; v[p.names[j]] = t2 != null ? t2 : raw;
+      }
+      if (ok) return interp(p.out, v);
+    }
+    return null;
+  }
+  // French typography: numbers the French way (1 234,5 and 91 000 $), elisions (d'Orlando), contractions (du, au), apostrophes and the space before : ; ? !
+  function loc(s, french) {
+    if (!FR) return s;
+    s = s.replace(/(^|[^\d.,\w])(\d{1,3}(?:,\d{3})+)(?!\d|,\d)/g, function (m, p, n) { return p + n.replace(/,/g, "\u202f"); })
+      .replace(/(^|[^\d.,\w])(\d+)\.(\d+)(?![\d.])/g, "$1$2,$3")
+      .replace(/\$(\d[\d\u202f]*(?:,\d+)?)/g, "$1\u00a0$")
+      .replace(/(\d)%/g, "$1\u00a0%");
+    if (french) {
+      s = s.replace(/\b([dD])e (?=[aeiouyàâäéèêëîïôöûüh])/gi, "$1'")
+        .replace(/(^|[\s(])de [Ll]es(?=\s)/g, "$1des").replace(/(^|[\s(])de [Ll]e(?=\s)/g, "$1du")
+        .replace(/(^|[\s(])à [Ll]es(?=\s)/g, "$1aux").replace(/(^|[\s(])à [Ll]e(?=\s)/g, "$1au")
+        .replace(/([A-Za-zÀ-ÿ])'([A-Za-zÀ-ÿ])/g, "$1\u2019$2")
+        .replace(/ ([?!:;»])/g, "\u00a0$1").replace(/« /g, "«\u00a0");
+    }
+    return s;
+  }
+  // Translate a string: the whole thing if the table knows it, otherwise sentence by sentence. Text the engine already wrote in French starts with \u2060.
+  function tr(str) {
+    if (!XL || !str) return str;
+    if (!T_EXACT) buildT();
+    if (FR && str.indexOf("\u2060") >= 0) return loc(str.replace(/\u2060/g, ""), true);
+    var m = /^(\s*)([\s\S]*?)(\s*)$/.exec(str), core = m[2]; if (!core) return str;
+    var o = trCore(core, 0);
+    if (o == null) {
+      var parts = splitSentences(core);
+      if (parts.length > 1) {
+        var any = false, out = parts.map(function (p) { var q = trCore(p, 0); if (q != null) { any = true; return q; } return p; });
+        if (any) o = out.join(" ");
+      }
+    }
+    if (o == null) return FR && /^[\d\s$.,%\u202f\u00a0+\-–×°]*(?:mi|ft|mph|min)?$/i.test(str) ? loc(str, false) : str;
+    return FR ? loc(m[1] + o + m[3], true) : m[1] + o + m[3];
+  }
+  // The English text under a translated element, for things that must not change with the language (section ids).
+  function enText(root) {
+    var s = "", w = document.createTreeWalker(root, 4), n;
+    while ((n = w.nextNode())) s += n.__en != null ? n.__en : n.data;
+    return s.trim();
+  }
+  if (XL) {
+    var TR_ATTRS = ["title", "aria-label", "placeholder", "alt", "data-cap"], TR_SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, NOSCRIPT: 1 };
+    var trText = function (n) {
+      var p = n.parentNode; if (!p || TR_SKIP[p.nodeName] || (p.closest && p.closest("[translate=no]"))) return;
+      var cur = n.data; if (n.__tr === cur) return;
+      var out = tr(cur);
+      if (out !== cur) { n.__en = cur; n.__tr = out; n.data = out; } else { n.__en = undefined; n.__tr = undefined; }
+    };
+    var trAttrs = function (e) {
+      if (!e.getAttribute || (e.closest && e.closest("[translate=no]"))) return;
+      for (var i = 0; i < TR_ATTRS.length; i++) {
+        var a = TR_ATTRS[i], v = e.getAttribute(a); if (!v) continue;
+        var rec = e.__trA || (e.__trA = {}); if (rec[a] === v) continue;
+        var out = tr(v); if (out !== v) { rec[a] = out; e.setAttribute(a, out); }
+      }
+    };
+    var trTree = function (root) {
+      if (root.nodeType === 3) { trText(root); return; }
+      if (root.nodeType !== 1) return;
+      trAttrs(root);
+      var w = document.createTreeWalker(root, 5), n;
+      while ((n = w.nextNode())) { if (n.nodeType === 3) trText(n); else trAttrs(n); }
+    };
+    var trQueue = [], trTimer = 0;
+    var trFlush = function () { trTimer = 0; var q = trQueue; trQueue = []; q.forEach(function (n) { if (n.attrOnly) trAttrs(n.attrOnly); else if (n.isConnected !== false) trTree(n); }); };
+    new MutationObserver(function (ms) {
+      ms.forEach(function (m) {
+        if (m.type === "childList") m.addedNodes.forEach(function (n) { trQueue.push(n); });
+        else if (m.type === "attributes") trQueue.push({ attrOnly: m.target });
+        else trQueue.push(m.target);
+      });
+      if (!trTimer) trTimer = setTimeout(trFlush, 0);
+    }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: TR_ATTRS });
+    trTree(document.body); document.title = tr(document.title);
+  }
+  // The language buttons at the top of the page.
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-lang]"); if (!b) return;
+    var v = b.getAttribute("data-lang"); if (!LANGS[v] || v === LANG) return;
+    safeSet("kyc_lang", v);
+    var u = new URL(location.href); u.searchParams.set("lang", v); location.href = u.toString();
+  });
+  (function () {
+    var row = document.getElementById("langRow"); if (!row) return;
+    row.innerHTML = Object.keys(LANGS).map(function (k) { return '<button type="button" class="pill" data-lang="' + k + '" lang="' + k + '" aria-pressed="' + (k === LANG ? "true" : "false") + '">' + LANGS[k] + "</button>"; }).join("");
+  })();
+
+  /* ====================================================================
    * Indicators. Each one: how to find it in the Census data, what visual suits it,
    * and the words that describe it. Sentences only describe and compare; they never judge.
    * ==================================================================== */
   var IND = {
     // who lives here
     medAge:  { scene: "people", find: ["sex and age", "median age"], viz: "ruler", grp: "age",
-               main: function (c, P) { return "Half of the people in " + P + " are younger than " + K.trimNum(c.p) + " and half are older."; }, usWord: "The U.S. median age" },
+               main: function (c, P) { return FR ? "\u2060" + "La moitié des habitants de " + P + " ont moins de " + K.trimNum(c.p) + " ans et l'autre moitié a plus." : ES ? "La mitad de las personas en " + P + " tiene menos de " + K.trimNum(c.p) + " años y la otra mitad tiene más." : "Half of the people in " + P + " are younger than " + K.trimNum(c.p) + " and half are older."; }, usWord: "The U.S. median age" },
     under18: { scene: "people", find: ["sex and age", "under 18 years"], viz: "crowd", grp: "age", subj: "people in {P}", pred: "are under 18" },
     age65:   { scene: "people", find: ["sex and age", "65 years and over"], viz: "crowd", grp: "age", subj: "people in {P}", pred: "are 65 or older" },
     // roots
     mix:     { scene: "roots", custom: "mix", viz: "ruler", grp: "mix",
-               main: function (c, P) { return "Pick two residents of " + P + " at random, and there's about a " + Math.round(c.p) + " in 100 chance their racial or ethnic backgrounds differ (Census categories)."; },
-               cmp: function (c, P) { var d = c.p - c.pus; return "The U.S. chance is about " + Math.round(c.pus) + " in 100, so " + P + " is " + (Math.abs(d) < 3 ? "close to the national figure" : d > 0 ? "above the national figure" : "below the national figure") + "."; } },
+               main: function (c, P) { return FR ? "\u2060" + "Si vous choisissez deux habitants de " + P + " au hasard, il y a environ " + Math.round(c.p) + " chances sur 100 que leurs origines raciales ou ethniques diffèrent (catégories du recensement)." : ES ? "Si eliges al azar a dos residentes de " + P + ", hay alrededor de " + Math.round(c.p) + " probabilidades en 100 de que sus orígenes raciales o étnicos sean distintos (categorías del Censo)." : "Pick two residents of " + P + " at random, and there's about a " + Math.round(c.p) + " in 100 chance their racial or ethnic backgrounds differ (Census categories)."; },
+               cmp: function (c, P) { var d = c.p - c.pus; if (FR) return "\u2060" + "La probabilité nationale est d'environ " + Math.round(c.pus) + " sur 100, donc " + P + " " + (Math.abs(d) < 3 ? "est proche du chiffre national" : d > 0 ? "se situe au-dessus du chiffre national" : "se situe en dessous du chiffre national") + "."; if (ES) return "La probabilidad nacional es de alrededor de " + Math.round(c.pus) + " en 100, así que " + P + " está " + (Math.abs(d) < 3 ? "cerca de la cifra nacional" : d > 0 ? "por encima de la cifra nacional" : "por debajo de la cifra nacional") + "."; return "The U.S. chance is about " + Math.round(c.pus) + " in 100, so " + P + " is " + (Math.abs(d) < 3 ? "close to the national figure" : d > 0 ? "above the national figure" : "below the national figure") + "."; } },
     hisp:    { scene: "roots", find: ["hispanic or latino and race", "hispanic or latino (of any race)"], viz: "crowd", grp: "hisp", subj: "people in {P}", pred: "are Hispanic or Latino, of any race" },
     foreign: { scene: "roots", find: ["place of birth", "foreign born"], viz: "crowd", grp: "foreign", subj: "residents of {P}", pred: "were born outside the United States" },
     lang:    { scene: "roots", find: ["language spoken at home", "language other than english"], viz: "crowd", grp: "lang", subj: "residents of {P} age 5 and over", pred: "speak a language other than English at home" },
     // households
     avgHH:   { scene: "households", find: ["households by type", "average household size"], viz: "ruler", grp: "hhsize",
-               main: function (c, P) { return "The average household in " + P + " has " + K.fmt(c, c.p) + " people."; }, usWord: "The U.S. average" },
+               main: function (c, P) { return FR ? "\u2060" + "Le ménage moyen à " + P + " compte " + K.fmt(c, c.p) + " personnes." : ES ? "El hogar promedio en " + P + " tiene " + K.fmt(c, c.p) + " personas." : "The average household in " + P + " has " + K.fmt(c, c.p) + " people."; }, usWord: "The U.S. average" },
     alone:   { scene: "households", find: ["householder living alone"], viz: "houses", grp: "alone", subj: "households in {P}", pred: "are one person living alone" },
     kids:    { scene: "households", find: ["households with one or more people under 18"], viz: "houses", grp: "kids", subj: "households in {P}", pred: "include at least one child under 18" },
     married: { scene: "households", find: ["households by type", "married-couple"], viz: "bars", grp: "hhtype", short: "Married-couple households", subj: "households in {P}", pred: "are married couples" },
@@ -698,31 +1823,35 @@ var EVENT_SOURCES = [
     // homes
     own:     { scene: "homes", find: ["housing tenure", "owner-occupied"], viz: "houses", grp: "tenure", subj: "occupied homes in {P}", pred: "are lived in by their owners" },
     value:   { scene: "homes", find: ["value", "median (dollars)"], viz: "tower", grp: "value",
-               main: function (c, P) { return "The typical (median) home in " + P + " is valued at " + K.fmt(c, c.p) + "."; } },
+               main: function (c, P) { return FR ? "\u2060" + "Le logement typique (médian) à " + P + " est évalué à " + K.fmt(c, c.p) + "." : ES ? "La vivienda típica (mediana) en " + P + " tiene un valor de " + K.fmt(c, c.p) + "." : "The typical (median) home in " + P + " is valued at " + K.fmt(c, c.p) + "."; } },
     rentVal: { scene: "homes", find: ["gross rent", "median (dollars)"], viz: "tower", grp: "rent",
-               main: function (c, P) { return "The typical (median) rent in " + P + " is " + K.fmt(c, c.p) + " a month."; } },
+               main: function (c, P) { return FR ? "\u2060" + "Le loyer typique (médian) à " + P + " est de " + K.fmt(c, c.p) + " par mois." : ES ? "El alquiler típico (mediano) en " + P + " es de " + K.fmt(c, c.p) + " al mes." : "The typical (median) rent in " + P + " is " + K.fmt(c, c.p) + " a month."; } },
     vacant:  { scene: "homes", find: ["housing occupancy", "vacant housing units"], viz: "houses", grp: "vacant", subj: "homes in {P}", pred: "are vacant" },
     singleFam: { scene: "homes", find: ["units in structure", "1-unit, detached"], viz: "houses", grp: "structure", subj: "homes in {P}", pred: "are detached single-family houses" },
     noCar:   { scene: "homes", find: ["vehicles available", "no vehicles available"], viz: "houses", grp: "cars", subj: "households in {P}", pred: "have no vehicle available" },
     // who owns the homes (Census table S2501)
     ownFM:   { scene: "owners", custom: "fm", viz: "duel", grp: "owners",
                main: function (c, P) {
+                 if (FR && c.nW != null && c.nM != null) return "\u2060" + "À " + P + ", environ " + K.approxCount(c.nW) + " ménages propriétaires sont dirigés par une femme sans conjoint, et environ " + K.approxCount(c.nM) + " par un homme.";
+                 if (FR) return "\u2060" + "Parmi les ménages familiaux sans conjoint, " + P + " compte environ " + K.trimNum(c.p) + " ménages propriétaires dirigés par une femme pour 1 dirigé par un homme.";
+                 if (ES && c.nW != null && c.nM != null) return "En " + P + ", unos " + K.approxCount(c.nW) + " hogares propietarios tienen una mujer al frente sin cónyuge presente, y unos " + K.approxCount(c.nM) + " tienen un hombre al frente.";
+                 if (ES) return "Entre los hogares familiares sin cónyuge presente, " + P + " tiene unos " + K.trimNum(c.p) + " hogares propietarios con una mujer al frente por cada 1 con un hombre al frente.";
                  if (c.nW != null && c.nM != null) return "In " + P + ", about " + K.approxCount(c.nW) + " homeowner households are headed by a woman with no spouse present, and about " + K.approxCount(c.nM) + " by a man.";
                  return "Among family households with no spouse present, " + P + " has about " + K.trimNum(c.p) + " owner-households headed by a woman for every 1 headed by a man.";
                },
-               cmp: function (c, P) { return "Nationwide the ratio is about " + K.trimNum(c.pus) + " to 1, so the gap in " + P + " is " + (c.sig ? (c.p > c.pus ? "wider" : "narrower") : "about the same") + "."; } },
+               cmp: function (c, P) { if (FR) return "\u2060" + "À l'échelle nationale, le rapport est d'environ " + K.trimNum(c.pus) + " pour 1, donc l'écart à " + P + " est " + (c.sig ? (c.p > c.pus ? "plus large" : "plus étroit") : "à peu près le même") + "."; if (ES) return "A nivel nacional la proporción es de alrededor de " + K.trimNum(c.pus) + " a 1, así que la diferencia en " + P + " es " + (c.sig ? (c.p > c.pus ? "más amplia" : "más estrecha") : "casi igual") + "."; return "Nationwide the ratio is about " + K.trimNum(c.pus) + " to 1, so the gap in " + P + " is " + (c.sig ? (c.p > c.pus ? "wider" : "narrower") : "about the same") + "."; } },
     ownF:    { scene: "owners", own: "female householder, no spouse", viz: "bars", grp: "ownrate", short: "Households headed by a woman, no spouse present", subj: "households headed by a woman with no spouse present in {P}", pred: "are owned by the people who live there" },
     ownM:    { scene: "owners", own: "male householder, no spouse", viz: "bars", grp: "ownrate", short: "Households headed by a man, no spouse present", subj: "households headed by a man with no spouse present in {P}", pred: "are owned by the people who live there" },
     own1p:   { scene: "owners", own: "1-person household", viz: "bars", grp: "ownrate", short: "One-person households", subj: "one-person households in {P}", pred: "are owned by the person who lives there" },
     ownMC:   { scene: "owners", own: "married-couple family", viz: "bars", grp: "ownrate", short: "Married-couple households", subj: "married-couple households in {P}", pred: "are owned by the couple who lives there" },
     // work and money
     income:  { scene: "work", find: ["median household income"], viz: "tower", grp: "income",
-               main: function (c, P) { return "The typical (median) household in " + P + " brings in " + K.fmt(c, c.p) + " a year."; } },
+               main: function (c, P) { return FR ? "\u2060" + "Le ménage typique (médian) à " + P + " gagne " + K.fmt(c, c.p) + " par an." : ES ? "El hogar típico (mediano) en " + P + " gana " + K.fmt(c, c.p) + " al año." : "The typical (median) household in " + P + " brings in " + K.fmt(c, c.p) + " a year."; } },
     perCap:  { scene: "work", find: ["per capita income"], viz: "tower", grp: "percap",
-               main: function (c, P) { return "Spread across every resident, income in " + P + " works out to " + K.fmt(c, c.p) + " a year per person."; }, usWord: "The U.S. figure" },
+               main: function (c, P) { return FR ? "\u2060" + "Réparti entre tous les habitants, le revenu à " + P + " équivaut à " + K.fmt(c, c.p) + " par an et par personne." : ES ? "Repartido entre todos los residentes, el ingreso en " + P + " equivale a " + K.fmt(c, c.p) + " al año por persona." : "Spread across every resident, income in " + P + " works out to " + K.fmt(c, c.p) + " a year per person."; }, usWord: "The U.S. figure" },
     poverty: { scene: "work", find: ["percentage of families and people", "all people"], viz: "crowd", grp: "poverty", subj: "people in {P}", pred: "live below the federal poverty line" },
     commute: { scene: "work", find: ["mean travel time to work"], viz: "ruler", grp: "commute",
-               main: function (c, P) { return "The average commute in " + P + " takes about " + Math.round(c.p) + " minutes each way."; }, usWord: "The U.S. average" },
+               main: function (c, P) { return FR ? "\u2060" + "Le trajet moyen pour aller travailler à " + P + " dure environ " + Math.round(c.p) + " minutes à l'aller." : ES ? "El trayecto promedio al trabajo en " + P + " dura unos " + Math.round(c.p) + " minutos de ida." : "The average commute in " + P + " takes about " + Math.round(c.p) + " minutes each way."; }, usWord: "The U.S. average" },
     drive:   { scene: "work", find: ["commuting to work", "drove alone"], viz: "road", grp: "mode", subj: "workers in {P}", pred: "drive to work alone", em: "🚗" },
     wfh:     { scene: "work", find: ["commuting to work", "worked from home"], viz: "road", grp: "mode", subj: "workers in {P}", pred: "work from home", em: "🏠" },
     transit: { scene: "work", find: ["commuting to work", "public transportation"], viz: "road", grp: "mode", subj: "workers in {P}", pred: "take public transportation to work", em: "🚌" },
@@ -734,6 +1863,74 @@ var EVENT_SOURCES = [
     capBach: { scene: "learning", find: ["educational attainment", "bachelor's degree"], not: ["or higher"], viz: "stack", grp: "degree", short: "Bachelor's degree", subj: "adults 25 and older in {P}", pred: "have a bachelor's degree as their highest level of school" },
     capGrad: { scene: "learning", find: ["educational attainment", "graduate or professional degree"], viz: "stack", grp: "degree", short: "Graduate or professional degree", subj: "adults 25 and older in {P}", pred: "have a graduate or professional degree" }
   };
+
+  // Spanish wording for the indicators above: subj/pred for shares (subjDef carries the article, g is the gender of the group), usWordEs for medians.
+  var ES_IND = {
+    under18: { subj: "personas en {P}", subjDef: "las personas en {P}", g: "f", pred: "son menores de 18 años" },
+    age65: { subj: "personas en {P}", subjDef: "las personas en {P}", g: "f", pred: "tienen 65 años o más" },
+    hisp: { subj: "personas en {P}", subjDef: "las personas en {P}", g: "f", pred: "son hispanas o latinas, de cualquier raza" },
+    foreign: { subj: "residentes de {P}", subjDef: "los residentes de {P}", g: "m", pred: "nacieron fuera de Estados Unidos" },
+    lang: { subj: "residentes de {P} de 5 años o más", subjDef: "los residentes de {P} de 5 años o más", g: "m", pred: "hablan en casa un idioma distinto del inglés" },
+    alone: { subj: "hogares en {P}", subjDef: "los hogares en {P}", g: "m", pred: "son de una sola persona que vive sola" },
+    kids: { subj: "hogares en {P}", subjDef: "los hogares en {P}", g: "m", pred: "incluyen al menos a un menor de 18 años" },
+    married: { subj: "hogares en {P}", subjDef: "los hogares en {P}", g: "m", pred: "son parejas casadas" },
+    hhFemale: { subj: "hogares en {P}", subjDef: "los hogares en {P}", g: "m", pred: "son hogares familiares con una mujer al frente, sin cónyuge ni pareja presente" },
+    hhMale: { subj: "hogares en {P}", subjDef: "los hogares en {P}", g: "m", pred: "son hogares familiares con un hombre al frente, sin cónyuge ni pareja presente" },
+    own: { subj: "viviendas ocupadas en {P}", subjDef: "las viviendas ocupadas en {P}", g: "f", pred: "están habitadas por sus propietarios" },
+    vacant: { subj: "viviendas en {P}", subjDef: "las viviendas en {P}", g: "f", pred: "están vacías" },
+    singleFam: { subj: "viviendas en {P}", subjDef: "las viviendas en {P}", g: "f", pred: "son casas unifamiliares independientes" },
+    noCar: { subj: "hogares en {P}", subjDef: "los hogares en {P}", g: "m", pred: "no tienen vehículo disponible" },
+    ownF: { subj: "hogares con una mujer al frente y sin cónyuge en {P}", subjDef: "los hogares con una mujer al frente y sin cónyuge en {P}", g: "m", pred: "son propiedad de las personas que viven allí" },
+    ownM: { subj: "hogares con un hombre al frente y sin cónyuge en {P}", subjDef: "los hogares con un hombre al frente y sin cónyuge en {P}", g: "m", pred: "son propiedad de las personas que viven allí" },
+    own1p: { subj: "hogares de una persona en {P}", subjDef: "los hogares de una persona en {P}", g: "m", pred: "son propiedad de la persona que vive allí" },
+    ownMC: { subj: "hogares de parejas casadas en {P}", subjDef: "los hogares de parejas casadas en {P}", g: "m", pred: "son propiedad de la pareja que vive allí" },
+    poverty: { subj: "personas en {P}", subjDef: "las personas en {P}", g: "f", pred: "viven por debajo de la línea federal de pobreza" },
+    drive: { subj: "trabajadores en {P}", subjDef: "los trabajadores en {P}", g: "m", pred: "van solos en auto al trabajo" },
+    wfh: { subj: "trabajadores en {P}", subjDef: "los trabajadores en {P}", g: "m", pred: "trabajan desde casa" },
+    transit: { subj: "trabajadores en {P}", subjDef: "los trabajadores en {P}", g: "m", pred: "usan el transporte público para ir al trabajo" },
+    walk: { subj: "trabajadores en {P}", subjDef: "los trabajadores en {P}", g: "m", pred: "van caminando al trabajo" },
+    capAll: { subj: "adultos de 25 años o más en {P}", subjDef: "los adultos de 25 años o más en {P}", g: "m", pred: "tienen un título universitario: de asociado, licenciatura o posgrado" },
+    hs: { subj: "adultos de 25 años o más en {P}", subjDef: "los adultos de 25 años o más en {P}", g: "m", pred: "tienen al menos un diploma de escuela secundaria" },
+    capAssoc: { subj: "adultos de 25 años o más en {P}", subjDef: "los adultos de 25 años o más en {P}", g: "m", pred: "tienen un título de asociado como su nivel de estudios más alto" },
+    capBach: { subj: "adultos de 25 años o más en {P}", subjDef: "los adultos de 25 años o más en {P}", g: "m", pred: "tienen una licenciatura como su nivel de estudios más alto" },
+    capGrad: { subj: "adultos de 25 años o más en {P}", subjDef: "los adultos de 25 años o más en {P}", g: "m", pred: "tienen un posgrado o título profesional" },
+    medAge: { usWordEs: "La edad mediana nacional" }, avgHH: { usWordEs: "El promedio nacional" }, perCap: { usWordEs: "La cifra nacional" }, commute: { usWordEs: "El promedio nacional" }
+  };
+  if (ES) Object.keys(ES_IND).forEach(function (k) { if (IND[k]) { IND[k].es = ES_IND[k]; if (ES_IND[k].usWordEs) IND[k].usWordEs = ES_IND[k].usWordEs; } });
+
+  // French wording: n1/np the noun (one / several), loc where, p1/pp what they do (one / several), def the group with its article for "presque tous", g its gender.
+  var FR_IND = {
+    under18: { n1: "personne", np: "personnes", loc: "à {P}", p1: "a moins de 18 ans", pp: "ont moins de 18 ans", def: "les personnes à {P}", g: "f" },
+    age65: { n1: "personne", np: "personnes", loc: "à {P}", p1: "a 65 ans ou plus", pp: "ont 65 ans ou plus", def: "les personnes à {P}", g: "f" },
+    hisp: { n1: "personne", np: "personnes", loc: "à {P}", p1: "est d'origine hispanique ou latino-américaine, de toute race", pp: "sont d'origine hispanique ou latino-américaine, de toute race", def: "les personnes à {P}", g: "f" },
+    foreign: { n1: "habitant", np: "habitants", loc: "de {P}", p1: "est né hors des États-Unis", pp: "sont nés hors des États-Unis", def: "les habitants de {P}", g: "m" },
+    lang: { n1: "habitant", np: "habitants", loc: "de {P} âgé de 5 ans ou plus", locp: "de {P} âgés de 5 ans ou plus", p1: "parle à la maison une autre langue que l'anglais", pp: "parlent à la maison une autre langue que l'anglais", def: "les habitants de {P} âgés de 5 ans ou plus", g: "m" },
+    alone: { n1: "ménage", np: "ménages", loc: "à {P}", p1: "est composé d'une seule personne vivant seule", pp: "sont composés d'une seule personne vivant seule", def: "les ménages à {P}", g: "m" },
+    kids: { n1: "ménage", np: "ménages", loc: "à {P}", p1: "compte au moins un enfant de moins de 18 ans", pp: "comptent au moins un enfant de moins de 18 ans", def: "les ménages à {P}", g: "m" },
+    married: { n1: "ménage", np: "ménages", loc: "à {P}", p1: "est un couple marié", pp: "sont des couples mariés", def: "les ménages à {P}", g: "m" },
+    hhFemale: { n1: "ménage", np: "ménages", loc: "à {P}", p1: "est un ménage familial dirigé par une femme, sans conjoint ni partenaire présent", pp: "sont des ménages familiaux dirigés par une femme, sans conjoint ni partenaire présent", def: "les ménages à {P}", g: "m" },
+    hhMale: { n1: "ménage", np: "ménages", loc: "à {P}", p1: "est un ménage familial dirigé par un homme, sans conjoint ni partenaire présent", pp: "sont des ménages familiaux dirigés par un homme, sans conjoint ni partenaire présent", def: "les ménages à {P}", g: "m" },
+    own: { n1: "logement occupé", np: "logements occupés", loc: "à {P}", p1: "est habité par son propriétaire", pp: "sont habités par leur propriétaire", def: "les logements occupés à {P}", g: "m" },
+    vacant: { n1: "logement", np: "logements", loc: "à {P}", p1: "est vacant", pp: "sont vacants", def: "les logements à {P}", g: "m" },
+    singleFam: { n1: "logement", np: "logements", loc: "à {P}", p1: "est une maison individuelle", pp: "sont des maisons individuelles", def: "les logements à {P}", g: "m" },
+    noCar: { n1: "ménage", np: "ménages", loc: "à {P}", p1: "n'a aucun véhicule à disposition", pp: "n'ont aucun véhicule à disposition", def: "les ménages à {P}", g: "m" },
+    ownF: { n1: "ménage dirigé par une femme sans conjoint", np: "ménages dirigés par une femme sans conjoint", loc: "à {P}", p1: "appartient à ceux qui y vivent", pp: "appartiennent à ceux qui y vivent", def: "les ménages dirigés par une femme sans conjoint à {P}", g: "m" },
+    ownM: { n1: "ménage dirigé par un homme sans conjoint", np: "ménages dirigés par un homme sans conjoint", loc: "à {P}", p1: "appartient à ceux qui y vivent", pp: "appartiennent à ceux qui y vivent", def: "les ménages dirigés par un homme sans conjoint à {P}", g: "m" },
+    own1p: { n1: "ménage d'une personne", np: "ménages d'une personne", loc: "à {P}", p1: "appartient à la personne qui y vit", pp: "appartiennent à la personne qui y vit", def: "les ménages d'une personne à {P}", g: "m" },
+    ownMC: { n1: "ménage de couple marié", np: "ménages de couples mariés", loc: "à {P}", p1: "appartient au couple qui y vit", pp: "appartiennent au couple qui y vit", def: "les ménages de couples mariés à {P}", g: "m" },
+    poverty: { n1: "personne", np: "personnes", loc: "à {P}", p1: "vit sous le seuil fédéral de pauvreté", pp: "vivent sous le seuil fédéral de pauvreté", def: "les personnes à {P}", g: "f" },
+    drive: { n1: "travailleur", np: "travailleurs", loc: "à {P}", p1: "se rend seul au travail en voiture", pp: "se rendent seuls au travail en voiture", def: "les travailleurs à {P}", g: "m" },
+    wfh: { n1: "travailleur", np: "travailleurs", loc: "à {P}", p1: "travaille à domicile", pp: "travaillent à domicile", def: "les travailleurs à {P}", g: "m" },
+    transit: { n1: "travailleur", np: "travailleurs", loc: "à {P}", p1: "prend les transports en commun pour aller travailler", pp: "prennent les transports en commun pour aller travailler", def: "les travailleurs à {P}", g: "m" },
+    walk: { n1: "travailleur", np: "travailleurs", loc: "à {P}", p1: "va travailler à pied", pp: "vont travailler à pied", def: "les travailleurs à {P}", g: "m" },
+    capAll: { n1: "adulte de 25 ans ou plus", np: "adultes de 25 ans ou plus", loc: "à {P}", p1: "est titulaire d'un diplôme universitaire : associate, licence ou diplôme d'études supérieures", pp: "sont titulaires d'un diplôme universitaire : associate, licence ou diplôme d'études supérieures", def: "les adultes de 25 ans ou plus à {P}", g: "m" },
+    hs: { n1: "adulte de 25 ans ou plus", np: "adultes de 25 ans ou plus", loc: "à {P}", p1: "a au moins un diplôme de fin d'études secondaires", pp: "ont au moins un diplôme de fin d'études secondaires", def: "les adultes de 25 ans ou plus à {P}", g: "m" },
+    capAssoc: { n1: "adulte de 25 ans ou plus", np: "adultes de 25 ans ou plus", loc: "à {P}", p1: "a un diplôme d'associé (bac+2) comme plus haut niveau d'études", pp: "ont un diplôme d'associé (bac+2) comme plus haut niveau d'études", def: "les adultes de 25 ans ou plus à {P}", g: "m" },
+    capBach: { n1: "adulte de 25 ans ou plus", np: "adultes de 25 ans ou plus", loc: "à {P}", p1: "a une licence comme plus haut niveau d'études", pp: "ont une licence comme plus haut niveau d'études", def: "les adultes de 25 ans ou plus à {P}", g: "m" },
+    capGrad: { n1: "adulte de 25 ans ou plus", np: "adultes de 25 ans ou plus", loc: "à {P}", p1: "a un master, un doctorat ou un diplôme professionnel", pp: "ont un master, un doctorat ou un diplôme professionnel", def: "les adultes de 25 ans ou plus à {P}", g: "m" },
+    medAge: { usWordFr: "L'âge médian national" }, avgHH: { usWordFr: "La moyenne nationale" }, perCap: { usWordFr: "Le chiffre national" }, commute: { usWordFr: "La moyenne nationale" }
+  };
+  if (FR) Object.keys(FR_IND).forEach(function (k) { if (IND[k]) { IND[k].fr = FR_IND[k]; if (FR_IND[k].usWordFr) IND[k].usWordFr = FR_IND[k].usWordFr; } });
 
   /* ---------- state ---------- */
   K.approxCount = function (n) {
@@ -1211,6 +2408,8 @@ var EVENT_SOURCES = [
     if (r.spec.custom === "mix") { gap = Math.abs(c.p - c.st) >= 3; higher = c.p > c.st; }
     else { gap = cs.sig && (cs.ratio >= 1.15 || cs.ratio <= 0.87); higher = cs.ratio > 1; }
     var val = r.spec.custom === "fm" ? "about " + K.trimNum(c.st) + " to 1" : r.spec.custom === "mix" ? "about " + Math.round(c.st) + " in 100" : K.fmt(c, c.st);
+    if (FR) return "\u2060" + "Dans l'État de " + SN + ", le chiffre est " + (r.spec.custom === "fm" ? "d'environ " + K.trimNum(c.st) + " pour 1" : r.spec.custom === "mix" ? "d'environ " + Math.round(c.st) + " sur 100" : val) + ", donc " + P + " est " + (gap ? (higher ? "supérieur" : "inférieur") : "comparable") + " à celui de l'État.";
+    if (ES) return "En " + SN + " la cifra es " + (r.spec.custom === "fm" ? "de alrededor de " + K.trimNum(c.st) + " a 1" : r.spec.custom === "mix" ? "de alrededor de " + Math.round(c.st) + " en 100" : val) + ", así que " + P + " está " + (gap ? (higher ? "por encima de" : "por debajo de") : "a la par de") + " " + SN + ".";
     return "In " + SN + " the figure is " + val + ", so " + P + " is " + (gap ? (higher ? "higher than" : "lower than") : "about the same as") + " " + SN + ".";
   }
 
@@ -1257,7 +2456,7 @@ var EVENT_SOURCES = [
       now = per[0];
       days = order.slice(0, 5).map(function (d, i) {
         var g = by[d], main = g.day || g.night, dt = new Date(d + "T12:00:00");
-        return { label: i === 0 ? (g.day ? "Today" : "Tonight") : dt.toLocaleDateString(undefined, { weekday: "short" }), hi: g.day ? g.day.temperature : null, lo: g.night ? g.night.temperature : null, txt: main.shortForecast, rain: main.probabilityOfPrecipitation && main.probabilityOfPrecipitation.value, unit: main.temperatureUnit };
+        return { label: i === 0 ? (g.day ? "Today" : "Tonight") : dt.toLocaleDateString(LOCALE, { weekday: "short" }), hi: g.day ? g.day.temperature : null, lo: g.night ? g.night.temperature : null, txt: main.shortForecast, rain: main.probabilityOfPrecipitation && main.probabilityOfPrecipitation.value, unit: main.temperatureUnit };
       });
     } catch (e) { console.info("Weather unavailable:", e.message); }
     if (myLoad !== S.loadId) return;
@@ -1686,6 +2885,7 @@ var EVENT_SOURCES = [
   function gradeRange(lo, hi) {
     var a = gradeWord(lo), b = gradeWord(hi); if (!a || !b) return "";
     var cap = function (t) { return t.charAt(0).toUpperCase() + t.slice(1); };
+    if (XL) return a === b ? T("Serves {a} only.", { a: tr(a) }) : T("{a} through {b}.", { a: tr(a), b: tr(b) });
     return a === b ? "Serves " + a + " only." : cap(a) + " through " + b + ".";
   }
   function phoneLink(ph) {
@@ -1840,13 +3040,13 @@ var EVENT_SOURCES = [
       var grade = gradeRange(a.GSLO, a.GSHI);
       var cmp = "";
       if (r) {
-        var txt = esc(nm) + " has about " + Math.round(r) + " students for each teacher." + (st ? " " + esc(stName) + " averages " + Math.round(st) + "." : "") + (us ? " The U.S. averages " + Math.round(us) + "." : "");
+        var txt = XL ? T("{n} has about {r} students for each teacher.", { n: esc(nm), r: Math.round(r) }) + (st ? " " + T("{s} averages {r}.", { s: esc(stName), r: Math.round(st) }) : "") + (us ? " " + T("The U.S. averages {r}.", { r: Math.round(us) }) : "") : esc(nm) + " has about " + Math.round(r) + " students for each teacher." + (st ? " " + esc(stName) + " averages " + Math.round(st) + "." : "") + (us ? " The U.S. averages " + Math.round(us) + "." : "");
         cmp = '<div class="tviz" role="img" aria-label="' + esc(txt.replace(/&[a-z]+;/g, "")) + '">' + dots(r, "This district", true) + (st ? dots(st, stName) : "") + (us ? dots(us, "U.S.") : "") + '</div>' +
           '<p class="tnote">' + txt + ' Each yellow dot is a student, and the dark dot is one teacher. This counts every teacher on staff, so it is not the same as class size.</p>';
       }
       return '<article class="dcard scard" data-key="' + esc(key) + '"><header><h3 class="dname">' + esc(nm) + '</h3>' + (a.LEA_TYPE_TEXT ? '<span class="evtag">' + esc(leaKind(a.LEA_TYPE_TEXT)) + '</span>' : "") + '</header>' +
         (nums.length ? '<dl class="dnums">' + nums.map(function (n) { return '<div><dd>' + esc(fmtN(n[1])) + '</dd><dt>' + esc(n[0]) + '</dt></div>'; }).join("") + '</dl>' : '') +
-        '<p class="dsent">' + (a.__n ? plural(a.__n, "of its schools is", "of its schools are") + " in " + esc(P) + ". " : "") + esc(grade) + (localeKind(loc) ? " It is based in " + esc(localeKind(loc).trim()) + "." : "") + '</p>' + cmp +
+        '<p class="dsent">' + (a.__n ? plural(a.__n, "of its schools is", "of its schools are") + " in " + esc(P) + ". " : "") + esc(grade) + (localeKind(loc) ? (XL ? " " + T("It is based in {x}.", { x: esc(tr(localeKind(loc).trim())) }) : " It is based in " + esc(localeKind(loc).trim()) + ".") : "") + '</p>' + cmp +
         '<div class="dact">' + ('<button type="button" class="pill sbtn" data-kind="dist" data-key="' + esc(key) + '" aria-label="Show ' + esc(nm) + ' on the map">Show district on map</button>') + phoneLink(a.PHONE) + '</div></article>';
     }
     function colTile(a) {
@@ -1858,7 +3058,7 @@ var EVENT_SOURCES = [
     }
     var bits = [];
     if (pubIds.length) bits.push(plural(pubIds.length, "public school")); if (privIds.length) bits.push(plural(privIds.length, "private school")); if (cols.length) bits.push(plural(cols.length, "college or university", "colleges and universities"));
-    var sum = bits.length ? "Inside " + esc(P) + " there " + (bits.length === 1 && /^1 /.test(bits[0]) ? "is " : "are ") + bits.join(", ").replace(/, ([^,]*)$/, bits.length > 2 ? ", and $1" : " and $1") + "." : "";
+    var sum = !bits.length ? "" : XL ? (function () { var b = bits.map(tr); return T("Inside {P} there are {x}.", { P: esc(P), x: b.length > 1 ? b.slice(0, -1).join(", ") + " " + T("and") + " " + b[b.length - 1] : b[0] }); })() : "Inside " + esc(P) + " there " + (bits.length === 1 && /^1 /.test(bits[0]) ? "is " : "are ") + bits.join(", ").replace(/, ([^,]*)$/, bits.length > 2 ? ", and $1" : " and $1") + ".";
     var more = leaids.length > shown.length ? " Plus " + plural(leaids.length - shown.length, "other district") + " with a school here." : "";
     var sc = scene("leaf", "Schools in " + P), w = el("div", "evwrap schwrap"); w.setAttribute("data-hid", "schools");
     w.innerHTML = '<h2>Schools and colleges.</h2><p class="evnote">' + sum + (dists.length ? ' School districts don\'t follow city limits, so the districts below are the ones that run a school in ' + esc(P) + '. A district may serve other places too.' : '') + more + ' Data is from the National Center for Education Statistics.</p>' +
@@ -2067,7 +3267,7 @@ var EVENT_SOURCES = [
     if (out.length < 2) throw new Error("no Wayback releases found");
     return (wbReleases = out);
   }
-  function wbDate(t) { return new Date(t).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }); }
+  function wbDate(t) { return new Date(t).toLocaleDateString(LOCALE, { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }); }
   function wbTileUrl(url, lon, lat, z) {
     var n = Math.pow(2, z), x = Math.floor((lon + 180) / 360 * n), r = lat * Math.PI / 180, y = Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n);
     return url.replace("{level}", z).replace("{row}", y).replace("{col}", x);
@@ -2194,7 +3394,7 @@ var EVENT_SOURCES = [
   var ICON_SHARE = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.1 1.1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3A4.5 4.5 0 0 0 11 19.4l1.1-1.1" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function slugify(s) { return String(s).toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
   function sectionInfo(sc) {
-    var sign = sc.querySelector(":scope > .sign"), signText = sign ? sign.textContent.trim() : "";
+    var sign = sc.querySelector(":scope > .sign"), signText = sign ? enText(sign) : "";
     for (var i = 0; i < NAMED_SECTIONS.length; i++) if (sc.querySelector('[data-hid="' + NAMED_SECTIONS[i] + '"]')) return { id: NAMED_SECTIONS[i], label: signText || "this section" };
     var base = signText && S.name ? signText.split(S.name).join(" ").trim().replace(/\s+(in|of|for|at|to)$/i, "") : signText;
     if (slugify(base)) return { id: slugify(base), label: signText };
@@ -2250,11 +3450,11 @@ var EVENT_SOURCES = [
     g.beginPath(); g.moveTo(58, 112); g.quadraticCurveTo(70, 124, 82, 112); g.stroke();
     g.lineWidth = 6; g.beginPath(); g.moveTo(52, 134); g.lineTo(52, 148); g.moveTo(88, 134); g.lineTo(88, 148); g.moveTo(44, 150); g.lineTo(60, 150); g.moveTo(80, 150); g.lineTo(96, 150); g.stroke();
     g.restore();
-    g.fillStyle = INK; g.font = "800 34px " + D; g.fillText("Know Your City", 212, 540);
-    g.font = "700 24px " + B; g.textAlign = "right"; g.fillText("Census data, compared with the U.S.", W - 112, 540); g.textAlign = "left";
+    g.fillStyle = INK; g.font = "800 34px " + D; g.fillText(T("Know Your City"), 212, 540);
+    g.font = "700 24px " + B; g.textAlign = "right"; g.fillText(T("Census data, compared with the U.S."), W - 112, 540); g.textAlign = "left";
     return new Promise(function (res) { cv.toBlob(function (b) { res(b); }, "image/png"); });
   }
-  function shareUrl(id) { return location.origin + location.pathname + "?place=" + S.geoid + "#" + id; }
+  function shareUrl(id) { return location.origin + location.pathname + "?place=" + S.geoid + (XL ? "&lang=" + LANG : "") + "#" + id; }
   function copyText(t) {
     if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
     return new Promise(function (res, rej) {
@@ -2272,7 +3472,7 @@ var EVENT_SOURCES = [
     var url = shareUrl(b.getAttribute("data-id")), span = b.querySelector("span"), label = (b.getAttribute("aria-label") || "").replace(/^Share a link to /, "");
     if (navigator.share && typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches) {
       var sc = b.closest(".scene"), sign = sc && sc.querySelector(":scope > .sign"), hid = sc && sc.querySelector("[data-hid]");
-      var line = (hid && S.SAY[hid.getAttribute("data-hid")]) || S.SAY.hero || "", title = "Know Your City: " + S.name;
+      var line = tr((hid && S.SAY[hid.getAttribute("data-hid")]) || S.SAY.hero || ""), title = T("Know Your City") + ": " + S.name;
       var plain = function () { navigator.share({ title: title, url: url }).catch(function () {}); };
       shareCard(sign ? sign.textContent.trim() : label, line).then(function (blob) {
         var f = blob && new File([blob], "know-your-city-" + slugify(S.name) + ".png", { type: "image/png" });
@@ -2307,7 +3507,7 @@ var EVENT_SOURCES = [
     story.querySelectorAll(":scope > .scene[id]").forEach(function (sc) {
       if (sc.hidden) return;
       var sign = sc.querySelector(":scope > .sign"); if (!sign) return;
-      var label = JUMP_LABEL[sc.id] || sign.textContent.trim(); if (!label || seen[label]) return; seen[label] = 1; items.push({ id: sc.id, label: label });
+      var label = JUMP_LABEL[sc.id] || enText(sign); if (!label || seen[label]) return; seen[label] = 1; items.push({ id: sc.id, label: label });
     });
     var stand = S.standouts || [], sig = items.map(function (i) { return i.id; }).join("|") + "#" + stand.map(function (s) { return (s.up ? "+" : "-") + s.t; }).join("|");
     if (sig === nav.getAttribute("data-sig")) return; nav.setAttribute("data-sig", sig);
@@ -2459,7 +3659,7 @@ var EVENT_SOURCES = [
             .then(function (rows) {
               if (!rows || !rows.length || !document.body.contains(w)) return;
               live.innerHTML = rows.map(function (r) {
-                var d = new Date(r[f.whenField]), when = isNaN(d) ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+                var d = new Date(r[f.whenField]), when = isNaN(d) ? "" : d.toLocaleDateString(LOCALE, { month: "short", day: "numeric" });
                 return '<li><time>' + esc(when) + '</time>' + esc(r[f.titleField] || "Event") + (r[f.whereField] ? ' <span class="evhow">at ' + esc(String(r[f.whereField]).split(",")[0]) + '</span>' : '') + '</li>';
               }).join("");
               live.hidden = false;

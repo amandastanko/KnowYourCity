@@ -173,7 +173,7 @@
     var u = unitFor(c.item);
     if (u === "$") return "$" + fmtNumber(v, 0);
     if (u === "min") return v.toFixed(1) + " min";
-    if (u === "yrs") return v.toFixed(1) + " yrs";
+    if (u === "yrs") return v.toFixed(1) + (api.lang === "es" ? " años" : api.lang === "fr" ? " ans" : " yrs");
     if (u === "ppl") return v.toFixed(2);
     return fmtNumber(v, v < 100 ? 1 : 0);
   }
@@ -330,7 +330,21 @@
     [0.4, "About 2 in 5"], [0.6, "About 3 in 5"]
   ];
   // p is a percent (0-100). Returns {t: "About 1 in 4", of: bool} where `of` means "of the" is needed after it.
-  function shareWords(p) {
+  var ES_FRAC = { "About half": ["Cerca de la mitad", true, true], "About 1 in 3": ["Alrededor de 1 de cada 3"], "About 2 in 3": ["Alrededor de 2 de cada 3"], "About 1 in 4": ["Alrededor de 1 de cada 4"],
+    "About 3 in 4": ["Alrededor de 3 de cada 4"], "About 1 in 5": ["Alrededor de 1 de cada 5"], "About 4 in 5": ["Alrededor de 4 de cada 5"], "About 1 in 10": ["Alrededor de 1 de cada 10"],
+    "About 9 in 10": ["Alrededor de 9 de cada 10"], "About 2 in 5": ["Alrededor de 2 de cada 5"], "About 3 in 5": ["Alrededor de 3 de cada 5"] };
+  function shareWordsEs(p, g) {
+    if (p >= 97) return { t: g === "m" ? "Casi todos" : "Casi todas", of: true };
+    for (var i = 0; i < FRACTIONS.length; i++) {
+      if (Math.abs(p - FRACTIONS[i][0] * 100) <= 2) { var e = ES_FRAC[FRACTIONS[i][1]]; return { t: e[0], of: !!e[1], de: !!e[2] }; }
+    }
+    if (p >= 10) return { t: "Alrededor de " + Math.round(p) + " de cada 100", of: false };
+    if (p >= 0.5) return { t: "Alrededor de 1 de cada " + Math.round(100 / p), of: false };
+    return { t: "Menos de 1 de cada 200", of: false };
+  }
+  function shareWords(p, g) {
+    if (api.lang === "es") return shareWordsEs(p, g);
+    if (api.lang === "fr") return { t: usFr(p).replace(/^./, function (m) { return m.toUpperCase(); }), of: false };
     if (p >= 97) return { t: "Nearly all", of: true };
     for (var i = 0; i < FRACTIONS.length; i++) {
       if (Math.abs(p - FRACTIONS[i][0] * 100) <= 2) return { t: FRACTIONS[i][1], of: !!FRACTIONS[i][2] };
@@ -342,6 +356,22 @@
 
   // r = place / U.S. for a share of people or things.
   function relCommon(r) {
+    if (api.lang === "fr") {
+      if (r >= 1.8) return "environ " + trimNum(r) + " fois plus courant";
+      if (r >= 1.15) return "environ " + Math.round((r - 1) * 100) + "% plus courant";
+      if (r > 0.87) return "à peu près aussi courant";
+      if (r > 0.5) return "environ " + Math.round((1 - r) * 100) + "% moins courant";
+      var nf = Math.round(1 / r);
+      return "environ " + (nf === 2 ? "deux fois" : nf === 3 ? "trois fois" : nf === 4 ? "quatre fois" : nf + " fois") + " moins courant";
+    }
+    if (api.lang === "es") {
+      if (r >= 1.8) return "alrededor de " + trimNum(r) + " veces más frecuente";
+      if (r >= 1.15) return "alrededor de un " + Math.round((r - 1) * 100) + "% más frecuente";
+      if (r > 0.87) return "casi igual de frecuente";
+      if (r > 0.5) return "alrededor de un " + Math.round((1 - r) * 100) + "% menos frecuente";
+      var ne = Math.round(1 / r);
+      return "alrededor de " + (ne === 2 ? "la mitad" : ne === 3 ? "un tercio" : ne === 4 ? "una cuarta parte" : "1/" + ne) + " de frecuente";
+    }
     if (r >= 1.8) return "about " + trimNum(r) + " times as common";
     if (r >= 1.15) return "about " + Math.round((r - 1) * 100) + "% more common";
     if (r > 0.87) return "about as common";
@@ -351,6 +381,22 @@
   }
   // r = place / U.S. for a dollar amount, age, time...
   function relAbove(r) {
+    if (api.lang === "fr") {
+      if (r >= 1.8) return "représente environ " + trimNum(r) + " fois le chiffre national";
+      if (r >= 1.15) return "se situe environ " + Math.round((r - 1) * 100) + "% au-dessus du chiffre national";
+      if (r > 0.87) return "est proche du chiffre national";
+      if (r > 0.5) return "se situe environ " + Math.round((1 - r) * 100) + "% en dessous du chiffre national";
+      var nf = Math.round(1 / r);
+      return "représente environ " + (nf === 2 ? "la moitié" : "1/" + nf) + " du chiffre national";
+    }
+    if (api.lang === "es") {
+      if (r >= 1.8) return "es alrededor de " + trimNum(r) + " veces la cifra nacional";
+      if (r >= 1.15) return "está alrededor de un " + Math.round((r - 1) * 100) + "% por encima de la cifra nacional";
+      if (r > 0.87) return "está cerca de la cifra nacional";
+      if (r > 0.5) return "está alrededor de un " + Math.round((1 - r) * 100) + "% por debajo de la cifra nacional";
+      var ne = Math.round(1 / r);
+      return "es alrededor de " + (ne === 2 ? "la mitad" : "1/" + ne) + " de la cifra nacional";
+    }
     if (r >= 1.8) return "about " + trimNum(r) + " times the national figure";
     if (r >= 1.15) return "about " + Math.round((r - 1) * 100) + "% above the national figure";
     if (r > 0.87) return "close to the national figure";
@@ -362,7 +408,66 @@
   // spec: { subj, pred }  for shares  ("people in {P}", "are under 18")
   //       { main: function(c, P) -> string, usWord }  for medians, ratios and anything custom
   // Returns { main, cmp }: two plain sentences.
+
+  /* French: the shares are said as "environ 1 personne sur 4 à X ..." (singular) or "environ 2 personnes sur 5 ..." (plural), so the sentence is built from
+     the spec's fr pieces: n1/np (noun), loc/locp (where), p1/pp (what they do), def (with article, for "presque tous"). The leading \u2060 marks text that is already French,
+     so the page can tidy elisions, contractions and spacing on it. */
+  var FR_MARK = "\u2060";
+  var FR_FRACS = { "About 1 in 3": [1, 3], "About 2 in 3": [2, 3], "About 1 in 4": [1, 4], "About 3 in 4": [3, 4], "About 1 in 5": [1, 5], "About 4 in 5": [4, 5],
+    "About 1 in 10": [1, 10], "About 9 in 10": [9, 10], "About 2 in 5": [2, 5], "About 3 in 5": [3, 5] };
+  function shareFr(p) {
+    if (p >= 97) return { t: "all" };
+    for (var i = 0; i < FRACTIONS.length; i++) {
+      if (Math.abs(p - FRACTIONS[i][0] * 100) <= 2) { var f = FR_FRACS[FRACTIONS[i][1]]; return f ? { t: "frac", n: f[0], d: f[1] } : { t: "half" }; }
+    }
+    if (p >= 10) return { t: "frac", n: Math.round(p), d: 100 };
+    if (p >= 0.5) return { t: "frac", n: 1, d: Math.round(100 / p) };
+    return { t: "lt" };
+  }
+  function usFr(p) {
+    var s = shareFr(p);
+    return s.t === "all" ? "presque tous" : s.t === "half" ? "environ la moitié" : s.t === "lt" ? "moins de 1 sur 200" : "environ " + s.n + " sur " + s.d;
+  }
+  function sentenceFr(c, spec, place) {
+    var fr = spec.fr || {}, fill = function (s) { return String(s || "").replace(/\{P\}/g, place); }, main, cmp;
+    if (spec.main) main = spec.main(c, place);
+    else {
+      var s = shareFr(c.p), one = s.t === "lt" || (s.t === "frac" && s.n === 1), where = fill(one ? fr.loc : (fr.locp || fr.loc));
+      if (s.t === "all") main = "Presque " + (fr.g === "f" ? "toutes" : "tous") + " " + fill(fr.def) + " " + fr.pp + ".";
+      else if (s.t === "half") main = "Environ la moitié des " + fr.np + " " + fill(fr.locp || fr.loc) + " " + fr.pp + ".";
+      else if (s.t === "lt") main = "Moins de 1 " + fr.n1 + " sur 200 " + where + " " + fr.p1 + ".";
+      else main = "Environ " + s.n + " " + (one ? fr.n1 : fr.np) + " sur " + s.d + " " + where + " " + (one ? fr.p1 : fr.pp) + ".";
+    }
+    if (spec.cmp) cmp = spec.cmp(c, place);
+    else if (c.type === "pct") {
+      var clearGap = c.sig && (c.ratio >= 1.15 || c.ratio <= 0.87);
+      cmp = "À l'échelle nationale, le chiffre est " + usFr(c.pus) + (clearGap ? ", ce qui le rend " + relCommon(c.ratio) + " à " + place + "." : ", donc " + place + " ressemble beaucoup aux États-Unis sur ce point.");
+    } else {
+      cmp = (spec.usWordFr || "Le chiffre national") + " est " + fmt(c, c.pus) + ", donc " + place + " " + (c.sig ? relAbove(c.ratio) : "est proche du chiffre national") + ".";
+    }
+    return { main: FR_MARK + main, cmp: FR_MARK + cmp };
+  }
+  function sentenceEs(c, spec, place) {
+    var es = spec.es || {}, fill = function (s) { return String(s).replace(/\{P\}/g, place); }, main, cmp;
+    if (spec.main) main = spec.main(c, place);
+    else {
+      var sw = shareWordsEs(c.p, es.g);
+      main = sw.t + (sw.de ? " de " : " ") + fill(sw.of ? es.subjDef : es.subj) + " " + fill(es.pred) + ".";
+    }
+    if (spec.cmp) cmp = spec.cmp(c, place);
+    else if (c.type === "pct") {
+      var us = shareWordsEs(c.pus, es.g).t.toLowerCase();
+      var clearGap = c.sig && (c.ratio >= 1.15 || c.ratio <= 0.87);
+      cmp = clearGap ? "A nivel nacional, la cifra es " + us + ", lo que la hace " + relCommon(c.ratio) + " en " + place + "."
+                  : "A nivel nacional, la cifra es " + us + ", así que " + place + " se parece mucho a EE. UU. en este aspecto.";
+    } else {
+      cmp = (spec.usWordEs || "La cifra nacional") + " es " + fmt(c, c.pus) + ", así que " + place + " " + (c.sig ? relAbove(c.ratio) : "está cerca de la cifra nacional") + ".";
+    }
+    return { main: main, cmp: cmp };
+  }
   function sentence(c, spec, place) {
+    if (api.lang === "es") return sentenceEs(c, spec, place);
+    if (api.lang === "fr") return sentenceFr(c, spec, place);
     var fill = function (s) { return String(s).replace(/\{P\}/g, place); };
     var main, cmp;
     if (spec.main) main = spec.main(c, place);
@@ -418,6 +523,7 @@
   }
 
   var api = {
+    lang: "en",
     trimNum: trimNum, shareWords: shareWords, relCommon: relCommon, relAbove: relAbove, sentence: sentence,
     diversityCompare: diversityCompare, diversityValue: diversityValue,
     isNeutralText: isNeutralText, buildOwnRows: buildOwnRows, ownRate: ownRate, findOwnRow: findOwnRow, compareOwnRate: compareOwnRate,
