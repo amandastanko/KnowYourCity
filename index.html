@@ -545,6 +545,12 @@ html[lang="vi"]{--f-body:"Be Vietnam Pro","Atkinson Hyperlegible",system-ui,sans
 .trmodes{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:8px 0 0;padding:0}
 .trmodes li{background:#fff;border:3px solid var(--ink);border-radius:999px;padding:4px 14px;font-weight:700}
 .trmodes b{margin-left:8px;font-family:var(--f-display)}
+.trnums small{display:block;font:500 13px/1.3 var(--f-body);margin-top:2px}
+.trnums{margin:6px 0 26px}
+.trkinds{margin:0 0 8px}
+.trmodes{margin-bottom:26px}
+.trsrc{margin-top:22px;font-size:14px;opacity:.9}
+.trmapwrap{margin:0 0 6px}
 </style>
 </head>
 <body>
@@ -796,6 +802,9 @@ var EVENT_SOURCES = [
     "Ferry": "Transbordador",
     "Other": "Otro",
     "Here is a look at public transit in {P}.": "Un vistazo al transporte público en {P}.",
+    "Census": "Censo",
+    "Each dot is a transit stop. The thick line is the edge of {P}.": "Cada punto es una parada de transporte público. La línea gruesa es el borde de {P}.",
+    "Map of public transit stops in {P}": "Mapa de las paradas de transporte público en {P}",
     "From": "Fuente:",
     ", which volunteers keep up to date, so some facts may be missing.": ", que mantienen voluntarios, así que puede faltar algún dato.",
     "Enlarge the {x}": "Ampliar: {x}",
@@ -1301,6 +1310,9 @@ var EVENT_SOURCES = [
     "Ferry": "Ferry",
     "Other": "Autre",
     "Here is a look at public transit in {P}.": "Un aperçu des transports en commun à {P}.",
+    "Census": "Recensement",
+    "Each dot is a transit stop. The thick line is the edge of {P}.": "Chaque point est un arrêt de transport en commun. Le trait épais marque la limite de {P}.",
+    "Map of public transit stops in {P}": "Carte des arrêts de transport en commun à {P}",
     "From": "Source :",
     ", which volunteers keep up to date, so some facts may be missing.": ", tenu à jour par des bénévoles ; certaines informations peuvent donc manquer.",
     "Enlarge the {x}": "Agrandir : {x}",
@@ -1803,6 +1815,9 @@ var EVENT_SOURCES = [
     "Ferry": "Phà",
     "Other": "Khác",
     "Here is a look at public transit in {P}.": "Đây là cái nhìn về phương tiện công cộng ở {P}.",
+    "Census": "Điều tra dân số",
+    "Each dot is a transit stop. The thick line is the edge of {P}.": "Mỗi chấm là một điểm dừng phương tiện công cộng. Đường đậm là ranh giới của {P}.",
+    "Map of public transit stops in {P}": "Bản đồ các điểm dừng phương tiện công cộng ở {P}",
     "From": "Từ",
     ", which volunteers keep up to date, so some facts may be missing.": ", do các tình nguyện viên cập nhật, nên có thể thiếu một vài thông tin.",
     "Enlarge the {x}": "Phóng to {x}",
@@ -3936,6 +3951,32 @@ var EVENT_SOURCES = [
     Object.keys(tally).forEach(function (t) { groups.push({ t: t, n: tally[t] }); });
     return { groups: groups, total: total };
   }
+  function ensureTransitMap(box) {
+    if (S.transitMapP && S.transitMapGid === S.geoid) return S.transitMapP;
+    S.transitMapGid = S.geoid;
+    S.transitMapP = (async function () {
+      await needMaps();
+      if (!modules.MapView || !modules.FeatureLayer || !modules.Map) throw new Error("transit map not available");
+      var map = CFG.ARCGIS_KEY ? new modules.Map({ basemap: "arcgis/community" }) : new modules.Map({ layers: [new modules.WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
+      var lyr = new modules.FeatureLayer({ url: TRANSIT.url.replace(/\/query$/, ""), outFields: ["stop_name", "stop_type_text"], definitionExpression: "(parent_station IS NULL OR parent_station = '')", copyright: "U.S. Department of Transportation, National Transit Map",
+        renderer: { type: "simple", symbol: { type: "simple-marker", style: "circle", size: 7, color: [10, 85, 96, 0.9], outline: { color: [255, 255, 255, 1], width: 1 } } },
+        popupTemplate: { title: "{stop_name}", content: "{stop_type_text}" } });
+      map.add(lyr);
+      var view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 12, ui: { components: ["zoom", "attribution"] },
+        popup: { collapseEnabled: true, dockEnabled: false }, navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
+      view.on("click", function () { view.navigation.mouseWheelZoomEnabled = true; });
+      box.addEventListener("mouseleave", function () { view.navigation.mouseWheelZoomEnabled = false; });
+      await view.when();
+      var poly = S.pendingPoly;
+      if (poly && modules.Graphic) {
+        view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [0, 0, 0, 0], outline: { color: "#1E1B4B", width: 3.5 } } }));
+        view.goTo(poly.extent.expand(1.2), { duration: 0 }).catch(function () {});
+      }
+      return view;
+    })();
+    S.transitMapP.catch(function (e) { console.info("Transit map unavailable:", e.message); var w = box.closest(".poimapwrap"); if (w) w.hidden = true; });
+    return S.transitMapP;
+  }
   async function loadTransit(myLoad) {
     var gid = S.geoid, rings = S.rings; if (!rings || !gid) return;
     var res = await transitStops(rings);
@@ -3948,16 +3989,20 @@ var EVENT_SOURCES = [
     var sum = n === 0 ? "No public transit stops are listed in " + P + " in this data." : n === 1 ? "1 public transit stop is listed in " + P + "." :
       fmtN(n) + " public transit stops are listed in " + P + (dens >= 0.05 ? ", about " + d1(dens) + " per square mile." : ".");
     var nums = [];
-    if (n > 0) { nums.push(["transit stops", fmtN(n)]); if (dens >= 0.05) nums.push(["stops per square mile", d1(dens)]); }
+    if (n > 0) { nums.push(["transit stops", fmtN(n), "National Transit Map"]); if (dens >= 0.05) nums.push(["stops per square mile", d1(dens), "National Transit Map"]); }
     var tr = S.R && S.R.transit && S.R.transit.c, nc = S.R && S.R.noCar && S.R.noCar.c;
-    if (tr && tr.p != null) nums.push(["workers who take public transit", pct(tr.p) + "%"]);
-    if (nc && nc.p != null) nums.push(["households with no vehicle", pct(nc.p) + "%"]);
+    if (tr && tr.p != null) nums.push(["workers who take public transit", pct(tr.p) + "%", "Census"]);
+    if (nc && nc.p != null) nums.push(["households with no vehicle", pct(nc.p) + "%", "Census"]);
     var chips = TRANSIT_ORDER.filter(function (k) { return kinds[k]; });
     var sc = scene("teal", "Getting around in " + P), w = el("div", "evwrap trwrap"); w.setAttribute("data-hid", "transit");
-    w.innerHTML = '<h2>Getting around.</h2><p class="evnote">' + esc(sum) + ' Source: U.S. Department of Transportation, National Transit Map. Stops come from schedule data that transit agencies publish, so service that is not in that data is not counted. This counts stops, not how often vehicles come.</p>' +
-      (nums.length ? '<dl class="dnums trnums">' + nums.map(function (x) { return "<div><dd>" + esc(x[1]) + "</dd><dt>" + esc(x[0]) + "</dt></div>"; }).join("") + '</dl>' : '') +
-      (chips.length ? '<p class="evnote">Kinds of stops:</p><ul class="trmodes">' + chips.map(function (k) { return '<li><span>' + esc(k) + '</span><b>' + esc(fmtN(kinds[k])) + '</b></li>'; }).join("") + '</ul>' : '');
+    w.innerHTML = '<h2>Getting around.</h2><p class="evnote">' + esc(sum) + '</p>' +
+      (nums.length ? '<dl class="dnums trnums">' + nums.map(function (x) { return "<div><dd>" + esc(x[1]) + "</dd><dt>" + esc(x[0]) + (x[2] ? "<small>" + esc(x[2]) + "</small>" : "") + "</dt></div>"; }).join("") + '</dl>' : '') +
+      (chips.length ? '<p class="evnote trkinds">Kinds of stops:</p><ul class="trmodes">' + chips.map(function (k) { return '<li><span>' + esc(k) + '</span><b>' + esc(fmtN(kinds[k])) + '</b></li>'; }).join("") + '</ul>' : '') +
+      (n > 0 ? '<div class="poimapwrap trmapwrap"><div id="transitMap" class="poimap" role="region" aria-label="Map of public transit stops in ' + esc(P) + '"></div><p class="evnote">Each dot is a transit stop. The thick line is the edge of ' + esc(P) + '.</p></div>' : '') +
+      '<p class="evnote trsrc">Source: U.S. Department of Transportation, National Transit Map. Stops come from schedule data that transit agencies publish, so service that is not in that data is not counted. This counts stops, not how often vehicles come.</p>';
     sc.appendChild(w);
+    var tBox = w.querySelector("#transitMap");
+    if (tBox) { if ("IntersectionObserver" in window) { var tio = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { tio.disconnect(); ensureTransitMap(tBox); } }, { rootMargin: "500px" }); tio.observe(tBox); } else ensureTransitMap(tBox); }
     var story = $("#story"), anchor = null;
     Array.prototype.some.call(story.children, function (c) { var sg = c.querySelector && c.querySelector(":scope > .sign"); if (sg && enText(sg) === "Work and money") { anchor = c; return true; } return false; });
     if (anchor) anchor.insertAdjacentElement("beforebegin", sc); else story.appendChild(sc);
@@ -4202,11 +4247,12 @@ var EVENT_SOURCES = [
     var t = document.getElementById(S.jump); if (t) t.scrollIntoView({ block: "start", behavior: "instant" });
   }
   ["wheel", "touchstart", "keydown", "pointerdown"].forEach(function (ev) { window.addEventListener(ev, function () { jumpMoved = true; }, { passive: true }); });
-  // Sections that load on their own can arrive in any order, so keep these three in story order: Places to see, Then and now, Schools and colleges.
+  // Sections that load on their own can arrive in any order, so keep them in story order: Postcards, Weather, Name card, Events, Places to see, Parks and trees, Then and now, Schools and colleges.
   function orderSections() {
     var story = $("#story"); if (!story) return;
     function sec(id) { var n = story.querySelector('[data-hid="' + id + '"]'); return n && n.closest(".scene"); }
-    var chain = [sec("pois"), sec("parks"), sec("wayback"), sec("schools")].filter(Boolean);
+    var ct = story.querySelector(".cards-title"), postcards = ct && ct.closest(".scene");
+    var chain = [postcards, sec("weather"), sec("namecard"), sec("events"), sec("pois"), sec("parks"), sec("wayback"), sec("schools")].filter(Boolean);
     for (var i = 1; i < chain.length; i++) if (chain[i - 1].nextElementSibling !== chain[i]) chain[i - 1].insertAdjacentElement("afterend", chain[i]);
   }
   // "On this page": what stands out, then a chip for each titled section, in page order.
