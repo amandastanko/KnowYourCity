@@ -3951,17 +3951,25 @@ var EVENT_SOURCES = [
     Object.keys(tally).forEach(function (t) { groups.push({ t: t, n: tally[t] }); });
     return { groups: groups, total: total };
   }
+  // The stops themselves (not just counts), for the map: only those inside the place.
+  async function transitStopPoints(rings) {
+    var base = { where: "(parent_station IS NULL OR parent_station = '')", geometry: JSON.stringify({ rings: rings, spatialReference: { wkid: 4326 } }), geometryType: "esriGeometryPolygon",
+      inSR: "4326", outSR: "4326", spatialRel: "esriSpatialRelIntersects", outFields: "stop_name,stop_type_text", returnGeometry: "true", f: "json" }, out = [];
+    for (var off = 0; off < 10000; off += 2000) {
+      var j = await postForm(TRANSIT.url, Object.assign({}, base, { resultOffset: off, resultRecordCount: 2000 }));
+      (j.features || []).forEach(function (f) { if (f.geometry && isFinite(f.geometry.x)) out.push({ x: f.geometry.x, y: f.geometry.y, name: f.attributes.stop_name || "Transit stop", type: f.attributes.stop_type_text || "" }); });
+      if (!j.exceededTransferLimit) break;
+    }
+    return out;
+  }
   function ensureTransitMap(box) {
     if (S.transitMapP && S.transitMapGid === S.geoid) return S.transitMapP;
     S.transitMapGid = S.geoid;
     S.transitMapP = (async function () {
       await needMaps();
-      if (!modules.MapView || !modules.FeatureLayer || !modules.Map) throw new Error("transit map not available");
+      if (!modules.MapView || !modules.Map) throw new Error("transit map not available");
       var map = CFG.ARCGIS_KEY ? new modules.Map({ basemap: "arcgis/community" }) : new modules.Map({ layers: [new modules.WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
-      var lyr = new modules.FeatureLayer({ url: TRANSIT.url.replace(/\/query$/, ""), outFields: ["stop_name", "stop_type_text"], definitionExpression: "(parent_station IS NULL OR parent_station = '')", copyright: "U.S. Department of Transportation, National Transit Map",
-        renderer: { type: "simple", symbol: { type: "simple-marker", style: "circle", size: 7, color: [10, 85, 96, 0.9], outline: { color: [255, 255, 255, 1], width: 1 } } },
-        popupTemplate: { title: "{stop_name}", content: "{stop_type_text}" } });
-      map.add(lyr);
+      var pts = await transitStopPoints(S.rings);   // only the stops inside this place, so the map stays light
       var view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 12, ui: { components: ["zoom", "attribution"] },
         popup: { collapseEnabled: true, dockEnabled: false }, navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
       view.on("click", function () { view.navigation.mouseWheelZoomEnabled = true; });
@@ -3972,6 +3980,10 @@ var EVENT_SOURCES = [
         view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: [0, 0, 0, 0], outline: { color: "#1E1B4B", width: 3.5 } } }));
         view.goTo(poly.extent.expand(1.2), { duration: 0 }).catch(function () {});
       }
+      var dot = { type: "simple-marker", style: "circle", size: 7, color: [10, 85, 96, 0.9], outline: { color: [255, 255, 255, 1], width: 1 } };
+      view.graphics.addMany(pts.map(function (q) {
+        return new modules.Graphic({ geometry: { type: "point", longitude: q.x, latitude: q.y }, symbol: dot, attributes: q, popupTemplate: { title: "{name}", content: "{type}" } });
+      }));
       return view;
     })();
     S.transitMapP.catch(function (e) { console.info("Transit map unavailable:", e.message); var w = box.closest(".poimapwrap"); if (w) w.hidden = true; });
