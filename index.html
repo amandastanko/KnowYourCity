@@ -302,7 +302,17 @@ button{font:inherit;color:inherit}
 .wbcap{position:absolute;top:14px;z-index:5;pointer-events:none;background:var(--ink);color:#fff;font:700 15px var(--f-body);padding:6px 14px;border-radius:999px;max-width:44%}
 .wbcap.l{left:14px}.wbcap.r{right:14px}
 .pkwrap .pknums{margin:6px 0 24px}
+.pknums small{display:block;font:500 13px/1.3 var(--f-body);margin-top:2px}
 .pkwrap h3{font:800 clamp(22px,2.6vw,32px) var(--f-display);margin:30px 0 12px}
+.pkcity{margin:0 0 26px;background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:6px 6px 0 var(--ink);padding:6px 22px 22px}
+.pkcity[hidden]{display:none}
+.pkcity h3{margin-top:18px}
+.tccchart{display:flex;align-items:flex-end;gap:clamp(10px,3vw,28px);height:200px;margin:18px 0 6px;padding:0 4px;border-bottom:3px solid var(--ink)}
+.tccbar{flex:1;max-width:96px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.tccbar i{display:block;width:100%;background:#3FA34D;border:3px solid var(--ink);border-bottom:0;border-radius:10px 10px 0 0}
+.tccbar .tccv{font:800 16px var(--f-display);margin-bottom:4px}
+.tccbar b{position:absolute;bottom:-30px;font:700 15px var(--f-body)}
+.tccnote{margin-top:40px!important;font-size:14px!important}
 .pkcan{display:flex;align-items:center;gap:8px}
 .pkbar{flex:0 0 64px;height:10px;border-radius:999px;background:#E3EBD9;border:2px solid var(--ink);overflow:hidden;display:block}
 .pkbar i{display:block;height:100%;background:#3FA34D}
@@ -1936,6 +1946,53 @@ var EVENT_SOURCES = [
     try { var lv = await view.whenLayerView(S.parkLayer); if (S.parkHl) S.parkHl.remove(); S.parkHl = lv.highlight(g); } catch (e) {}
     say("Showing " + name + " on the map.");
   }
+  // Tree canopy for the whole city: USDA Forest Service NLCD Tree Canopy Cover (30 m squares, one raster per year, 0-100 percent).
+  // We read the squares inside the city boundary and average them. Roads, roofs and open ground count as 0.
+  var TCC = { url: "https://imagery.geoplatform.gov/iipp/rest/services/Vegetation/USFS_EDW_NLCD_TCC_CONUS/ImageServer", years: [1985, 1995, 2005, 2015, 2025] };
+  function mercator(lon, lat) { return [6378137 * lon * Math.PI / 180, 6378137 * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360))]; }
+  function canopyGrid(rings) {
+    var rs = rings.map(function (r) { return r.map(function (c) { return mercator(c[0], c[1]); }); }), x0 = 1e99, y0 = 1e99, x1 = -1e99, y1 = -1e99;
+    rs.forEach(function (r) { r.forEach(function (p) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }); });
+    var d = Math.max(30, Math.max(x1 - x0, y1 - y0) / 1000), w = Math.max(1, Math.ceil((x1 - x0) / d)), h = Math.max(1, Math.ceil((y1 - y0) / d)), mask = new Uint8Array(w * h);
+    for (var row = 0; row < h; row++) {
+      var y = y1 - (row + 0.5) * d, xs = [];
+      rs.forEach(function (r) { for (var i = 0; i < r.length - 1; i++) { var a = r[i], b = r[i + 1]; if ((a[1] <= y && b[1] > y) || (b[1] <= y && a[1] > y)) xs.push(a[0] + (y - a[1]) * (b[0] - a[0]) / (b[1] - a[1])); } });
+      xs.sort(function (p, q) { return p - q; });
+      for (var k = 0; k + 1 < xs.length; k += 2) { var c0 = Math.max(0, Math.ceil((xs[k] - x0) / d - 0.5)), c1 = Math.min(w - 1, Math.floor((xs[k + 1] - x0) / d - 0.5)); for (var c = c0; c <= c1; c++) mask[row * w + c] = 1; }
+    }
+    return { x0: x0, y0: y0, x1: x0 + w * d, y1: y0 + h * d, w: w, h: h, mask: mask };
+  }
+  async function canopyMean(grid, year) {
+    var lyr = new modules.ImageryLayer({ url: TCC.url, mosaicRule: { method: "none", where: "beginyear = " + year }, interpolation: "nearest" });
+    var ext = new modules.Extent({ xmin: grid.x0, ymin: grid.y0, xmax: grid.x1, ymax: grid.y1, spatialReference: { wkid: 102100 } });
+    var res = await lyr.fetchPixels(ext, grid.w, grid.h), pb = res && res.pixelBlock;
+    if (!pb || !pb.pixels || !pb.pixels[0] || pb.width !== grid.w || pb.height !== grid.h) throw new Error("no canopy pixels");
+    var px = pb.pixels[0], m = pb.mask, sum = 0, n = 0, tot = 0;
+    for (var i = 0; i < px.length; i++) { if (!grid.mask[i]) continue; tot++; if ((m && !m[i]) || px[i] > 100) continue; sum += px[i]; n++; }
+    try { lyr.destroy(); } catch (e) {}
+    return tot > 0 && n / tot > 0.5 ? sum / n : null;
+  }
+  async function loadCanopy(box, parkCanopy, myLoad) {
+    try {
+      await needMaps();
+      if (myLoad !== S.loadId || !modules.ImageryLayer || !modules.Extent || !S.rings) return;
+      var grid = canopyGrid(S.rings), vals = await Promise.all(TCC.years.map(function (y) { return canopyMean(grid, y).catch(function () { return null; }); }));
+      if (myLoad !== S.loadId) return;
+      var now = vals[vals.length - 1]; if (now == null) return;
+      function pct(x) { return x < 1 ? x.toFixed(1) : String(Math.round(x)); }
+      var P = S.name, firstI = vals.findIndex(function (v) { return v != null; }), first = vals[firstI], fy = TCC.years[firstI], ly = TCC.years[TCC.years.length - 1];
+      var s = "About " + pct(now) + "% of " + esc(P) + " is covered by tree canopy, as seen from above in " + ly + "." + (parkCanopy != null ? " Inside its parks it is about " + pct(parkCanopy) + "%." : "");
+      var trend = "";
+      if (first != null && firstI < vals.length - 1) { var dlt = now - first; trend = Math.abs(dlt) < 1 ? " Tree cover is about the same as in " + fy + "." : " In " + fy + " it was about " + pct(first) + "%, so it has gone " + (dlt > 0 ? "up" : "down") + " by about " + pct(Math.abs(dlt)) + " percentage points."; }
+      var mx = Math.max.apply(null, vals.filter(function (v) { return v != null; }).concat([10]));
+      var bars = TCC.years.map(function (y, i) { var v = vals[i]; return v == null ? "" : '<div class="tccbar"><span class="tccv">' + pct(v) + '%</span><i style="height:' + Math.max(3, v / mx * 100) + '%"></i><b>' + y + '</b></div>'; }).join("");
+      var label = "Tree cover in " + P + " by year: " + TCC.years.map(function (y, i) { return vals[i] == null ? "" : y + ", " + pct(vals[i]) + " percent"; }).filter(Boolean).join("; ") + ".";
+      box.innerHTML = '<h3>Tree cover across the whole city</h3><p class="evnote">' + s + trend + '</p><div class="tccchart" role="img" aria-label="' + esc(label) + '">' + bars + '</div>' +
+        '<p class="evnote tccnote">Each bar is the average of every 30-meter square inside the city limits, so streets, roofs and open ground count as no trees. The numbers come from the U.S. Forest Service and are modeled from satellite pictures, so small differences from year to year are best treated as estimates.</p>';
+      box.hidden = false;
+      S.SAY.parks = "About " + pct(now) + "% of " + P + " is covered by tree canopy.";
+    } catch (e) { console.info("Whole-city tree cover unavailable:", e && e.message); }
+  }
   async function loadParks(myLoad) {
     var gid = S.geoid; if (!PARKS.url || !/^\d{7}$/.test(gid || "")) return;
     var rows = [];
@@ -1955,11 +2012,10 @@ var EVENT_SOURCES = [
     var pop = K.findItem(S.items, ["sex and age", "total population"]), popV = pop && K.getVals(S.pl, pop.base).e, per1k = popV > 0 ? acres / popV * 1000 : 0;
     var canopy = cA > 0 ? cw / cA : null;
     function pct(x) { return x < 1 ? x.toFixed(1) : String(Math.round(x)); }
-    var sum = esc(P) + " has " + plural(rows.length, "park") + " in the Trust for Public Land's park data, covering about " + fmtN(acres) + " acres." +
-      (share >= 0.05 ? " That is about " + pct(share) + "% of the city's land." : "") + (per1k >= 0.05 ? " It works out to about " + (per1k < 10 ? per1k.toFixed(1) : fmtN(per1k)) + " acres of park for every 1,000 residents." : "") +
-      (canopy != null ? " Across these parks, about " + pct(canopy) + "% of the ground is covered by tree canopy." : "");
+    var sum = plural(rows.length, "park") + (rows.length === 1 ? " covers" : " cover") + " about " + fmtN(acres) + " acres" +
+      (per1k >= 0.05 ? ", or about " + (per1k < 10 ? per1k.toFixed(1) : fmtN(per1k)) + " acres for every 1,000 people" : "") + ".";
     var nums = [["parks", fmtN(rows.length)], ["acres of parks", fmtN(acres)]];
-    if (share >= 0.05) nums.push(["of the city's land", pct(share) + "%"]); if (canopy != null) nums.push(["tree cover in parks", pct(canopy) + "%"]);
+    if (share >= 0.05) nums.push(["of the city's land", pct(share) + "%"]); if (canopy != null) nums.push(["tree cover in parks", pct(canopy) + "%", "Share of each park shaded by trees, seen from above"]);
     var shown = rows.slice(0, 8);
     function tile(a) {
       var p = parkFacts(a), oid = pk(a, "objectid"), nm = properName(pk(a, "park_name") || "Unnamed park"), ic = ICONS.tree;
@@ -1970,13 +2026,16 @@ var EVENT_SOURCES = [
         '<div class="pbtns"><button type="button" class="pill poibtn pkbtn" data-oid="' + esc(oid) + '" aria-label="Show ' + esc(nm) + ' on the map">Show on map</button></div></div></article>';
     }
     var sc = scene("leaf", "Parks and trees in " + P), w = el("div", "evwrap pkwrap"); w.setAttribute("data-hid", "parks");
-    w.innerHTML = '<h2>Parks and trees.</h2><p class="evnote">' + sum + ' Park data is from The Trust for Public Land\'s ParkServe. Tree cover is the share of each park shaded by tree canopy, seen from above.</p>' +
-      '<dl class="dnums pknums">' + nums.map(function (n) { return "<div><dd>" + esc(n[1]) + "</dd><dt>" + esc(n[0]) + "</dt></div>"; }).join("") + '</dl>' +
+    w.innerHTML = '<h2>Parks and trees.</h2><p class="evnote">' + sum + ' Source: The Trust for Public Land\'s ParkServe.</p>' +
+      '<dl class="dnums pknums">' + nums.map(function (n) { return "<div><dd>" + esc(n[1]) + "</dd><dt>" + esc(n[0]) + (n[2] ? "<small>" + esc(n[2]) + "</small>" : "") + "</dt></div>"; }).join("") + '</dl>' +
+      '<div class="pkcity" id="pkCity" hidden></div>' +
       '<div class="poimapwrap"><div id="parkMap" class="poimap" role="region" aria-label="Map of parks in ' + esc(P) + '"></div>' +
       '<p id="parkStatus" class="evnote" role="status" aria-live="polite">Select &ldquo;Show on map&rdquo; on a park to find it here.</p></div>' +
       '<h3>The biggest parks</h3><div class="poigrid">' + shown.map(tile).join("") + '</div>' + (rows.length > shown.length ? '<p class="evnote">Showing ' + shown.length + ' of ' + rows.length + '. The rest are on the map.</p>' : '');
     sc.appendChild(w);
     w.addEventListener("click", function (e) { var b = e.target.closest(".pkbtn"); if (b) showOnParkMap(b.getAttribute("data-oid")); });
+    var cityBox = w.querySelector("#pkCity");
+    if (cityBox) { if ("IntersectionObserver" in window) { var cio = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { cio.disconnect(); loadCanopy(cityBox, canopy, myLoad); } }, { rootMargin: "600px" }); cio.observe(w); } else loadCanopy(cityBox, canopy, myLoad); }
     var mapBox = w.querySelector("#parkMap");
     if (mapBox) { if ("IntersectionObserver" in window) { var mio = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { mio.disconnect(); ensureParkMap(mapBox); } }, { rootMargin: "500px" }); mio.observe(mapBox); } else ensureParkMap(mapBox); }
     var story = $("#story"), prev = null;
@@ -2361,7 +2420,7 @@ var EVENT_SOURCES = [
     var foot = el("div", "foot");
     foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
       '<p>Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.</p>' +
-      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>. Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Aerial photos over time: <a href="https://livingatlas.arcgis.com/wayback/" target="_blank" rel="noopener">Esri World Imagery Wayback</a>. Parks: <a href="https://www.tpl.org/park-data-downloads" target="_blank" rel="noopener">ParkServe, The Trust for Public Land</a>. Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
+      '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>. Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Aerial photos over time: <a href="https://livingatlas.arcgis.com/wayback/" target="_blank" rel="noopener">Esri World Imagery Wayback</a>. Parks: <a href="https://www.tpl.org/park-data-downloads" target="_blank" rel="noopener">ParkServe, The Trust for Public Land</a>. Tree cover: <a href="https://imagery.geoplatform.gov/iipp/rest/services/Vegetation/USFS_EDW_NLCD_TCC_CONUS/ImageServer" target="_blank" rel="noopener">U.S. Forest Service</a>. Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
     end.appendChild(foot);
     story.appendChild(end);
     var chips = $("#chips", end);
@@ -2735,9 +2794,9 @@ var EVENT_SOURCES = [
   function startMap() {
     if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); modulesDone(); return; }
     try {
-      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home", "esri/widgets/Swipe", "esri/layers/FeatureLayer"],
-        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home, Swipe, FeatureLayer) {
-          modules.Swipe = Swipe; modules.FeatureLayer = FeatureLayer;
+      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home", "esri/widgets/Swipe", "esri/layers/FeatureLayer", "esri/layers/ImageryLayer", "esri/geometry/Extent"],
+        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home, Swipe, FeatureLayer, ImageryLayer, Extent) {
+          modules.Swipe = Swipe; modules.FeatureLayer = FeatureLayer; modules.ImageryLayer = ImageryLayer; modules.Extent = Extent;
           modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter; modules.Viewpoint = Viewpoint;
           modulesDone();
           var wmId = WEBMAP.id || qs.get("webmap") || "", map;
