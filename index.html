@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#FFD23F">
 <title>Know Your City</title>
+<meta name="description" content="Facts and data about any U.S. city or town, compared with the state and the country.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Know Your City">
+<meta property="og:title" content="Know Your City">
+<meta property="og:description" content="Facts and data about any U.S. city or town, compared with the state and the country.">
+<meta property="og:image" content="https://amandastanko.github.io/KnowYourCity/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Know Your City: a yellow card with a house and the words Know Your City.">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-180.png" type="image/png" sizes="180x180">
 <link rel="apple-touch-icon" href="favicon-180.png">
@@ -2098,10 +2108,12 @@ var EVENT_SOURCES = [
         var all = await wbList(); keep = await wbChanged(all, S.center.longitude, S.center.latitude, myLoad);
         if (myLoad !== S.loadId) return;
         var C = "Esri, Maxar, Earthstar Geographics, and the GIS User Community";
-        function mk(r) { return new modules.WebTileLayer({ urlTemplate: r.url, copyright: C }); }
+        // Photos exist down to about level 19. Past that the last real level is stretched, so the view can still zoom in closer.
+        var TI = modules.TileInfo, NATIVE = 19, MAXZ = 21;
+        function mk(r) { var o = { urlTemplate: r.url, copyright: C }; if (TI) { try { o.tileInfo = TI.create({ numLODs: NATIVE + 1 }); } catch (e) {} } return new modules.WebTileLayer(o); }
         var map = new modules.Map({ layers: [] }), lT = mk(keep[0]), lN = mk(keep[keep.length - 1]);
         map.addMany([lT, lN]);
-        view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 14, ui: { components: ["zoom", "attribution"] }, constraints: { maxZoom: 19 },
+        view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 14, ui: { components: ["zoom", "attribution"] }, constraints: TI ? { lods: TI.create({ numLODs: MAXZ + 1 }).lods } : { maxZoom: NATIVE },
           navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
         S.wbView = view;
         view.ui.move("zoom", "bottom-left");
@@ -2203,6 +2215,45 @@ var EVENT_SOURCES = [
       b.setAttribute("aria-label", "Share a link to " + info.label); sc.appendChild(b);
     });
   }
+  // A small picture to go with a shared link: the place, the section and its one-line fact, in the app's look.
+  async function shareCard(label, line) {
+    try { await Promise.all([document.fonts.load('800 60px "Bricolage Grotesque"'), document.fonts.load('700 30px "Atkinson Hyperlegible"')]); } catch (e) {}
+    var W = 1200, H = 630, cv = document.createElement("canvas"); cv.width = W; cv.height = H; var g = cv.getContext("2d"), INK = "#1E1B4B";
+    var D = '"Bricolage Grotesque", system-ui, sans-serif', B = '"Atkinson Hyperlegible", system-ui, sans-serif';
+    function rr(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+    function wrap(t, x, y, maxW, lh, maxLines) {
+      var words = String(t).split(/\s+/), ln = "", n = 0;
+      for (var i = 0; i < words.length; i++) {
+        var test = ln ? ln + " " + words[i] : words[i];
+        if (g.measureText(test).width > maxW && ln) { n++; if (n >= maxLines) { g.fillText(ln.replace(/[.,;:]?$/, "") + "…", x, y); return; } g.fillText(ln, x, y); y += lh; ln = words[i]; } else ln = test;
+      }
+      if (ln) g.fillText(ln, x, y);
+    }
+    g.fillStyle = "#FFD23F"; g.fillRect(0, 0, W, H);
+    g.fillStyle = INK; rr(64, 64, W - 120, H - 120, 36); g.fill();
+    g.fillStyle = "#fff"; g.strokeStyle = INK; g.lineWidth = 8; rr(52, 52, W - 120, H - 120, 36); g.fill(); g.stroke();
+    g.textBaseline = "alphabetic"; g.fillStyle = INK;
+    g.font = '800 30px ' + D; var lw = Math.min(g.measureText(label).width + 44, W - 220);
+    g.save(); g.translate(112, 150); g.rotate(-0.03); g.fillStyle = "#FFD23F"; g.strokeStyle = INK; g.lineWidth = 6; rr(0, -44, lw, 64, 14); g.fill(); g.stroke();
+    g.fillStyle = INK; g.fillText(label, 22, 0); g.restore();
+    var name = S.name + (S.stateName ? ", " + S.stateName : ""), fs = 84;
+    do { g.font = "800 " + fs + "px " + D; fs -= 4; } while (g.measureText(name).width > W - 240 && fs > 40);
+    g.fillStyle = INK; g.fillText(name, 112, 270);
+    g.font = "700 40px " + B; g.fillStyle = INK; wrap(line, 112, 350, W - 260, 54, 3);
+    // Homie, drawn from the same shapes as the character on the page
+    g.save(); g.translate(112, 462); g.scale(0.52, 0.52); g.translate(-16, 0); g.lineJoin = "round"; g.lineCap = "round"; g.lineWidth = 5; g.strokeStyle = INK;
+    g.fillStyle = "#fff"; rr(88, 20, 16, 30, 3); g.fill(); g.stroke(); rr(30, 66, 80, 68, 8); g.fill(); g.stroke();
+    g.fillStyle = "#FFD23F"; g.beginPath(); g.moveTo(16, 72); g.lineTo(70, 20); g.lineTo(124, 72); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = INK; [54, 86].forEach(function (x) { g.beginPath(); g.arc(x, 96, 6.5, 0, 7); g.fill(); });
+    g.fillStyle = "#fff"; [56, 88].forEach(function (x) { g.beginPath(); g.arc(x, 93.5, 2.2, 0, 7); g.fill(); });
+    g.fillStyle = "rgba(255,159,184,.85)"; [44, 96].forEach(function (x) { g.beginPath(); g.arc(x, 110, 5, 0, 7); g.fill(); });
+    g.beginPath(); g.moveTo(58, 112); g.quadraticCurveTo(70, 124, 82, 112); g.stroke();
+    g.lineWidth = 6; g.beginPath(); g.moveTo(52, 134); g.lineTo(52, 148); g.moveTo(88, 134); g.lineTo(88, 148); g.moveTo(44, 150); g.lineTo(60, 150); g.moveTo(80, 150); g.lineTo(96, 150); g.stroke();
+    g.restore();
+    g.fillStyle = INK; g.font = "800 34px " + D; g.fillText("Know Your City", 212, 540);
+    g.font = "700 24px " + B; g.textAlign = "right"; g.fillText("Census data, compared with the U.S.", W - 112, 540); g.textAlign = "left";
+    return new Promise(function (res) { cv.toBlob(function (b) { res(b); }, "image/png"); });
+  }
   function shareUrl(id) { return location.origin + location.pathname + "?place=" + S.geoid + "#" + id; }
   function copyText(t) {
     if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
@@ -2219,7 +2270,17 @@ var EVENT_SOURCES = [
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest(".sharebtn"); if (!b || !S.geoid) return;
     var url = shareUrl(b.getAttribute("data-id")), span = b.querySelector("span"), label = (b.getAttribute("aria-label") || "").replace(/^Share a link to /, "");
-    if (navigator.share && typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches) { navigator.share({ title: "Know Your City: " + S.name, url: url }).catch(function () {}); return; }
+    if (navigator.share && typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches) {
+      var sc = b.closest(".scene"), sign = sc && sc.querySelector(":scope > .sign"), hid = sc && sc.querySelector("[data-hid]");
+      var line = (hid && S.SAY[hid.getAttribute("data-hid")]) || S.SAY.hero || "", title = "Know Your City: " + S.name;
+      var plain = function () { navigator.share({ title: title, url: url }).catch(function () {}); };
+      shareCard(sign ? sign.textContent.trim() : label, line).then(function (blob) {
+        var f = blob && new File([blob], "know-your-city-" + slugify(S.name) + ".png", { type: "image/png" });
+        if (f && navigator.canShare && navigator.canShare({ files: [f] })) navigator.share({ files: [f], title: title, text: title + "\n" + url }).catch(function (err) { if (err && err.name !== "AbortError") plain(); });
+        else plain();
+      }).catch(plain);
+      return;
+    }
     copyText(url).then(function () {
       span.textContent = "Link copied"; shareSay("Link to " + label + " copied."); clearTimeout(shareTimer);
       shareTimer = setTimeout(function () { span.textContent = "Share"; }, 2400);
@@ -2794,9 +2855,9 @@ var EVENT_SOURCES = [
   function startMap() {
     if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); modulesDone(); return; }
     try {
-      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home", "esri/widgets/Swipe", "esri/layers/FeatureLayer", "esri/layers/ImageryLayer", "esri/geometry/Extent"],
-        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home, Swipe, FeatureLayer, ImageryLayer, Extent) {
-          modules.Swipe = Swipe; modules.FeatureLayer = FeatureLayer; modules.ImageryLayer = ImageryLayer; modules.Extent = Extent;
+      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home", "esri/widgets/Swipe", "esri/layers/FeatureLayer", "esri/layers/ImageryLayer", "esri/geometry/Extent", "esri/layers/support/TileInfo"],
+        function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home, Swipe, FeatureLayer, ImageryLayer, Extent, TileInfo) {
+          modules.TileInfo = TileInfo; modules.Swipe = Swipe; modules.FeatureLayer = FeatureLayer; modules.ImageryLayer = ImageryLayer; modules.Extent = Extent;
           modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter; modules.Viewpoint = Viewpoint;
           modulesDone();
           var wmId = WEBMAP.id || qs.get("webmap") || "", map;
