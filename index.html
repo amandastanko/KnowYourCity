@@ -769,6 +769,8 @@ var EVENT_SOURCES = [
     "City seal": "Sello de la ciudad",
     "Sister cities": "Ciudades hermanas",
     "Born in {P}": "Nacidos en {P}",
+    "Grew up in {P}": "Crecieron en {P}",
+    "Co-founder and president of Esri, the mapping software company.": "Cofundador y presidente de Esri, la empresa de software de mapas.",
     "From": "Fuente:",
     ", which volunteers keep up to date, so some facts may be missing.": ", que mantienen voluntarios, así que puede faltar algún dato.",
     "Enlarge the {x}": "Ampliar: {x}",
@@ -1250,6 +1252,8 @@ var EVENT_SOURCES = [
     "City seal": "Sceau de la ville",
     "Sister cities": "Villes jumelées",
     "Born in {P}": "Nés à {P}",
+    "Grew up in {P}": "Ont grandi à {P}",
+    "Co-founder and president of Esri, the mapping software company.": "Cofondateur et président d'Esri, l'entreprise de logiciels de cartographie.",
     "From": "Source :",
     ", which volunteers keep up to date, so some facts may be missing.": ", tenu à jour par des bénévoles ; certaines informations peuvent donc manquer.",
     "Enlarge the {x}": "Agrandir : {x}",
@@ -1728,6 +1732,8 @@ var EVENT_SOURCES = [
     "City seal": "Ấn thành phố",
     "Sister cities": "Thành phố kết nghĩa",
     "Born in {P}": "Sinh ra ở {P}",
+    "Grew up in {P}": "Lớn lên ở {P}",
+    "Co-founder and president of Esri, the mapping software company.": "Đồng sáng lập và chủ tịch của Esri, công ty phần mềm bản đồ.",
     "From": "Từ",
     ", which volunteers keep up to date, so some facts may be missing.": ", do các tình nguyện viên cập nhật, nên có thể thiếu một vài thông tin.",
     "Enlarge the {x}": "Phóng to {x}",
@@ -2620,6 +2626,8 @@ var EVENT_SOURCES = [
   }
   // Free-licensed photos taken near the place, from Wikimedia Commons (no key needed). Keeps real photos only, with credits.
   // Only landscapes and buildings: a photo must look like one (by its title, description or Commons categories) and must not look like people, animals, plants, food, or events.
+  // Hand-added "grew up in" entries, by Census place ID (Redlands, CA).
+  var GREW_UP = { "0659962": [{ name: "Jack Dangermond", desc: "Co-founder and president of Esri, the mapping software company.", url: "https://en.wikipedia.org/wiki/Jack_Dangermond" }] };
   var PHOTO_WANT = /\b(building|buildings|architecture|architectural|landscape|skyline|downtown|cityscape|streetscape|street|avenue|boulevard|historic|heritage|landmark|church|cathedral|chapel|temple|mosque|synagogue|courthouse|city hall|town hall|library|museum|school|university|college|campus|hospital|station|depot|bridge|tower|monument|memorial|statue|fountain|plaza|square|park|garden|lake|river|creek|canal|beach|coast|mountain|mountains|hill|hills|butte|desert|canyon|valley|forest|trail|sunset|sunrise|panorama|aerial|view|vista|scenery|house|houses|mansion|home|residence|hotel|theater|theatre|stadium|arena|mall|brewery|barn|farm|orchard|grove|citrus|lighthouse|pier|harbor|downtown|neighborhood|district|skyscraper|capitol|fort|mission|cemetery|golf course|dam|reservoir|observatory)\b/i;
   var PHOTO_AVOID = /\b(concert|rapper|rap|hip hop|singer|musician|band|dj|performing|performance|festival|portrait|people|person|man|woman|men|women|boy|girl|child|children|crowd|audience|fans|selfie|wedding|party|team|players?|athlete|game|race|protest|rally|politician|candidate|senator|governor|mayor|actor|actress|artist|plant|plants|flower|flowers|leaf|leaves|seedling|cilantro|herb|vegetable|fruit|food|meal|dish|drink|beer|animal|animals|bird|birds|duck|ducks|cat|dog|insect|bug|butterfly|bee|lizard|snake|fish|horse|car|cars|truck|bus|motorcycle|bike|train|aircraft|airplane|plane|helicopter|vehicle|product|logo|album|stage|microphone|costume|cosplay|art|painting|sculpture|exhibit|sign|closeup|close-up|macro|hip-hop|rappers|concerts|musicians|singers|bands|musical|music|live music|nightlife|club|nightclub|plantae|plantarum|coriandrum|cuisine|restaurant food)s?\b/i;
   var PHOTO_SKIP = /\b(map|maps|logo|flag|seal|coat of arms|diagram|locator|plan|chart|poster|scan|sign|signage|plaque|interior|screenshot|banner|icon|diploma|certificate)\b/i;
@@ -3111,13 +3119,16 @@ var EVENT_SOURCES = [
     var imgs = [["P41", "City flag"], ["P158", "City seal"]].map(function (pr) {
       var v = wdVals(c, pr[0])[0]; return typeof v === "string" && /\.(svg|png|jpe?g|gif)$/i.test(v) ? '<figure><button type="button" class="ntzoom" data-src="https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(v) + '?width=1200" data-cap="' + esc(pr[1] + ' of ' + P) + '" aria-label="Enlarge the ' + esc(pr[1].toLowerCase() + ' of ' + P) + '"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(v) + '?width=360" onerror="this.closest(\'figure\').remove()" alt="' + pr[1] + ' of ' + esc(P) + '" loading="lazy"><span class="ntmag" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="m15 15 6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span></button><figcaption>' + pr[1] + '</figcaption></figure>' : "";
     }).join("");
-    if (!rows.length && !people.length && !demo) return;
+    // People added by hand, where Wikidata's "born in" list doesn't cover them. Each entry is a plain fact from the person's Wikipedia article.
+    var grew = (GREW_UP[S.geoid] || []).filter(function (g) { return !people.some(function (x) { return x.name === g.name; }); });
+    if (!rows.length && !people.length && !demo && !grew.length) return;
     var sc = scene("lilac", "The name card"), w = el("div", "evwrap nmwrap"); w.setAttribute("data-hid", "namecard");
     w.innerHTML = '<h2>What\'s in a name?</h2>' +
       '<div class="ntgrid"><div class="nametag"><div class="nthello"><b>Hello</b><span>my name is</span></div><div class="ntname' + (demo ? ' tight' : '') + '">' + esc(demo || P) + '</div>' + (demo ? '<p class="ntcap">That\'s what people from ' + esc(P) + ' are called.</p>' : '') + '</div>' +
       (rows.length ? '<dl class="ntrows">' + rows.map(function (r) { return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>'; }).join("") + '</dl>' : '') + '</div>' +
       (imgs ? '<div class="ntimgs">' + imgs + '</div>' : '') +
       (people.length ? '<h3>Born in ' + esc(P) + '</h3><ul class="ntpeople">' + people.map(function (x) { return '<li><a href="https://www.wikidata.org/wiki/' + esc(x.id) + '" target="_blank" rel="noopener"><b>' + esc(x.name) + '</b></a><span>' + esc(x.desc.charAt(0).toUpperCase() + x.desc.slice(1)) + '</span></li>'; }).join("") + '</ul>' : '') +
+      (grew.length ? '<h3>Grew up in ' + esc(P) + '</h3><ul class="ntpeople">' + grew.map(function (x) { return '<li><a href="' + esc(x.url) + '" target="_blank" rel="noopener"><b>' + esc(x.name) + '</b></a><span>' + esc(x.desc) + '</span></li>'; }).join("") + '</ul>' : '') +
       '<p class="wxsrc">From <a href="https://www.wikidata.org/wiki/' + esc(qid) + '" target="_blank" rel="noopener">Wikidata</a>, which volunteers keep up to date, so some facts may be missing.</p>';
     sc.appendChild(w);
     S.SAY.namecard = demo ? "People from " + P + " are called " + demo + (/s$/i.test(demo) ? "." : "s.") : nick.length ? P + " is nicknamed " + nick[0] + "." : "Here's a little about the name " + P + ".";
