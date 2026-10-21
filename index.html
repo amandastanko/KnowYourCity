@@ -61,6 +61,102 @@ button{font:inherit;color:inherit}
 .viz{position:relative;justify-self:center;width:100%;max-width:560px;border-radius:26px;padding:10px}
 .viz.spot{outline:4px dashed var(--ink);outline-offset:8px}
 
+/* compare places */
+.cxgo{margin:0 0 1.2em}
+.cxbtn{font-size:18px;padding:11px 20px;background:var(--ink);color:#fff}
+.cxbtn:hover{background:#2c2870}
+.cxmode #hero,.cxmode #jump,.cxmode #story,.cxmode #ptr{display:none}
+.cxsr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.cxpage{background:#FFD23F;min-height:100vh;padding:112px clamp(16px,5vw,80px) 70px;max-width:1240px;margin:0 auto}
+.cxtop h1{font:800 clamp(52px,9vw,120px)/.9 var(--f-display);letter-spacing:-.04em;margin:.1em 0 .25em}
+.cxlead{font-size:clamp(18px,1.7vw,22px);max-width:56ch;margin:0 0 1.2em}
+.cxtop .langrow{margin:0 0 1em}
+.cxpick{background:#fff;border:3px solid var(--ink);border-radius:20px;padding:18px clamp(14px,2.4vw,26px) 20px;box-shadow:6px 6px 0 var(--ink);margin-bottom:34px}
+.cxlab{display:block;font:800 20px var(--f-display);margin-bottom:8px}
+.cxadd{display:flex;gap:10px;align-items:stretch}
+.cxin{position:relative;flex:1;min-width:0}
+.cxin input{width:100%;box-sizing:border-box;padding:12px 18px;border-radius:999px;border:3px solid var(--ink);background:#fff;font:700 17px var(--f-body);color:var(--ink)}
+.cxin input:disabled{opacity:.5}
+.cxin ul{list-style:none;margin:6px 0 0;padding:6px;position:absolute;left:0;right:0;top:100%;background:#fff;border:3px solid var(--ink);border-radius:14px;z-index:30;max-height:300px;overflow:auto}
+.cxin li{padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:700}
+.cxin li:hover,.cxin li[aria-selected=true]{background:#FFE98F}
+.cxin li.cxmsg{cursor:default;font-weight:600}
+.cxplus{flex:none;width:54px;border:3px solid var(--ink);background:var(--ink);color:#fff;border-radius:999px;font:800 30px/1 var(--f-display);cursor:pointer}
+.cxplus:hover:not(:disabled){background:#2c2870}
+.cxplus:disabled{opacity:.4;cursor:not-allowed}
+.cxcount,.cxhint{margin:10px 0 0;font-weight:700;font-size:16px}
+.cxhint{font-weight:500;min-height:0}
+.cxhint:empty{display:none}
+.cxchips{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:10px}
+.cxchip{display:flex;align-items:center;gap:8px;border:3px solid var(--pc);border-radius:999px;padding:4px 6px 4px 6px;background:#fff;max-width:100%}
+.cxcn{display:flex;flex-direction:column;line-height:1.1;font-weight:800;padding-right:6px;min-width:0}
+.cxcn small{font-weight:600;font-size:13px;opacity:.8}
+.cxx{border:0;background:var(--ink);color:#fff;width:28px;height:28px;border-radius:50%;font:700 18px/1 var(--f-body);cursor:pointer;flex:none}
+.cxx:hover{background:#2c2870}
+.cxbadge{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;color:#fff;font:800 17px var(--f-display);flex:none}
+.cxstatus{margin:8px 0 0;font-weight:600;min-height:0}
+.cxstatus:empty{display:none}
+.cxout[aria-busy=true]{opacity:.55;transition:opacity .15s}
+.cxempty{font:700 22px var(--f-display);margin:20px 0}
+.cxheads{display:grid;gap:clamp(10px,2vw,22px);grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:14px}
+.cxheads.cxn1{grid-template-columns:minmax(0,1fr);max-width:420px}
+.cxheads.cxn2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cxheads.cxn4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cxheads.cxn5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.cxhead{background:#fff;border:3px solid var(--pc);border-radius:18px;padding:14px;min-width:0}
+.cxhead h2{font:800 clamp(22px,2.8vw,36px)/1 var(--f-display);letter-spacing:-.02em;margin:8px 0 2px;overflow-wrap:anywhere}
+.cxhead p{margin:0;font-weight:600}
+.cxmap{height:190px;margin-top:12px;border-radius:12px;overflow:hidden;border:3px solid var(--ink);background:#e9e4d4}
+.cxmaptoggle{margin:0 0 6px}
+.cxhow{font-weight:600;margin:18px 0 6px}
+.cxgrp{margin-top:28px}
+.cxgrp h2{font:800 clamp(28px,3.4vw,44px)/1 var(--f-display);letter-spacing:-.025em;margin:0 0 14px}
+.cxrow{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:16px clamp(14px,2.4vw,24px) 14px;margin-bottom:16px}
+.cxrow h3{font:800 clamp(20px,2.2vw,26px)/1.1 var(--f-display);margin:0 0 12px}
+.cxbars{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cxbar{display:grid;grid-template-columns:minmax(110px,30%) minmax(0,1fr) auto;gap:10px;align-items:center}
+.cxbl{display:flex;align-items:center;gap:8px;font-weight:700;min-width:0}
+.cxbl span{overflow-wrap:anywhere;line-height:1.15}
+.cxbt{height:22px;background:var(--track);border-radius:7px;overflow:hidden}
+.cxbt i{display:block;height:100%;border-radius:7px}
+.cxbv{font:800 18px var(--f-display);min-width:5.5ch;text-align:right;white-space:nowrap}
+.cxst .cxbl,.cxus .cxbl{font-weight:600;padding-left:38px}
+.cxst .cxbt,.cxus .cxbt{height:14px}
+.cxst .cxbv,.cxus .cxbv{font-weight:700;font-size:16px}
+.cxnote{margin:12px 0 0;font-size:16px;font-weight:600}
+.cxsamelist{list-style:none;margin:0;padding:0;background:#fff;border:3px solid var(--ink);border-radius:18px}
+.cxsamelist li{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;align-items:center;padding:12px 18px;border-top:2px solid var(--track)}
+.cxsamelist li:first-child{border-top:0}
+.cxsl{font-weight:800}
+.cxsv{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.cxsv .cxbadge{width:24px;height:24px;font-size:13px;margin-right:4px}
+.cxsv span{font-weight:700}
+.cxsv span:not(.cxbadge){display:inline}
+.cxscroll{overflow-x:auto;background:#fff;border:3px solid var(--ink);border-radius:18px;margin-top:22px}
+.cxtab{border-collapse:collapse;width:100%;min-width:760px;font-size:16px}
+.cxtab th,.cxtab td{padding:10px 12px;text-align:left;vertical-align:top;border-top:2px solid var(--track)}
+.cxtab thead th{border-top:0;vertical-align:bottom;font-weight:800}
+.cxtab thead th .cxbadge{margin-bottom:4px}
+.cxth{display:block;line-height:1.1;overflow-wrap:anywhere}
+.cxth small{display:block;font-weight:600;opacity:.8}
+.cxtab tbody th[scope=row]{font-weight:700;position:sticky;left:0;background:#fff;min-width:150px}
+.cxtab .cxgh th{background:#FFE98F;font:800 18px var(--f-display);border-top:3px solid var(--ink)}
+.cxcv{display:block;font:800 17px var(--f-display);white-space:nowrap}
+.cxmini{display:block;height:8px;background:var(--track);border-radius:4px;margin-top:5px;overflow:hidden}
+.cxmini i{display:block;height:100%}
+.cxusc{border-left:2px solid var(--ink)}
+.cxsrc{margin:26px 0 8px;font-size:15px;max-width:70ch}
+.cxfoot{margin:18px 0 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cxfoot .pill{text-decoration:none;color:var(--ink)}
+@media (max-width:820px){
+  .cxheads.cxn3,.cxheads.cxn2{grid-template-columns:minmax(0,1fr)}
+  .cxheads.cxn4,.cxheads.cxn5{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cxbar{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l v" "b b"}
+  .cxbl{grid-area:l}.cxbv{grid-area:v}.cxbt{grid-area:b}
+  .cxst .cxbl,.cxus .cxbl{padding-left:0}
+  .cxmap{height:160px}
+}
+@media (prefers-reduced-motion:reduce){.cxout[aria-busy=true]{transition:none}}
 /* hero */
 .hero{display:grid;grid-template-columns:1.1fr 1fr;gap:4vw;align-items:center;min-height:100vh;padding:110px clamp(18px,6vw,90px) 60px;background:#FFD23F}
 .hero h1{font:800 clamp(56px,11vw,168px)/.88 var(--f-display);letter-spacing:-.045em;margin:0;word-break:break-word}
@@ -584,6 +680,7 @@ html[lang="vi"]{--f-body:"Be Vietnam Pro","Atkinson Hyperlegible",system-ui,sans
       <h1 id="placeName">&nbsp;</h1>
       <p class="state" id="stateName">&nbsp;</p>
       <p class="line" id="heroLine">Scroll down and Homie will show you around.</p>
+      <p class="cxgo"><button type="button" class="pill cxbtn" id="cxGo">Compare places</button></p>
       <p class="cue"><i></i>Scroll to start</p>
     </div>
     <div class="mapcol"><div class="house-map" data-hid="hero"><div class="inner"><div id="viewDiv"></div></div></div><p class="maphint" id="maphint">Drag to move. Click, then scroll to zoom.</p></div>
@@ -2230,6 +2327,103 @@ var EVENT_SOURCES = [
     "Snow": "Tuyết", "Chance Snow": "Có thể có tuyết", "Light Snow": "Tuyết nhẹ", "Snow Showers": "Mưa tuyết rào", "Rain And Snow": "Mưa và tuyết", "Freezing Rain": "Mưa băng",
     "Sleet": "Mưa tuyết", "Drizzle": "Mưa phùn", "Windy": "Có gió mạnh", "Breezy": "Gió nhẹ", "Isolated Showers": "Mưa rào cục bộ", "Scattered Showers": "Mưa rào rải rác" };
   var DICT_TX = ES ? DICT_ES : FR ? DICT_FR : VI ? DICT_VI : {}, CODE_TX = ES ? CODE_ES : FR ? CODE_FR : VI ? CODE_VI : {};
+  /* ---------- Compare places: wording in the other languages ---------- */
+  var CMP_STR = {
+    es: {
+      "Compare places": "Comparar lugares", "Side by side.": "Lado a lado.",
+      "Compare homes, money, getting around and learning in up to five places.": "Compara viviendas, dinero, cómo moverse y estudios en hasta cinco lugares.",
+      "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Todas las cifras vienen de la misma encuesta de la Oficina del Censo, así que los lugares se comparan con justicia.",
+      "Add a place to compare": "Añade un lugar para comparar", "City, State": "Ciudad, Estado", "Add place": "Añadir lugar",
+      "{n} of 5 places": "{n} de 5 lugares", "5 of 5. Remove one to add another.": "5 de 5. Quita uno para añadir otro.",
+      "Already in your list.": "Ya está en tu lista.", "Remove {name}": "Quitar {name}", "Added {name}.": "Se añadió {name}.", "Removed {name}.": "Se quitó {name}.",
+      "Loading {name}…": "Cargando {name}…", "Couldn't load {name}. Remove it and try again.": "No se pudo cargar {name}. Quítalo e inténtalo de nuevo.",
+      "With 4 or 5 places, the page switches to a compact view.": "Con 4 o 5 lugares, la página cambia a una vista compacta.",
+      "Add another place to see them side by side.": "Añade otro lugar para verlos lado a lado.",
+      "Biggest differences come first. Rows near the bottom are nearly the same.": "Primero van las mayores diferencias. Las filas del final son casi iguales.",
+      "Nearly the same": "Casi iguales", "Close enough that the survey can't say which is higher.": "Tan cerca que la encuesta no puede decir cuál es mayor.",
+      "The gap is bigger than the survey's margin of error.": "La diferencia es mayor que el margen de error de la encuesta.",
+      "Same scale": "Misma escala", "Fit each place": "Ajustar cada lugar", "Map of {name}": "Mapa de {name}",
+      "The basics": "Lo básico", "Homes": "Viviendas", "Work and money": "Trabajo y dinero", "Getting around": "Cómo moverse", "Learning": "Estudios",
+      "Population": "Población", "Land area": "Superficie terrestre", "People per square mile": "Personas por milla cuadrada", "Median age": "Edad mediana",
+      "Average household size": "Tamaño promedio del hogar", "Typical home value": "Valor típico de una vivienda", "Typical monthly rent": "Alquiler mensual típico",
+      "Homes lived in by their owners": "Viviendas habitadas por sus propietarios", "Empty homes": "Viviendas vacías", "Detached single-family houses": "Casas unifamiliares independientes",
+      "Typical household income": "Ingreso típico del hogar", "Income per person": "Ingreso por persona", "Average trip to work": "Trayecto promedio al trabajo",
+      "Drive to work alone": "Van solos en auto al trabajo", "Work from home": "Trabajan desde casa", "Take public transit to work": "Usan transporte público para ir al trabajo",
+      "Walk to work": "Van caminando al trabajo", "Households with no vehicle": "Hogares sin vehículo", "Transit stops": "Paradas de transporte público",
+      "Transit stops per square mile": "Paradas por milla cuadrada", "Adults with a college degree": "Adultos con título universitario",
+      "Adults with a high school diploma or more": "Adultos con diploma de secundaria o más",
+      "{n} sq mi": "{n} mi²", "U.S.": "EE. UU.", "Measure": "Medida", "Side by side figures": "Cifras lado a lado",
+      "Source: U.S. Census Bureau, American Community Survey 5-year estimates (2020–2024), and the National Transit Map.": "Fuente: Oficina del Censo de EE. UU., estimaciones a 5 años de la Encuesta sobre la Comunidad Estadounidense (2020–2024), y el Mapa Nacional de Tránsito.",
+      "The numbers are survey estimates, so small gaps can be noise.": "Las cifras son estimaciones de una encuesta, así que las diferencias pequeñas pueden ser ruido.",
+      "State figures appear when you compare three places or fewer.": "Las cifras estatales aparecen cuando comparas tres lugares o menos.",
+      "Back to {name}": "Volver a {name}", "Copy link": "Copiar enlace", "Link copied.": "Enlace copiado.", "Gathering the numbers…": "Reuniendo las cifras…", "No data": "Sin datos",
+      "Side by side · Know Your City": "Lado a lado · Conoce tu ciudad", "Type a city and state first.": "Escribe primero una ciudad y un estado.",
+      "Places in this comparison": "Lugares en esta comparación", "Search isn't working right now.": "La búsqueda no funciona en este momento."
+    },
+    fr: {
+      "Compare places": "Comparer des lieux", "Side by side.": "Côte à côte.",
+      "Compare homes, money, getting around and learning in up to five places.": "Comparez logement, argent, déplacements et études dans cinq lieux au maximum.",
+      "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Tous les chiffres viennent de la même enquête du Bureau du recensement, donc les lieux se comparent équitablement.",
+      "Add a place to compare": "Ajoutez un lieu à comparer", "City, State": "Ville, État", "Add place": "Ajouter le lieu",
+      "{n} of 5 places": "{n} lieux sur 5", "5 of 5. Remove one to add another.": "5 sur 5. Retirez-en un pour en ajouter un autre.",
+      "Already in your list.": "Déjà dans votre liste.", "Remove {name}": "Retirer {name}", "Added {name}.": "{name} ajouté.", "Removed {name}.": "{name} retiré.",
+      "Loading {name}…": "Chargement de {name}…", "Couldn't load {name}. Remove it and try again.": "Impossible de charger {name}. Retirez-le et réessayez.",
+      "With 4 or 5 places, the page switches to a compact view.": "Avec 4 ou 5 lieux, la page passe en vue compacte.",
+      "Add another place to see them side by side.": "Ajoutez un autre lieu pour les voir côte à côte.",
+      "Biggest differences come first. Rows near the bottom are nearly the same.": "Les plus grands écarts viennent en premier. Les lignes du bas sont presque identiques.",
+      "Nearly the same": "Presque identiques", "Close enough that the survey can't say which is higher.": "Si proches que l'enquête ne peut pas dire lequel est plus élevé.",
+      "The gap is bigger than the survey's margin of error.": "L'écart dépasse la marge d'erreur de l'enquête.",
+      "Same scale": "Même échelle", "Fit each place": "Ajuster chaque lieu", "Map of {name}": "Carte de {name}",
+      "The basics": "L'essentiel", "Homes": "Logements", "Work and money": "Travail et argent", "Getting around": "Se déplacer", "Learning": "Études",
+      "Population": "Population", "Land area": "Superficie terrestre", "People per square mile": "Habitants par mille carré", "Median age": "Âge médian",
+      "Average household size": "Taille moyenne des ménages", "Typical home value": "Valeur typique d'un logement", "Typical monthly rent": "Loyer mensuel typique",
+      "Homes lived in by their owners": "Logements occupés par leurs propriétaires", "Empty homes": "Logements vacants", "Detached single-family houses": "Maisons individuelles isolées",
+      "Typical household income": "Revenu typique d'un ménage", "Income per person": "Revenu par personne", "Average trip to work": "Trajet moyen vers le travail",
+      "Drive to work alone": "Vont travailler seuls en voiture", "Work from home": "Travaillent à domicile", "Take public transit to work": "Prennent les transports en commun pour aller travailler",
+      "Walk to work": "Vont travailler à pied", "Households with no vehicle": "Ménages sans véhicule", "Transit stops": "Arrêts de transport en commun",
+      "Transit stops per square mile": "Arrêts par mille carré", "Adults with a college degree": "Adultes diplômés de l'enseignement supérieur",
+      "Adults with a high school diploma or more": "Adultes ayant au moins un diplôme de fin d'études secondaires",
+      "{n} sq mi": "{n} mi²", "U.S.": "É.-U.", "Measure": "Mesure", "Side by side figures": "Chiffres côte à côte",
+      "Source: U.S. Census Bureau, American Community Survey 5-year estimates (2020–2024), and the National Transit Map.": "Source : Bureau du recensement des États-Unis, estimations sur 5 ans de l'American Community Survey (2020–2024), et National Transit Map.",
+      "The numbers are survey estimates, so small gaps can be noise.": "Ces chiffres sont des estimations d'enquête : les petits écarts peuvent n'être que du bruit.",
+      "State figures appear when you compare three places or fewer.": "Les chiffres des États apparaissent quand vous comparez trois lieux ou moins.",
+      "Back to {name}": "Retour à {name}", "Copy link": "Copier le lien", "Link copied.": "Lien copié.", "Gathering the numbers…": "Rassemblement des chiffres…", "No data": "Pas de données",
+      "Side by side · Know Your City": "Côte à côte · Connaître sa ville", "Type a city and state first.": "Saisissez d'abord une ville et un État.",
+      "Places in this comparison": "Lieux de cette comparaison", "Search isn't working right now.": "La recherche ne fonctionne pas pour le moment."
+    },
+    vi: {
+      "Compare places": "So sánh các nơi", "Side by side.": "Cạnh nhau.",
+      "Compare homes, money, getting around and learning in up to five places.": "So sánh nhà ở, tiền bạc, việc đi lại và học vấn ở tối đa năm nơi.",
+      "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Mọi con số đều lấy từ cùng một cuộc khảo sát của Cục Điều tra Dân số, nên các nơi được so sánh công bằng.",
+      "Add a place to compare": "Thêm một nơi để so sánh", "City, State": "Thành phố, Tiểu bang", "Add place": "Thêm nơi này",
+      "{n} of 5 places": "{n} trên 5 nơi", "5 of 5. Remove one to add another.": "5 trên 5. Hãy bỏ một nơi để thêm nơi khác.",
+      "Already in your list.": "Nơi này đã có trong danh sách.", "Remove {name}": "Bỏ {name}", "Added {name}.": "Đã thêm {name}.", "Removed {name}.": "Đã bỏ {name}.",
+      "Loading {name}…": "Đang tải {name}…", "Couldn't load {name}. Remove it and try again.": "Không tải được {name}. Hãy bỏ nơi này và thử lại.",
+      "With 4 or 5 places, the page switches to a compact view.": "Với 4 hoặc 5 nơi, trang chuyển sang dạng gọn.",
+      "Add another place to see them side by side.": "Hãy thêm một nơi nữa để xem cạnh nhau.",
+      "Biggest differences come first. Rows near the bottom are nearly the same.": "Khác biệt lớn nhất nằm trước. Các hàng ở cuối gần như giống nhau.",
+      "Nearly the same": "Gần như giống nhau", "Close enough that the survey can't say which is higher.": "Gần đến mức khảo sát không thể nói nơi nào cao hơn.",
+      "The gap is bigger than the survey's margin of error.": "Khoảng cách lớn hơn sai số của khảo sát.",
+      "Same scale": "Cùng tỉ lệ", "Fit each place": "Vừa khít từng nơi", "Map of {name}": "Bản đồ của {name}",
+      "The basics": "Điều cơ bản", "Homes": "Nhà ở", "Work and money": "Việc làm và tiền bạc", "Getting around": "Di chuyển", "Learning": "Học vấn",
+      "Population": "Dân số", "Land area": "Diện tích đất", "People per square mile": "Số người trên mỗi dặm vuông", "Median age": "Tuổi trung vị",
+      "Average household size": "Quy mô hộ gia đình trung bình", "Typical home value": "Giá trị nhà điển hình", "Typical monthly rent": "Tiền thuê nhà hằng tháng điển hình",
+      "Homes lived in by their owners": "Nhà do chủ sở hữu ở", "Empty homes": "Nhà bỏ trống", "Detached single-family houses": "Nhà riêng lẻ một gia đình",
+      "Typical household income": "Thu nhập hộ gia đình điển hình", "Income per person": "Thu nhập bình quân đầu người", "Average trip to work": "Thời gian đi làm trung bình",
+      "Drive to work alone": "Tự lái xe đi làm", "Work from home": "Làm việc tại nhà", "Take public transit to work": "Đi làm bằng phương tiện công cộng",
+      "Walk to work": "Đi bộ đi làm", "Households with no vehicle": "Hộ không có phương tiện", "Transit stops": "Điểm dừng giao thông công cộng",
+      "Transit stops per square mile": "Điểm dừng trên mỗi dặm vuông", "Adults with a college degree": "Người lớn có bằng đại học",
+      "Adults with a high school diploma or more": "Người lớn tốt nghiệp trung học trở lên",
+      "{n} sq mi": "{n} dặm vuông", "U.S.": "Hoa Kỳ", "Measure": "Chỉ tiêu", "Side by side figures": "Số liệu cạnh nhau",
+      "Source: U.S. Census Bureau, American Community Survey 5-year estimates (2020–2024), and the National Transit Map.": "Nguồn: Cục Điều tra Dân số Hoa Kỳ, ước tính 5 năm của Khảo sát Cộng đồng Hoa Kỳ (2020–2024) và Bản đồ Giao thông Quốc gia.",
+      "The numbers are survey estimates, so small gaps can be noise.": "Các con số là ước tính từ khảo sát, nên khác biệt nhỏ có thể chỉ là nhiễu.",
+      "State figures appear when you compare three places or fewer.": "Số liệu cấp tiểu bang xuất hiện khi bạn so sánh tối đa ba nơi.",
+      "Back to {name}": "Quay lại {name}", "Copy link": "Sao chép liên kết", "Link copied.": "Đã sao chép liên kết.", "Gathering the numbers…": "Đang gom số liệu…", "No data": "Không có dữ liệu",
+      "Side by side · Know Your City": "Cạnh nhau · Hiểu thành phố của bạn", "Type a city and state first.": "Hãy nhập thành phố và tiểu bang trước.",
+      "Places in this comparison": "Các nơi trong phần so sánh này", "Search isn't working right now.": "Tính năng tìm kiếm hiện không hoạt động."
+    }
+  };
+  if (XL) { var CMP_L = CMP_STR[ES ? "es" : FR ? "fr" : "vi"]; Object.keys(CMP_L).forEach(function (k) { CODE_TX[k] = CMP_L[k]; if (DICT_TX[k] == null) DICT_TX[k] = CMP_L[k]; }); }
   var FORECASTS = { "Sunny": "Soleado", "Mostly Sunny": "Mayormente soleado", "Partly Sunny": "Parcialmente soleado", "Clear": "Despejado", "Mostly Clear": "Mayormente despejado",
     "Partly Cloudy": "Parcialmente nublado", "Mostly Cloudy": "Mayormente nublado", "Cloudy": "Nublado", "Overcast": "Cubierto", "Chance Rain Showers": "Posibles chubascos",
     "Slight Chance Rain Showers": "Leve posibilidad de chubascos", "Rain Showers Likely": "Chubascos probables", "Rain Showers": "Chubascos", "Showers": "Chubascos", "Rain": "Lluvia",
@@ -4662,6 +4856,7 @@ var EVENT_SOURCES = [
     } catch (e) { showError("Couldn't search for " + name + ". " + e.message); }
   }
   async function selectByGeoid(geoid) {
+    if (CMP.on) { location.href = cmpWith("?place=" + encodeURIComponent(geoid)); return; }
     S.manual = true;
     try {
       var f = await lookupByGeoid(geoid);
@@ -4674,6 +4869,7 @@ var EVENT_SOURCES = [
     S.manual = true;
     try {
       var f = await lookupByPoint(lon, lat);
+      if (f && CMP.on) { location.href = cmpWith("?place=" + encodeURIComponent(f.attributes.GEOID)); return; }
       if (!f) { showBubble("Hmm, that spot isn't inside a Census Place. Try a city, town or village."); return; }
       window.scrollTo({ top: 0 });
       loadPlace(f);
@@ -4820,6 +5016,353 @@ var EVENT_SOURCES = [
     setTimeout(function () { sched(); }, 200);
   }
 
+  /* ====================================================================
+   * Compare places: "Side by side". Up to five places, same Census numbers as a single-place page.
+   * Left out on purpose: race and ethnicity, language, birthplace, family makeup, sex of householder, ages of residents and poverty.
+   * ==================================================================== */
+  var CMP = { on: !!qs.get("compare"), max: 5, list: [], names: {}, cache: {}, stCache: {}, shared: null, views: [], same: true, token: 0, msg: "" };
+  var CMP_COLORS = [
+    { hex: "#2F5DFF", rgb: [47, 93, 255], tint: "#B4C3FF" }, { hex: "#D9480F", rgb: [217, 72, 15], tint: "#F6C3A8" },
+    { hex: "#8E24AA", rgb: [142, 36, 170], tint: "#DDB6E6" }, { hex: "#00796B", rgb: [0, 121, 107], tint: "#A5D9D2" },
+    { hex: "#C2185B", rgb: [194, 24, 91], tint: "#EDAAC4" }
+  ];
+  var CMP_GROUPS = { basics: "The basics", homes: "Homes", money: "Work and money", move: "Getting around", learn: "Learning" };
+  var CMP_ROWS = [
+    { g: "basics", key: "pop", label: "Population", kind: "cnt" }, { g: "basics", key: "area", label: "Land area", kind: "area" },
+    { g: "basics", key: "density", label: "People per square mile", kind: "cnt" },
+    { g: "basics", key: "medAge", label: "Median age", ind: "medAge" }, { g: "basics", key: "avgHH", label: "Average household size", ind: "avgHH" },
+    { g: "homes", key: "value", label: "Typical home value", ind: "value" }, { g: "homes", key: "rentVal", label: "Typical monthly rent", ind: "rentVal" },
+    { g: "homes", key: "own", label: "Homes lived in by their owners", ind: "own" }, { g: "homes", key: "vacant", label: "Empty homes", ind: "vacant" },
+    { g: "homes", key: "singleFam", label: "Detached single-family houses", ind: "singleFam" },
+    { g: "money", key: "income", label: "Typical household income", ind: "income" }, { g: "money", key: "perCap", label: "Income per person", ind: "perCap" },
+    { g: "move", key: "commute", label: "Average trip to work", ind: "commute" }, { g: "move", key: "drive", label: "Drive to work alone", ind: "drive" },
+    { g: "move", key: "wfh", label: "Work from home", ind: "wfh" }, { g: "move", key: "transit", label: "Take public transit to work", ind: "transit" },
+    { g: "move", key: "walk", label: "Walk to work", ind: "walk" }, { g: "move", key: "noCar", label: "Households with no vehicle", ind: "noCar" },
+    { g: "move", key: "stops", label: "Transit stops", kind: "cnt" }, { g: "move", key: "stopDens", label: "Transit stops per square mile", kind: "dens1" },
+    { g: "learn", key: "capAll", label: "Adults with a college degree", ind: "capAll" }, { g: "learn", key: "hs", label: "Adults with at least a high school diploma", ind: "hs", tkey: "Adults with a high school diploma or more" }
+  ];
+  function cmpColor(i) { return CMP_COLORS[i % CMP_COLORS.length]; }
+  function cmpLetter(i) { return String.fromCharCode(65 + i); }
+  function cmpSqMi(a) { return a && a.AREALAND ? a.AREALAND / 2589988.11 : null; }
+  function cmpShared() {
+    if (!CMP.shared) CMP.shared = Promise.all([labelMap(), usRows()]).then(function (r) { return { items: K.buildItems(r[0]), us: r[1] }; }).catch(function (e) { CMP.shared = null; throw e; });
+    return CMP.shared;
+  }
+  function cmpState(fips) {
+    if (!CMP.stCache[fips]) CMP.stCache[fips] = groupRows("for=state:" + fips).catch(function (e) { delete CMP.stCache[fips]; return null; });
+    return CMP.stCache[fips];
+  }
+  // The same calculations a single-place page does, run for one place at a time (the shared page state is swapped in, then put back).
+  function cmpValues(d, sh) {
+    var keep = { items: S.items, pl: S.pl, own: S.own, us: S.us }, out = {};
+    S.items = sh.items; S.pl = d.row; S.own = null; S.us = sh.us;
+    try {
+      CMP_ROWS.forEach(function (r) {
+        if (!r.ind) return;
+        var s = IND[r.ind], c = s && calcInd(s, sh.us, null); if (!c) return;
+        var cs = d.st ? calcInd(s, d.st, null) : null;
+        out[r.key] = { p: c.p, m: c.m, us: c.pus, mus: c.mus, st: cs ? cs.pus : null, c: c };
+      });
+      var pop = K.findItem(sh.items, ["sex and age", "total population"]), pv = pop ? K.getVals(d.row, pop.base) : null, sq = cmpSqMi(d.attrs);
+      if (pv && pv.e != null) out.pop = { p: pv.e, m: pv.em };
+      if (sq) out.area = { p: sq, m: null };
+      if (pv && pv.e != null && sq >= 0.05) out.density = { p: pv.e / sq, m: null };
+      if (d.transit && sq) { out.stops = { p: d.transit.total, m: null }; if (sq >= 0.05) out.stopDens = { p: d.transit.total / sq, m: null }; }
+    } finally { S.items = keep.items; S.pl = keep.pl; S.own = keep.own; S.us = keep.us; }
+    return out;
+  }
+  function cmpLoad(g) {
+    if (CMP.cache[g]) return CMP.cache[g];
+    var pr = (async function () {
+      var f = await lookupByGeoid(g); if (!f) throw new Error("place not found");
+      var a = f.attributes, rg = f.geometry.rings;
+      var res = await Promise.all([cmpShared(), groupRows(geoClause(a)), cmpState(a.STATE), transitStops(rg).catch(function () { return null; })]);
+      var nm = K.splitCensusName(res[1].NAME);
+      var d = { geoid: g, attrs: a, rings: rg, name: a.BASENAME || nm.place, stateName: nm.state, fips: a.STATE, row: res[1], st: res[2], transit: res[3] };
+      d.vals = cmpValues(d, res[0]);
+      CMP.names[g] = { name: d.name, state: d.stateName };
+      return d;
+    })();
+    CMP.cache[g] = pr;
+    pr.catch(function () { delete CMP.cache[g]; });
+    return pr;
+  }
+  function cmpLabel(g) { var n = CMP.names[g]; return n ? n.name + (n.state ? ", " + n.state : "") : g; }
+  function cmpWith(url) { var l = qs.get("lang"); return l ? url + (url.indexOf("?") > -1 ? "&" : "?") + "lang=" + encodeURIComponent(l) : url; }
+  function cmpSyncUrl() { try { history.replaceState(null, "", cmpWith("?compare=" + CMP.list.join(","))); } catch (e) {} }
+
+  /* ---- numbers ---- */
+  function cmpFmt(row, v) {
+    if (v == null || !isFinite(v)) return T("No data");
+    var s;
+    if (row.ind) s = K.fmt(row.c, v);
+    else if (row.kind === "area") s = T("{n} sq mi", { n: v < 10 ? v.toFixed(1) : Math.round(v).toLocaleString("en-US") });
+    else if (row.kind === "dens1") s = v < 10 ? v.toFixed(1) : Math.round(v).toLocaleString("en-US");
+    else s = Math.round(v).toLocaleString("en-US");
+    return FR || VI ? "⁠" + s : s;
+  }
+  // How far apart the highest and lowest are, and whether the survey can tell them apart.
+  function cmpSpread(row, idx) {
+    var vs = idx.map(function (i) { return row.v[i]; }).filter(function (x) { return x && x.p != null && isFinite(x.p); });
+    if (vs.length < 2) return { rel: 0, sig: false };
+    var hi = vs[0], lo = vs[0]; vs.forEach(function (x) { if (x.p > hi.p) hi = x; if (x.p < lo.p) lo = x; });
+    var rel = row.pct ? Math.abs(Math.log((hi.p + 1) / (lo.p + 1))) : lo.p > 0 ? Math.abs(Math.log(hi.p / lo.p)) : hi.p > 0 ? 3 : 0, sig;
+    if (hi.m != null && lo.m != null) { var den = Math.sqrt(Math.pow(hi.m / 1.645, 2) + Math.pow(lo.m / 1.645, 2)); sig = den > 0 ? (hi.p - lo.p) / den >= 1.96 : hi.p !== lo.p; }
+    else sig = rel >= 0.1;
+    return { rel: rel, sig: sig };
+  }
+  // Rows in the order the page shows them: groups with the biggest gaps first; rows that are nearly the same go to the end.
+  function cmpModel(ready) {
+    var idx = ready.map(function (_, i) { return i; }), rows = [];
+    CMP_ROWS.forEach(function (r) {
+      var v = ready.map(function (d) { return d.vals[r.key] || null; });
+      if (v.filter(Boolean).length < Math.min(2, ready.length)) return;
+      var ref = null; v.forEach(function (x) { if (!ref && x && x.c) ref = x.c; });
+      var row = { key: r.key, g: r.g, label: T(r.tkey || r.label), ind: r.ind, kind: r.kind, v: v, c: ref, pct: !!(ref && ref.type === "pct") };
+      row.us = ref ? ref.pus : null;
+      row.st = ready.map(function (d, i) { return v[i] && v[i].st != null ? v[i].st : null; });
+      var sp = cmpSpread(row, idx); row.rel = sp.rel; row.sig = sp.sig; row.same = !sp.sig || sp.rel < 0.06;
+      rows.push(row);
+    });
+    var groups = {}, same = [];
+    rows.forEach(function (r) { if (r.same) { same.push(r); return; } (groups[r.g] = groups[r.g] || []).push(r); });
+    var order = Object.keys(groups).map(function (g) { groups[g].sort(function (a, b) { return b.rel - a.rel; }); return { g: g, rows: groups[g], top: groups[g][0].rel }; })
+      .sort(function (a, b) { return b.top - a.top; });
+    same.sort(function (a, b) { return a.rel - b.rel; });
+    return { groups: order, same: same };
+  }
+  function cmpBadge(i) { return '<b class="cxbadge" style="background:' + cmpColor(i).hex + '" aria-hidden="true">' + cmpLetter(i) + '</b>'; }
+
+  /* ---- rendering: 1 to 3 places ---- */
+  function cmpBars(row, ready, withState) {
+    var vals = [];
+    row.v.forEach(function (x) { if (x && x.p != null) vals.push(x.p); });
+    if (withState) { row.st.forEach(function (x) { if (x != null) vals.push(x); }); }
+    if (row.us != null) vals.push(row.us);
+    var max = Math.max.apply(null, vals) || 1, h = "";
+    function line(cls, lab, v, color) {
+      var w = v == null ? 0 : Math.max(1.5, v / max * 100);
+      return '<li class="cxbar ' + cls + '"><span class="cxbl">' + lab + '</span><span class="cxbt" aria-hidden="true"><i style="width:' + w.toFixed(1) + '%;background:' + color + '"></i></span><span class="cxbv">' + esc(cmpFmt(row, v)) + '</span></li>';
+    }
+    ready.forEach(function (d, i) { var x = row.v[i]; h += line("cxpl", cmpBadge(i) + '<span>' + esc(d.name) + '</span>', x ? x.p : null, cmpColor(i).hex); });
+    if (withState) {
+      var seen = {};
+      ready.forEach(function (d, i) { var s = row.st[i]; if (s == null || seen[d.fips]) return; seen[d.fips] = 1; h += line("cxst", '<span>' + esc(d.stateName) + '</span>', s, cmpColor(i).tint); });
+    }
+    if (row.us != null) h += line("cxus", '<span>' + esc(T("U.S.")) + '</span>', row.us, "rgba(30,27,75,.5)");
+    return '<ul class="cxbars">' + h + '</ul>';
+  }
+  function cmpNote(row, ready) {
+    if (ready.length !== 2 || row.v.some(function (x) { return !x || x.m == null; })) return "";
+    return '<p class="cxnote">' + esc(row.sig ? T("The gap is bigger than the survey's margin of error.") : T("Close enough that the survey can't say which is higher.")) + '</p>';
+  }
+  function cmpFull(model, ready) {
+    var h = "";
+    model.groups.forEach(function (gr) {
+      h += '<section class="cxgrp"><h2>' + esc(T(CMP_GROUPS[gr.g])) + '</h2>';
+      gr.rows.forEach(function (r) { h += '<article class="cxrow"><h3>' + esc(r.label) + '</h3>' + cmpBars(r, ready, true) + cmpNote(r, ready) + '</article>'; });
+      h += '</section>';
+    });
+    if (model.same.length) {
+      h += '<section class="cxgrp cxsame"><h2>' + esc(T("Nearly the same")) + '</h2><ul class="cxsamelist">';
+      model.same.forEach(function (r) {
+        h += '<li><span class="cxsl">' + esc(r.label) + '</span><span class="cxsv">' + ready.map(function (d, i) { return cmpBadge(i) + '<span>' + esc(cmpFmt(r, r.v[i] ? r.v[i].p : null)) + '</span>'; }).join("") + '</span></li>';
+      });
+      h += '</ul></section>';
+    }
+    return h;
+  }
+  /* ---- rendering: 4 or 5 places ---- */
+  function cmpCompact(model, ready) {
+    var h = '<div class="cxscroll" role="region" aria-label="' + esc(T("Side by side figures")) + '" tabindex="0"><table class="cxtab"><caption class="cxsr">' + esc(T("Side by side figures")) + '</caption><thead><tr><th scope="col">' + esc(T("Measure")) + '</th>';
+    ready.forEach(function (d, i) { h += '<th scope="col">' + cmpBadge(i) + '<span class="cxth">' + esc(d.name) + '<small>' + esc(d.stateName) + '</small></span></th>'; });
+    h += '<th scope="col" class="cxusc">' + esc(T("U.S.")) + '</th></tr></thead><tbody>';
+    function rowHtml(r) {
+      var vals = r.v.map(function (x) { return x ? x.p : null; }).filter(function (x) { return x != null; });
+      if (r.us != null) vals.push(r.us);
+      var max = Math.max.apply(null, vals) || 1, t = '<tr><th scope="row">' + esc(r.label) + '</th>';
+      ready.forEach(function (d, i) {
+        var x = r.v[i], p = x ? x.p : null;
+        t += '<td><span class="cxcv">' + esc(cmpFmt(r, p)) + '</span><span class="cxmini" aria-hidden="true"><i style="width:' + (p == null ? 0 : Math.max(2, p / max * 100)).toFixed(1) + '%;background:' + cmpColor(i).hex + '"></i></span></td>';
+      });
+      return t + '<td class="cxusc"><span class="cxcv">' + (r.us != null ? esc(cmpFmt(r, r.us)) : "") + '</span>' + (r.us != null ? '<span class="cxmini" aria-hidden="true"><i style="width:' + Math.max(2, r.us / max * 100).toFixed(1) + '%;background:rgba(30,27,75,.5)"></i></span>' : '') + '</td></tr>';
+    }
+    model.groups.forEach(function (gr) { h += '<tr class="cxgh"><th colspan="' + (ready.length + 2) + '" scope="colgroup">' + esc(T(CMP_GROUPS[gr.g])) + '</th></tr>'; gr.rows.forEach(function (r) { h += rowHtml(r); }); });
+    if (model.same.length) { h += '<tr class="cxgh"><th colspan="' + (ready.length + 2) + '" scope="colgroup">' + esc(T("Nearly the same")) + '</th></tr>'; model.same.forEach(function (r) { h += rowHtml(r); }); }
+    return h + '</tbody></table></div>';
+  }
+
+  /* ---- maps: same scale by default ---- */
+  function cmpDestroyViews() { CMP.views.forEach(function (v) { try { v.destroy(); } catch (e) {} }); CMP.views = []; }
+  async function cmpMaps(ready, token) {
+    try {
+      await needMaps();
+      if (!modules.MapView || !modules.Map || token !== CMP.token) return;
+      var made = [];
+      for (var i = 0; i < ready.length; i++) {
+        var box = document.getElementById("cxmap" + i); if (!box) continue;
+        var d = ready[i], col = cmpColor(i);
+        var map = CFG.ARCGIS_KEY ? new modules.Map({ basemap: "arcgis/community" }) : new modules.Map({ layers: [new modules.WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
+        var view = new modules.MapView({ container: box, map: map, ui: { components: [] }, navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true }, constraints: { snapToZoom: false } });
+        var poly = Poly(d.rings);
+        view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: col.rgb.concat([0.2]), outline: { color: col.rgb.concat([1]), width: 3 } } }));
+        CMP.views.push(view); made.push({ view: view, poly: poly });
+      }
+      await Promise.all(made.map(function (m) { return m.view.when(); }));
+      if (token !== CMP.token) return;
+      CMP.made = made; await cmpFit();
+    } catch (e) { console.info("Comparison maps unavailable:", e && e.message); }
+  }
+  async function cmpFit() {
+    var made = CMP.made || []; if (!made.length) return;
+    try {
+      await Promise.all(made.map(function (m) { return m.view.goTo({ target: m.poly.extent.expand(1.25) }, { animate: false }); }));
+      if (!CMP.same) return;
+      var scale = 0; made.forEach(function (m) { if (m.view.scale > scale) scale = m.view.scale; });
+      await Promise.all(made.map(function (m) { return m.view.goTo({ center: m.poly.extent.center, scale: scale }, { animate: false }); }));
+    } catch (e) { console.info("Map fit skipped:", e && e.message); }
+  }
+  function cmpHeads(ready, full) {
+    var h = '<div class="cxheads cxn' + ready.length + '">';
+    ready.forEach(function (d, i) {
+      h += '<div class="cxhead" style="--pc:' + cmpColor(i).hex + '">' + cmpBadge(i) + '<h2>' + esc(d.name) + '</h2><p>' + esc(d.stateName) + '</p>' +
+        (full ? '<div class="cxmap" id="cxmap' + i + '" role="img" aria-label="' + esc(T("Map of {name}", { name: d.name + ", " + d.stateName })) + '"></div>' : '') + '</div>';
+    });
+    return h + '</div>' + (full ? '<p class="cxmaptoggle"><button type="button" class="pill" id="cxScale" aria-pressed="' + (CMP.same ? "true" : "false") + '">' + esc(CMP.same ? T("Same scale") : T("Fit each place")) + '</button></p>' : '');
+  }
+
+  /* ---- the page ---- */
+  function cmpLive(msg) { var l = document.getElementById("cxLive"); if (l) { l.textContent = ""; setTimeout(function () { l.textContent = msg; }, 30); } }
+  function cmpChips() {
+    var ul = document.getElementById("cxChips"); if (!ul) return;
+    ul.innerHTML = "";
+    CMP.list.forEach(function (g, i) {
+      var n = CMP.names[g], li = el("li", "cxchip");
+      li.style.setProperty("--pc", cmpColor(i).hex);
+      li.innerHTML = cmpBadge(i) + '<span class="cxcn">' + esc(n ? n.name : g) + '<small>' + esc(n ? n.state : "") + '</small></span>';
+      if (CMP.list.length > 1) {
+        var b = el("button", "cxx", "×"); b.type = "button"; b.setAttribute("aria-label", T("Remove {name}", { name: cmpLabel(g) }));
+        b.onclick = function () { cmpRemove(g); }; li.appendChild(b);
+      }
+      ul.appendChild(li);
+    });
+    var full = CMP.list.length >= CMP.max, c = document.getElementById("cxCount");
+    if (c) c.textContent = full ? T("5 of 5. Remove one to add another.") : T("{n} of 5 places", { n: CMP.list.length });
+    var inp = document.getElementById("cxQ"), plus = document.getElementById("cxPlus");
+    if (inp) inp.disabled = full; if (plus) plus.disabled = full;
+    var hint = document.getElementById("cxHint"); if (hint) hint.textContent = CMP.list.length === 3 ? T("With 4 or 5 places, the page switches to a compact view.") : "";
+  }
+  function cmpAdd(g, name) {
+    if (CMP.list.indexOf(g) > -1) { cmpLive(T("Already in your list.")); var c = document.getElementById("cxCount"); if (c) c.textContent = T("Already in your list."); return false; }
+    if (CMP.list.length >= CMP.max) return false;
+    CMP.list.push(g); if (name && !CMP.names[g]) { var p = name.split(", "); CMP.names[g] = { name: p[0], state: p.slice(1).join(", ").replace(/ \(.*\)$/, "") }; }
+    cmpChips(); cmpSyncUrl(); cmpLive(T("Added {name}.", { name: cmpLabel(g) })); cmpRefresh(); return true;
+  }
+  function cmpRemove(g) {
+    var i = CMP.list.indexOf(g); if (i < 0 || CMP.list.length < 2) return;
+    var lab = cmpLabel(g); CMP.list.splice(i, 1);
+    cmpChips(); cmpSyncUrl(); cmpLive(T("Removed {name}.", { name: lab })); cmpRefresh();
+    var q = document.getElementById("cxQ"); if (q && !q.disabled) q.focus();
+  }
+  async function cmpRefresh() {
+    var token = ++CMP.token, out = document.getElementById("cxOut"), status = document.getElementById("cxStatus"), list = CMP.list.slice();
+    if (!out) return;
+    out.setAttribute("aria-busy", "true");
+    var names = list.filter(function (g) { return !CMP.cache[g]; }).map(cmpLabel);
+    if (status) status.textContent = names.length ? T("Loading {name}…", { name: names.join(", ") }) : "";
+    var res = await Promise.all(list.map(function (g) { return cmpLoad(g).then(function (d) { return { d: d }; }, function (e) { return { bad: g }; }); }));
+    if (token !== CMP.token) return;
+    var ready = res.filter(function (r) { return r.d; }).map(function (r) { return r.d; }), bad = res.filter(function (r) { return r.bad; }).map(function (r) { return r.bad; });
+    cmpChips();
+    if (status) status.textContent = bad.length ? T("Couldn't load {name}. Remove it and try again.", { name: bad.map(cmpLabel).join(", ") }) : "";
+    cmpDestroyViews(); CMP.made = null;
+    var title = T("Side by side · Know Your City"); document.title = title;
+    $("#loading").classList.add("gone");
+    if (ready.length < 2) {
+      out.innerHTML = (ready.length ? cmpHeads(ready, false) : "") + '<p class="cxempty">' + esc(T("Add another place to see them side by side.")) + '</p>';
+      out.removeAttribute("aria-busy"); return;
+    }
+    var full = ready.length <= 3, model = cmpModel(ready);
+    out.innerHTML = cmpHeads(ready, full) + '<p class="cxhow">' + esc(T("Biggest differences come first. Rows near the bottom are nearly the same.")) + '</p>' + (full ? cmpFull(model, ready) : cmpCompact(model, ready)) +
+      '<p class="cxsrc">' + esc(T("Source: U.S. Census Bureau, American Community Survey 5-year estimates (2020–2024), and the National Transit Map.")) + ' ' + esc(T("The numbers are survey estimates, so small gaps can be noise.")) + (full ? "" : ' ' + esc(T("State figures appear when you compare three places or fewer."))) + '</p>';
+    out.removeAttribute("aria-busy");
+    var sc = document.getElementById("cxScale");
+    if (sc) sc.onclick = function () { CMP.same = !CMP.same; sc.setAttribute("aria-pressed", CMP.same ? "true" : "false"); sc.textContent = CMP.same ? T("Same scale") : T("Fit each place"); cmpFit(); };
+    if (full) cmpMaps(ready, token);
+  }
+  // Picker: suggestions come from the same Census place search the top bar uses.
+  function cmpPicker(host) {
+    host.innerHTML = '<label for="cxQ" class="cxlab">' + esc(T("Add a place to compare")) + '</label>' +
+      '<div class="cxadd"><div class="cxin"><input id="cxQ" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="cxSugg" aria-autocomplete="list" placeholder="' + esc(T("City, State")) + '"><ul id="cxSugg" role="listbox" hidden></ul></div>' +
+      '<button type="button" id="cxPlus" class="cxplus" aria-label="' + esc(T("Add place")) + '">+</button></div>' +
+      '<p id="cxCount" class="cxcount"></p><p id="cxHint" class="cxhint"></p>' +
+      '<ul id="cxChips" class="cxchips" aria-label="' + esc(T("Places in this comparison")) + '"></ul><p id="cxLive" class="cxsr" role="status" aria-live="polite"></p><p id="cxStatus" class="cxstatus" role="status"></p>';
+    var inp = host.querySelector("#cxQ"), ul = host.querySelector("#cxSugg"), plus = host.querySelector("#cxPlus"), data = [], act = -1, seq = 0, timer = null;
+    function hide() { ul.hidden = true; inp.setAttribute("aria-expanded", "false"); act = -1; inp.removeAttribute("aria-activedescendant"); }
+    function paint() {
+      ul.innerHTML = "";
+      data.forEach(function (s, i) {
+        var li = el("li", null, esc(s.name)); li.id = "cxS" + i; li.setAttribute("role", "option"); li.setAttribute("aria-selected", i === act ? "true" : "false");
+        li.onmousedown = function (e) { e.preventDefault(); choose(i); }; ul.appendChild(li);
+      });
+      ul.hidden = false; inp.setAttribute("aria-expanded", "true");
+      if (act > -1) inp.setAttribute("aria-activedescendant", "cxS" + act); else inp.removeAttribute("aria-activedescendant");
+    }
+    function say(msg) { ul.innerHTML = ""; ul.appendChild(el("li", "cxmsg", esc(msg))); ul.hidden = false; }
+    function choose(i) { var s = data[i]; if (!s) return; hide(); data = []; if (cmpAdd(s.geoid, s.name)) inp.value = ""; }
+    async function search(q) {
+      var my = ++seq;
+      try {
+        var r = await searchPlaces(q); if (my !== seq) return null;
+        return r;
+      } catch (e) { if (my !== seq) return null; say(T("Search isn't working right now.")); return null; }
+    }
+    inp.addEventListener("input", function () {
+      clearTimeout(timer); var v = inp.value.trim(); if (v.length < 2) { hide(); data = []; return; }
+      timer = setTimeout(async function () {
+        var r = await search(v); if (!r) return;
+        data = r; act = -1;
+        if (!r.length) say(T("No Census places match that. Try the city name, then a comma and the state.")); else paint();
+      }, 250);
+    });
+    inp.addEventListener("keydown", function (e) {
+      if ((e.key === "ArrowDown" || e.key === "ArrowUp") && data.length) { e.preventDefault(); act = (act + (e.key === "ArrowDown" ? 1 : -1) + data.length) % data.length; paint(); }
+      else if (e.key === "Enter") { e.preventDefault(); if (data.length && !ul.hidden) choose(act > -1 ? act : 0); else addFromText(); }
+      else if (e.key === "Escape") hide();
+    });
+    inp.addEventListener("blur", function () { setTimeout(hide, 120); });
+    async function addFromText() {
+      var v = inp.value.trim(); if (v.length < 2) { cmpLive(T("Type a city and state first.")); inp.focus(); return; }
+      if (data.length) { choose(act > -1 ? act : 0); return; }
+      var r = await search(v); if (!r) return;
+      if (!r.length) { say(T("No Census places match that. Try the city name, then a comma and the state.")); return; }
+      data = r; choose(0);
+    }
+    plus.addEventListener("click", addFromText);
+  }
+  function cmpBoot() {
+    document.body.classList.add("cxmode");
+    var ids = (qs.get("compare") || "").split(",").map(function (s) { return s.replace(/\D/g, ""); }).filter(function (s, i, a) { return s && a.indexOf(s) === i; }).slice(0, CMP.max);
+    CMP.list = ids;
+    var main = document.querySelector("main"), sec = el("section", "cxpage"); sec.id = "compare";
+    sec.innerHTML = '<div class="cxtop"><div id="cxLangHost"></div><h1>' + esc(T("Side by side.")) + '</h1><p class="cxlead">' + esc(T("Compare homes, money, getting around and learning in up to five places.")) + ' ' + esc(T("Every number comes from the same Census Bureau survey, so the places line up fairly.")) + '</p></div>' +
+      '<div class="cxpick" id="cxPick"></div><div id="cxOut" class="cxout" aria-live="off"><p class="cxempty">' + esc(T("Gathering the numbers…")) + '</p></div>' +
+      '<p class="cxfoot"><a id="cxBack" class="pill" href="./">' + esc(T("Back to {name}", { name: "…" })) + '</a> <button type="button" class="pill" id="cxCopy">' + esc(T("Copy link")) + '</button> <span id="cxCopied" class="cxsr" role="status"></span></p>';
+    main.appendChild(sec);
+    var lr = document.getElementById("langRow"), host = document.getElementById("cxLangHost"); if (lr && host) host.appendChild(lr);
+    cmpPicker(document.getElementById("cxPick")); cmpChips();
+    var back = document.getElementById("cxBack");
+    if (ids[0]) { back.href = cmpWith("?place=" + ids[0]); cmpLoad(ids[0]).then(function (d) { back.textContent = T("Back to {name}", { name: d.name }); }, function () {}); }
+    document.getElementById("cxCopy").onclick = function () {
+      var url = location.href, done = function () { var c = document.getElementById("cxCopied"); if (c) c.textContent = T("Link copied."); var b = document.getElementById("cxCopy"); if (b) { b.textContent = T("Link copied."); setTimeout(function () { b.textContent = T("Copy link"); }, 2000); } };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function () {}); else { var t = el("textarea"); t.value = url; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); done(); } catch (e) {} t.remove(); }
+    };
+    if (!ids.length) { $("#loading").classList.add("gone"); var o = document.getElementById("cxOut"); o.innerHTML = '<p class="cxempty">' + esc(T("Add another place to see them side by side.")) + '</p>'; return; }
+    cmpRefresh();
+  }
+
+  $("#cxGo").addEventListener("click", function () { if (S.geoid) location.href = cmpWith("?compare=" + S.geoid); });
+
   /* ---------- Boot ---------- */
   function startMap() {
     if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); modulesDone(); return; }
@@ -4829,6 +5372,7 @@ var EVENT_SOURCES = [
           modules.TileInfo = TileInfo; modules.Swipe = Swipe; modules.FeatureLayer = FeatureLayer; modules.ImageryLayer = ImageryLayer; modules.Extent = Extent;
           modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter; modules.Viewpoint = Viewpoint;
           modulesDone();
+          if (CMP.on) return;
           var wmId = WEBMAP.id || qs.get("webmap") || "", map;
           if (CFG.ARCGIS_KEY) esriConfig.apiKey = CFG.ARCGIS_KEY;
           if (wmId) { map = new WebMap({ portalItem: { id: wmId } }); S.webmap = true; }
@@ -4869,6 +5413,7 @@ var EVENT_SOURCES = [
   }
   checkArcgisKey().then(startMap, startMap);
   (async function () {
+    if (CMP.on) { cmpBoot(); return; }
     var wd = setTimeout(function () { if (!$("#loading").classList.contains("gone")) showError("This is taking too long. Check your internet connection and reload."); }, 40000);
     try {
       var geoid = (qs.get("place") || CFG.DEFAULT_GEOID).replace(/\D/g, "");
