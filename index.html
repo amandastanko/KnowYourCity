@@ -5372,7 +5372,7 @@ var EVENT_SOURCES = [
           modules.TileInfo = TileInfo; modules.Swipe = Swipe; modules.FeatureLayer = FeatureLayer; modules.ImageryLayer = ImageryLayer; modules.Extent = Extent;
           modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter; modules.Viewpoint = Viewpoint;
           modulesDone();
-          if (CMP.on) return;
+          if (CMP.on) { if (CFG.ARCGIS_KEY) esriConfig.apiKey = CFG.ARCGIS_KEY; return; }
           var wmId = WEBMAP.id || qs.get("webmap") || "", map;
           if (CFG.ARCGIS_KEY) esriConfig.apiKey = CFG.ARCGIS_KEY;
           if (wmId) { map = new WebMap({ portalItem: { id: wmId } }); S.webmap = true; }
