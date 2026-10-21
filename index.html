@@ -111,7 +111,10 @@ button{font:inherit;color:inherit}
 .cxhead h2{font:800 clamp(22px,2.8vw,36px)/1 var(--f-display);letter-spacing:-.02em;margin:8px 0 2px;overflow-wrap:anywhere}
 .cxhead p{margin:0;font-weight:600}
 .cxmap{height:190px;margin-top:12px;border-radius:12px;overflow:hidden;border:3px solid var(--ink);background:#e9e4d4}
-.cxmaptoggle{margin:0 0 6px}
+.cxmaptoggle{margin:0 0 6px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.cxscalenote{font-weight:600;font-size:15px;max-width:60ch}
+.cxsb{background:rgba(255,255,255,.92);border:2px solid var(--ink);border-radius:8px;padding:3px 7px 4px;margin:0 0 4px 4px;font:700 12px var(--f-body);color:var(--ink);pointer-events:none;white-space:nowrap}
+.cxsb i{display:block;height:6px;border:2px solid var(--ink);border-top:0;margin-top:2px}
 .cxhow{font-weight:600;margin:18px 0 28px}
 .cxscene{padding-top:clamp(50px,7vh,80px);padding-bottom:clamp(40px,6vh,70px)}
 .cxscene .sign{margin-bottom:26px}
@@ -2370,7 +2373,7 @@ var EVENT_SOURCES = [
   /* ---------- Compare places: wording in the other languages ---------- */
   var CMP_STR = {
     es: {
-      "Compare places": "Comparar lugares", "Search": "Buscar", "Compare": "Comparar", "Side by side.": "Lado a lado.",
+      "Compare places": "Comparar lugares", "{n} mi": "{n} mi", "{n} ft": "{n} pies", "Same scale: every map shows the same amount of ground, so a bigger city looks bigger.": "Misma escala: todos los mapas muestran la misma cantidad de terreno, así que una ciudad más grande se ve más grande.", "Fit each place: every city fills its own map, so use the scale bar to compare sizes.": "Ajustar cada lugar: cada ciudad llena su propio mapa, así que usa la barra de escala para comparar tamaños.", "Search": "Buscar", "Compare": "Comparar", "Side by side.": "Lado a lado.",
       "Compare homes, money, getting around and learning in up to five places.": "Compara viviendas, dinero, cómo moverse y estudios en hasta cinco lugares.",
       "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Todas las cifras vienen de la misma encuesta de la Oficina del Censo, así que los lugares se comparan con justicia.",
       "Add a place to compare": "Añade un lugar para comparar", "City, State": "Ciudad, Estado", "Add place": "Añadir lugar",
@@ -2401,7 +2404,7 @@ var EVENT_SOURCES = [
       "Places in this comparison": "Lugares en esta comparación", "Search isn't working right now.": "La búsqueda no funciona en este momento.", "Parks and trees": "Parques y árboles", "Parks": "Parques", "Acres of parks": "Acres de parques", "Park land as a share of the city": "Parques como parte del territorio de la ciudad", "Park acres for every 1,000 people": "Acres de parque por cada 1,000 personas", "Tree cover inside parks": "Cobertura de árboles en los parques", "Tree cover across the whole city": "Cobertura de árboles en toda la ciudad", "Map of parks": "Mapa de parques", "Map of transit stops": "Mapa de paradas de transporte público", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Los parques y la cobertura de árboles vienen de ParkServe, de The Trust for Public Land, y del Servicio Forestal de EE. UU.", "Loading parks and trees…": "Cargando parques y árboles…", "Adults by highest degree": "Adultos según su título más alto", "Associate's degree": "Título de grado asociado", "Bachelor's degree": "Licenciatura", "Graduate or professional degree": "Posgrado o título profesional", "Colleges and universities": "Colegios y universidades", "Students enrolled": "Estudiantes matriculados", "Students enrolled for every 100 residents": "Estudiantes matriculados por cada 100 residentes", "{n} colleges and universities": "{n} colegios y universidades", "1 college or university": "1 colegio o universidad", "None listed": "Ninguno en la lista", "About {n} students": "Unos {n} estudiantes", "{n} students": "{n} estudiantes", "No count listed": "Sin cifra publicada", "Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.": "Las cifras de estudiantes vienen de Wikidata, que mantienen voluntarios. Pueden incluir otros campus o estar desactualizadas. Los residentes se cuentan donde viven, así que los estudiantes que viven en la ciudad ya forman parte de la población residente.", "Loading colleges and universities…": "Cargando colegios y universidades…", "Notes about the data": "Notas sobre los datos", "* A star means the gap between the highest and lowest place is bigger than the survey's margin of error. Census numbers for cities come from a sample of households, so each one is an estimate that could be a little high or low. The margin of error is how far off it could be. A star means the difference is bigger than that, so it is probably real. With no star, the places are close enough that the survey can't say for sure which is higher.": "* Una estrella significa que la diferencia entre el lugar más alto y el más bajo es mayor que el margen de error de la encuesta. Las cifras del Censo para las ciudades vienen de una muestra de hogares, así que cada una es una estimación que podría ser un poco alta o baja. El margen de error indica cuánto podría desviarse. Una estrella significa que la diferencia es mayor que eso, así que probablemente es real. Sin estrella, los lugares están tan cerca que la encuesta no puede decir con seguridad cuál es mayor."
     },
     fr: {
-      "Compare places": "Comparer des lieux", "Search": "Chercher", "Compare": "Comparer", "Side by side.": "Côte à côte.",
+      "Compare places": "Comparer des lieux", "{n} mi": "{n} mi", "{n} ft": "{n} pi", "Same scale: every map shows the same amount of ground, so a bigger city looks bigger.": "Même échelle : toutes les cartes montrent la même étendue de terrain, donc une grande ville paraît plus grande.", "Fit each place: every city fills its own map, so use the scale bar to compare sizes.": "Ajuster chaque lieu : chaque ville remplit sa propre carte, donc servez-vous de l'échelle pour comparer les tailles.", "Search": "Chercher", "Compare": "Comparer", "Side by side.": "Côte à côte.",
       "Compare homes, money, getting around and learning in up to five places.": "Comparez logement, argent, déplacements et études dans cinq lieux au maximum.",
       "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Tous les chiffres viennent de la même enquête du Bureau du recensement, donc les lieux se comparent équitablement.",
       "Add a place to compare": "Ajoutez un lieu à comparer", "City, State": "Ville, État", "Add place": "Ajouter le lieu",
@@ -2432,7 +2435,7 @@ var EVENT_SOURCES = [
       "Places in this comparison": "Lieux de cette comparaison", "Search isn't working right now.": "La recherche ne fonctionne pas pour le moment.", "Parks and trees": "Parcs et arbres", "Parks": "Parcs", "Acres of parks": "Acres de parcs", "Park land as a share of the city": "Part du territoire de la ville occupée par les parcs", "Park acres for every 1,000 people": "Acres de parc pour 1,000 habitants", "Tree cover inside parks": "Couverture arborée dans les parcs", "Tree cover across the whole city": "Couverture arborée dans toute la ville", "Map of parks": "Carte des parcs", "Map of transit stops": "Carte des arrêts de transport en commun", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Les parcs et la couverture arborée viennent de ParkServe, de The Trust for Public Land, et du Service forestier des États-Unis.", "Loading parks and trees…": "Chargement des parcs et des arbres…", "Adults by highest degree": "Adultes selon leur diplôme le plus élevé", "Associate's degree": "Diplôme de premier cycle court (associate)", "Bachelor's degree": "Licence (bachelor)", "Graduate or professional degree": "Diplôme d'études supérieures ou professionnel", "Colleges and universities": "Collèges et universités", "Students enrolled": "Étudiants inscrits", "Students enrolled for every 100 residents": "Étudiants inscrits pour 100 habitants", "{n} colleges and universities": "{n} collèges et universités", "1 college or university": "1 collège ou université", "None listed": "Aucun répertorié", "About {n} students": "Environ {n} étudiants", "{n} students": "{n} étudiants", "No count listed": "Aucun effectif publié", "Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.": "Les chiffres d'étudiants viennent de Wikidata, que des bénévoles tiennent à jour. Ils peuvent inclure d'autres campus ou être périmés. Les habitants sont comptés là où ils vivent : les étudiants qui vivent en ville font donc déjà partie de la population résidente.", "Loading colleges and universities…": "Chargement des collèges et universités…", "Notes about the data": "Notes sur les données", "* A star means the gap between the highest and lowest place is bigger than the survey's margin of error. Census numbers for cities come from a sample of households, so each one is an estimate that could be a little high or low. The margin of error is how far off it could be. A star means the difference is bigger than that, so it is probably real. With no star, the places are close enough that the survey can't say for sure which is higher.": "* Une étoile signifie que l'écart entre le lieu le plus élevé et le plus bas dépasse la marge d'erreur de l'enquête. Les chiffres du recensement pour les villes viennent d'un échantillon de ménages : chacun est une estimation, un peu trop haute ou trop basse. La marge d'erreur indique de combien elle peut se tromper. Une étoile signifie que l'écart est plus grand que cela, donc probablement réel. Sans étoile, les lieux sont si proches que l'enquête ne peut pas dire avec certitude lequel est plus élevé."
     },
     vi: {
-      "Compare places": "So sánh các nơi", "Search": "Tìm kiếm", "Compare": "So sánh", "Side by side.": "Cạnh nhau.",
+      "Compare places": "So sánh các nơi", "{n} mi": "{n} dặm", "{n} ft": "{n} ft", "Same scale: every map shows the same amount of ground, so a bigger city looks bigger.": "Cùng tỉ lệ: mọi bản đồ hiển thị cùng một diện tích mặt đất, nên thành phố lớn hơn trông lớn hơn.", "Fit each place: every city fills its own map, so use the scale bar to compare sizes.": "Vừa khít từng nơi: mỗi thành phố lấp đầy bản đồ riêng, nên hãy dùng thanh tỉ lệ để so sánh kích thước.", "Search": "Tìm kiếm", "Compare": "So sánh", "Side by side.": "Cạnh nhau.",
       "Compare homes, money, getting around and learning in up to five places.": "So sánh nhà ở, tiền bạc, việc đi lại và học vấn ở tối đa năm nơi.",
       "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Mọi con số đều lấy từ cùng một cuộc khảo sát của Cục Điều tra Dân số, nên các nơi được so sánh công bằng.",
       "Add a place to compare": "Thêm một nơi để so sánh", "City, State": "Thành phố, Tiểu bang", "Add place": "Thêm nơi này",
@@ -5260,6 +5263,25 @@ var EVENT_SOURCES = [
   /* ---- maps: same scale by default ---- */
   function cmpDestroyViews() { CMP.views.forEach(function (v) { try { v.destroy(); } catch (e) {} }); CMP.views = []; CMP.sets = []; }
   var CMP_DOT = { type: "simple-marker", style: "circle", size: 6, color: [10, 85, 96, 0.9], outline: { color: [255, 255, 255, 1], width: 1 } };
+  // A scale bar that follows the map: a round distance, drawn as long as it really is on screen.
+  var CMP_NICE = [{ ft: 50 }, { ft: 100 }, { ft: 200 }, { ft: 500 }, { ft: 1000 }, { mi: 0.25 }, { mi: 0.5 }, { mi: 1 }, { mi: 2 }, { mi: 5 }, { mi: 10 }, { mi: 20 }, { mi: 50 }, { mi: 100 }, { mi: 200 }, { mi: 500 }];
+  function cmpScaleBar(view) {
+    var box = document.createElement("div"); box.className = "cxsb"; box.setAttribute("aria-hidden", "true");
+    var lab = document.createElement("span"), bar = document.createElement("i"); box.appendChild(lab); box.appendChild(bar);
+    function upd() {
+      try {
+        var res = view.resolution, lat = view.center && view.center.latitude; if (!res || lat == null) return;
+        var ftPx = res * Math.cos(lat * Math.PI / 180) * 3.28084, pick = CMP_NICE[0];
+        CMP_NICE.forEach(function (c) { var f = c.ft || c.mi * 5280; if (f / ftPx <= 90) pick = c; });
+        var f = pick.ft || pick.mi * 5280;
+        bar.style.width = Math.max(14, f / ftPx).toFixed(0) + "px";
+        lab.textContent = pick.mi ? T("{n} mi", { n: pick.mi }) : T("{n} ft", { n: pick.ft });
+      } catch (e) {}
+    }
+    try { view.ui.add(box, "bottom-left"); } catch (e) { return; }
+    try { modules.reactiveUtils.watch(function () { return view.scale; }, upd); } catch (e) { try { view.watch("scale", upd); } catch (e2) {} }
+    upd();
+  }
   // kind: "head" (place outlines), "parks" (park shapes) or "transit" (stops). Every map in a set shares one scale unless "Fit each place" is chosen.
   async function cmpBuildSet(kind, ready, token) {
     try {
@@ -5280,6 +5302,7 @@ var EVENT_SOURCES = [
         if (kind === "transit") {
           (function (v) { transitStopPoints(d.rings).then(function (pts) { if (token !== CMP.token) return; v.graphics.addMany(pts.map(function (q) { return new modules.Graphic({ geometry: { type: "point", longitude: q.x, latitude: q.y }, symbol: CMP_DOT }); })); }).catch(function () {}); })(view);
         }
+        cmpScaleBar(view);
         CMP.views.push(view); made.push({ view: view, poly: poly });
       }
       await Promise.all(made.map(function (m) { return m.view.when(); }));
@@ -5410,13 +5433,14 @@ var EVENT_SOURCES = [
     cmpGrow(fresh);
     if (full) cmpLazySet("parks", ready, token);
   }
+  function cmpScaleNote() { return CMP.same ? T("Same scale: every map shows the same amount of ground, so a bigger city looks bigger.") : T("Fit each place: every city fills its own map, so use the scale bar to compare sizes."); }
   function cmpHeads(ready, full) {
     var h = '<div class="cxheads cxn' + ready.length + '">';
     ready.forEach(function (d, i) {
       h += '<div class="cxhead" style="--pc:' + cmpColor(i).hex + '">' + cmpBadge(i) + '<h2>' + esc(d.name) + '</h2><p>' + esc(d.stateName) + '</p>' +
         (full ? '<div class="cxmap" id="cxmap_head_' + i + '" role="img" aria-label="' + esc(T("Map of {name}", { name: d.name + ", " + d.stateName })) + '"></div>' : '') + '</div>';
     });
-    return h + '</div>' + (full ? '<p class="cxmaptoggle"><button type="button" class="pill" id="cxScale" aria-pressed="' + (CMP.same ? "true" : "false") + '">' + esc(CMP.same ? T("Same scale") : T("Fit each place")) + '</button></p>' : '');
+    return h + '</div>' + (full ? '<p class="cxmaptoggle"><button type="button" class="pill" id="cxScale" aria-pressed="' + (CMP.same ? "true" : "false") + '">' + esc(CMP.same ? T("Same scale") : T("Fit each place")) + '</button> <span class="cxscalenote" id="cxScaleNote">' + esc(cmpScaleNote()) + '</span></p>' : '');
   }
 
   /* ---- the page ---- */
@@ -5482,7 +5506,7 @@ var EVENT_SOURCES = [
       '<div class="cxyel"><div class="cxwrap cxnotes"><h2>' + esc(T("Notes about the data")) + '</h2><ul id="cxNotes"><li>' + esc(T("* A star means the gap between the highest and lowest place is bigger than the survey's margin of error. Census numbers for cities come from a sample of households, so each one is an estimate that could be a little high or low. The margin of error is how far off it could be. A star means the difference is bigger than that, so it is probably real. With no star, the places are close enough that the survey can't say for sure which is higher.")) + '</li><li>' + esc(T("Source: U.S. Census Bureau, American Community Survey 5-year estimates (2020–2024), and the National Transit Map.")) + '</li><li>' + esc(T("The numbers are survey estimates, so small gaps can be noise.")) + '</li>' + (full ? "" : '<li>' + esc(T("State figures appear when you compare three places or fewer.")) + '</li>') + '</ul></div></div>';    out.removeAttribute("aria-busy");
     cmpGrow(out);
     var sc = document.getElementById("cxScale");
-    if (sc) sc.onclick = function () { CMP.same = !CMP.same; sc.setAttribute("aria-pressed", CMP.same ? "true" : "false"); sc.textContent = CMP.same ? T("Same scale") : T("Fit each place"); CMP.sets.forEach(function (m) { cmpFit(m); }); };
+    if (sc) sc.onclick = function () { CMP.same = !CMP.same; sc.setAttribute("aria-pressed", CMP.same ? "true" : "false"); sc.textContent = CMP.same ? T("Same scale") : T("Fit each place"); var sn = document.getElementById("cxScaleNote"); if (sn) sn.textContent = cmpScaleNote(); CMP.sets.forEach(function (m) { cmpFit(m); }); };
     if (full) { cmpBuildSet("head", ready, token); cmpLazySet("transit", ready, token); }
     cmpParksFlow(ready, token, full);
     cmpCollegeFlow(ready, token, full);
