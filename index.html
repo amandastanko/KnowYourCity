@@ -63,8 +63,9 @@ button{font:inherit;color:inherit}
 
 /* compare places */
 .cxgo{margin:0 0 1.2em}
-.cxbtn{font-size:18px;padding:11px 20px;background:var(--ink);color:#fff}
+.cxbtn{background:var(--ink);color:#fff;white-space:nowrap;flex:none}
 .cxbtn:hover{background:#2c2870}
+.cxmode #cxGo{display:none}
 .cxmode #hero,.cxmode #jump,.cxmode #story,.cxmode #ptr{display:none}
 .cxsr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .cxpage{background:#FFD23F;min-height:100vh}
@@ -600,6 +601,7 @@ i.sw{border-width:3px}
 .step .col .u2{position:absolute;left:0;right:0;height:0;border-top:4px dotted #fff;bottom:var(--u2)}
 .pill[disabled]{opacity:.6;cursor:progress}
 @media (max-width:820px){.pill{padding:7px 10px;font-size:14px}.top{gap:6px}}
+@media (max-width:560px){.cxbtn{font-size:12px;padding:6px 9px}.brand span{display:none}}
 
 /* Homie */
 #homie{position:fixed;bottom:14px;left:14px;width:128px;z-index:70;transition:left .9s cubic-bezier(.5,0,.2,1);pointer-events:none}
@@ -664,6 +666,7 @@ html[lang="vi"]{--f-body:"Be Vietnam Pro","Atkinson Hyperlegible",system-ui,sans
   <a class="brand" href="./" aria-label="Know Your City">
     <svg viewBox="0 0 40 40" aria-hidden="true"><use href="#i-house"/></svg><span>Know Your City</span>
   </a>
+  <button type="button" class="pill cxbtn" id="cxGo">Compare places</button>
   <div class="search">
     <input id="q" type="search" placeholder="Search any U.S. town or city" autocomplete="off" aria-label="Search for a place">
     <ul id="sugg" role="listbox"></ul>
@@ -678,7 +681,6 @@ html[lang="vi"]{--f-body:"Be Vietnam Pro","Atkinson Hyperlegible",system-ui,sans
       <h1 id="placeName">&nbsp;</h1>
       <p class="state" id="stateName">&nbsp;</p>
       <p class="line" id="heroLine">Scroll down and Homie will show you around.</p>
-      <p class="cxgo"><button type="button" class="pill cxbtn" id="cxGo">Compare places</button></p>
       <p class="cue"><i></i>Scroll to start</p>
     </div>
     <div class="mapcol"><div class="house-map" data-hid="hero"><div class="inner"><div id="viewDiv"></div></div></div><p class="maphint" id="maphint">Drag to move. Click, then scroll to zoom.</p></div>
