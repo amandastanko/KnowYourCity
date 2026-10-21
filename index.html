@@ -131,6 +131,12 @@ button{font:inherit;color:inherit}
 .cxshort .cxtc .v{font-size:clamp(12px,1.5vw,19px)}
 .cxtc .b{width:100%;height:0;border-radius:12px 12px 0 0;background-color:var(--tc);background-image:repeating-linear-gradient(0deg,transparent 0 16px,rgba(255,255,255,.28) 16px 24px);transition:height 1.1s cubic-bezier(.2,.8,.2,1)}
 .cxrow.in .cxtc .b{height:var(--h)}
+.cxmapcard h3{margin-bottom:14px}
+.cxmaps{display:grid;gap:clamp(10px,2vw,22px);grid-template-columns:repeat(3,minmax(0,1fr))}
+.cxmaps.cxn2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cxmapname{display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:8px}
+.cxmapcol .cxmap{height:240px;margin-top:0}
+.cxwait{font:700 22px var(--f-display);margin:0}
 .cxnote{margin:16px 0 0;font-size:17px;font-weight:600}
 .cxsamelist{list-style:none;margin:0;padding:0;background:#fff;border:4px solid var(--ink);border-radius:24px;box-shadow:7px 7px 0 var(--ink)}
 .cxsamelist li{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;align-items:center;padding:14px 22px;border-top:2px solid var(--track)}
@@ -146,6 +152,7 @@ button{font:inherit;color:inherit}
   .cxheads.cxn3,.cxheads.cxn2{grid-template-columns:minmax(0,1fr)}
   .cxheads.cxn4,.cxheads.cxn5{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cxrows.cxcols{grid-template-columns:minmax(0,1fr)}
+  .cxmaps,.cxmaps.cxn2{grid-template-columns:minmax(0,1fr)}
   .cxbs{height:270px}
   .cxnm .cxbadge{width:22px;height:22px;font-size:12px}
   .cxnm{font-size:11px}
@@ -2358,7 +2365,7 @@ var EVENT_SOURCES = [
       "State figures appear when you compare three places or fewer.": "Las cifras estatales aparecen cuando comparas tres lugares o menos.",
       "Back to {name}": "Volver a {name}", "Copy link": "Copiar enlace", "Link copied.": "Enlace copiado.", "Gathering the numbers…": "Reuniendo las cifras…", "No data": "Sin datos",
       "Side by side · Know Your City": "Lado a lado · Conoce tu ciudad", "Type a city and state first.": "Escribe primero una ciudad y un estado.",
-      "Places in this comparison": "Lugares en esta comparación", "Search isn't working right now.": "La búsqueda no funciona en este momento."
+      "Places in this comparison": "Lugares en esta comparación", "Search isn't working right now.": "La búsqueda no funciona en este momento.", "Parks and trees": "Parques y árboles", "Parks": "Parques", "Acres of parks": "Acres de parques", "Park land as a share of the city": "Parques como parte del territorio de la ciudad", "Park acres for every 1,000 people": "Acres de parque por cada 1,000 personas", "Tree cover inside parks": "Cobertura de árboles en los parques", "Tree cover across the whole city": "Cobertura de árboles en toda la ciudad", "Map of parks": "Mapa de parques", "Map of transit stops": "Mapa de paradas de transporte público", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Los parques y la cobertura de árboles vienen de ParkServe, de The Trust for Public Land, y del Servicio Forestal de EE. UU.", "Loading parks and trees…": "Cargando parques y árboles…"
     },
     fr: {
       "Compare places": "Comparer des lieux", "Side by side.": "Côte à côte.",
@@ -2389,7 +2396,7 @@ var EVENT_SOURCES = [
       "State figures appear when you compare three places or fewer.": "Les chiffres des États apparaissent quand vous comparez trois lieux ou moins.",
       "Back to {name}": "Retour à {name}", "Copy link": "Copier le lien", "Link copied.": "Lien copié.", "Gathering the numbers…": "Rassemblement des chiffres…", "No data": "Pas de données",
       "Side by side · Know Your City": "Côte à côte · Connaître sa ville", "Type a city and state first.": "Saisissez d'abord une ville et un État.",
-      "Places in this comparison": "Lieux de cette comparaison", "Search isn't working right now.": "La recherche ne fonctionne pas pour le moment."
+      "Places in this comparison": "Lieux de cette comparaison", "Search isn't working right now.": "La recherche ne fonctionne pas pour le moment.", "Parks and trees": "Parcs et arbres", "Parks": "Parcs", "Acres of parks": "Acres de parcs", "Park land as a share of the city": "Part du territoire de la ville occupée par les parcs", "Park acres for every 1,000 people": "Acres de parc pour 1,000 habitants", "Tree cover inside parks": "Couverture arborée dans les parcs", "Tree cover across the whole city": "Couverture arborée dans toute la ville", "Map of parks": "Carte des parcs", "Map of transit stops": "Carte des arrêts de transport en commun", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Les parcs et la couverture arborée viennent de ParkServe, de The Trust for Public Land, et du Service forestier des États-Unis.", "Loading parks and trees…": "Chargement des parcs et des arbres…"
     },
     vi: {
       "Compare places": "So sánh các nơi", "Side by side.": "Cạnh nhau.",
@@ -2420,7 +2427,7 @@ var EVENT_SOURCES = [
       "State figures appear when you compare three places or fewer.": "Số liệu cấp tiểu bang xuất hiện khi bạn so sánh tối đa ba nơi.",
       "Back to {name}": "Quay lại {name}", "Copy link": "Sao chép liên kết", "Link copied.": "Đã sao chép liên kết.", "Gathering the numbers…": "Đang gom số liệu…", "No data": "Không có dữ liệu",
       "Side by side · Know Your City": "Cạnh nhau · Hiểu thành phố của bạn", "Type a city and state first.": "Hãy nhập thành phố và tiểu bang trước.",
-      "Places in this comparison": "Các nơi trong phần so sánh này", "Search isn't working right now.": "Tính năng tìm kiếm hiện không hoạt động."
+      "Places in this comparison": "Các nơi trong phần so sánh này", "Search isn't working right now.": "Tính năng tìm kiếm hiện không hoạt động.", "Parks and trees": "Công viên và cây xanh", "Parks": "Công viên", "Acres of parks": "Mẫu Anh công viên", "Park land as a share of the city": "Tỉ lệ đất công viên so với thành phố", "Park acres for every 1,000 people": "Mẫu Anh công viên cho mỗi 1,000 người", "Tree cover inside parks": "Độ phủ cây trong công viên", "Tree cover across the whole city": "Độ phủ cây trên toàn thành phố", "Map of parks": "Bản đồ công viên", "Map of transit stops": "Bản đồ điểm dừng giao thông công cộng", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Dữ liệu công viên và độ phủ cây lấy từ ParkServe của The Trust for Public Land và Sở Lâm nghiệp Hoa Kỳ.", "Loading parks and trees…": "Đang tải công viên và cây xanh…"
     }
   };
   if (XL) { var CMP_L = CMP_STR[ES ? "es" : FR ? "fr" : "vi"]; Object.keys(CMP_L).forEach(function (k) { CODE_TX[k] = CMP_L[k]; if (DICT_TX[k] == null) DICT_TX[k] = CMP_L[k]; }); }
@@ -5026,7 +5033,7 @@ var EVENT_SOURCES = [
     { hex: "#6D34B8", rgb: [109, 52, 184], tint: "#D3BDEE" }, { hex: "#2F7D22", rgb: [47, 125, 34], tint: "#BFE0B7" },
     { hex: "#B8307F", rgb: [184, 48, 127], tint: "#EDB8DB" }
   ];
-  var CMP_GROUPS = { basics: "The basics", homes: "Homes", money: "Work and money", move: "Getting around", learn: "Learning" };
+  var CMP_GROUPS = { basics: "The basics", homes: "Homes", money: "Work and money", move: "Getting around", learn: "Learning", parks: "Parks and trees" };
   var CMP_ROWS = [
     { g: "basics", key: "pop", label: "Population", kind: "cnt" }, { g: "basics", key: "area", label: "Land area", kind: "area" },
     { g: "basics", key: "density", label: "People per square mile", kind: "cnt" },
@@ -5039,6 +5046,9 @@ var EVENT_SOURCES = [
     { g: "move", key: "wfh", label: "Work from home", ind: "wfh" }, { g: "move", key: "transit", label: "Take public transit to work", ind: "transit" },
     { g: "move", key: "walk", label: "Walk to work", ind: "walk" }, { g: "move", key: "noCar", label: "Households with no vehicle", ind: "noCar" },
     { g: "move", key: "stops", label: "Transit stops", kind: "cnt" }, { g: "move", key: "stopDens", label: "Transit stops per square mile", kind: "dens1" },
+    { g: "parks", key: "parkCount", label: "Parks", kind: "cnt" }, { g: "parks", key: "parkAcres", label: "Acres of parks", kind: "cnt" },
+    { g: "parks", key: "parkShare", label: "Park land as a share of the city", kind: "pct" }, { g: "parks", key: "parkPer1k", label: "Park acres for every 1,000 people", kind: "dens1" },
+    { g: "parks", key: "parkCanopy", label: "Tree cover inside parks", kind: "pct" }, { g: "parks", key: "cityCanopy", label: "Tree cover across the whole city", kind: "pct" },
     { g: "learn", key: "capAll", label: "Adults with a college degree", ind: "capAll" }, { g: "learn", key: "hs", label: "Adults with at least a high school diploma", ind: "hs", tkey: "Adults with a high school diploma or more" }
   ];
   function cmpColor(i) { return CMP_COLORS[i % CMP_COLORS.length]; }
@@ -5096,6 +5106,7 @@ var EVENT_SOURCES = [
     if (v == null || !isFinite(v)) return T("No data");
     var s;
     if (row.ind) s = K.fmt(row.c, v);
+    else if (row.kind === "pct") s = (v >= 10 ? String(Math.round(v)) : v.toFixed(1)) + "%";
     else if (row.kind === "area") s = T("{n} sq mi", { n: v < 10 ? v.toFixed(1) : Math.round(v).toLocaleString("en-US") });
     else if (row.kind === "dens1") s = v < 10 ? v.toFixed(1) : Math.round(v).toLocaleString("en-US");
     else s = Math.round(v).toLocaleString("en-US");
@@ -5112,29 +5123,30 @@ var EVENT_SOURCES = [
     return { rel: rel, sig: sig };
   }
   // Rows in the order the page shows them: groups with the biggest gaps first; rows that are nearly the same go to the end.
-  function cmpModel(ready) {
+  function cmpModel(ready, only) {
     var idx = ready.map(function (_, i) { return i; }), rows = [];
     CMP_ROWS.forEach(function (r) {
+      if (only ? r.g !== only : r.g === "parks") return;
       var v = ready.map(function (d) { return d.vals[r.key] || null; });
       if (v.filter(Boolean).length < Math.min(2, ready.length)) return;
       var ref = null; v.forEach(function (x) { if (!ref && x && x.c) ref = x.c; });
-      var row = { key: r.key, g: r.g, label: T(r.tkey || r.label), ind: r.ind, kind: r.kind, v: v, c: ref, pct: !!(ref && ref.type === "pct") };
+      var row = { key: r.key, g: r.g, label: T(r.tkey || r.label), ind: r.ind, kind: r.kind, v: v, c: ref, pct: !!(ref && ref.type === "pct") || r.kind === "pct" };
       row.us = ref ? ref.pus : null;
       row.st = ready.map(function (d, i) { return v[i] && v[i].st != null ? v[i].st : null; });
-      var sp = cmpSpread(row, idx); row.rel = sp.rel; row.sig = sp.sig; row.same = !sp.sig || sp.rel < 0.06;
+      var sp = cmpSpread(row, idx); row.rel = sp.rel; row.sig = sp.sig; row.same = only ? false : (!sp.sig || sp.rel < 0.06);
       rows.push(row);
     });
     var groups = {}, same = [];
     rows.forEach(function (r) { if (r.same) { same.push(r); return; } (groups[r.g] = groups[r.g] || []).push(r); });
     var order = Object.keys(groups).map(function (g) { groups[g].sort(function (a, b) { return b.rel - a.rel; }); return { g: g, rows: groups[g], top: groups[g][0].rel }; })
-      .sort(function (a, b) { return b.top - a.top; });
+      .sort(function (a, b) { return CMP_ORDER.indexOf(a.g) - CMP_ORDER.indexOf(b.g); });
     same.sort(function (a, b) { return a.rel - b.rel; });
     return { groups: order, same: same };
   }
   function cmpBadge(i) { return '<b class="cxbadge" style="background:' + cmpColor(i).hex + '" aria-hidden="true">' + cmpLetter(i) + '</b>'; }
 
   /* ---- rendering: vertical towers, the same look as a single-place page ---- */
-  var CMP_SCENES = { basics: "tang", homes: "mint", money: "lilac", move: "teal", learn: "leaf", same: "pink" };
+  var CMP_SCENES = { basics: "tang", homes: "mint", money: "lilac", learn: "yellow", parks: "leaf", move: "teal", same: "pink" }, CMP_ORDER = ["basics", "homes", "money", "learn", "parks", "move"];
   function cmpTowers(row, ready, withState, short) {
     var vals = [];
     row.v.forEach(function (x) { if (x && x.p != null) vals.push(x.p); });
@@ -5163,12 +5175,17 @@ var EVENT_SOURCES = [
     return '<p class="cxnote">' + esc(row.sig ? T("The gap is bigger than the survey's margin of error.") : T("Close enough that the survey can't say which is higher.")) + '</p>';
   }
   function cmpScene(key, title, inner) {
-    return '<section class="scene cxscene" style="--bg:' + SC[CMP_SCENES[key]].bg + '"><div class="cxwrap"><div class="sign">' + esc(title) + '</div>' + inner + '</div></section>';
+    return '<section class="scene cxscene" data-g="' + key + '" style="--bg:' + SC[CMP_SCENES[key]].bg + '"><div class="cxwrap"><div class="sign">' + esc(title) + '</div>' + inner + '</div></section>';
+  }
+  function cmpMapCard(kind, ready, title) {
+    return '<article class="cxrow cxmapcard"><h3>' + esc(title) + '</h3><div class="cxmaps cxn' + ready.length + '">' + ready.map(function (d, i) {
+      return '<div class="cxmapcol"><div class="cxmapname">' + cmpBadge(i) + '<span>' + esc(d.name) + '</span></div><div class="cxmap" id="cxmap_' + kind + '_' + i + '" role="img" aria-label="' + esc(T(kind === "parks" ? "Map of parks" : "Map of transit stops") + ": " + d.name + ", " + d.stateName) + '"></div></div>';
+    }).join("") + '</div></article>';
   }
   function cmpFull(model, ready, compact) {
     var h = "";
     model.groups.forEach(function (gr) {
-      var rows = gr.rows.map(function (r) { return '<article class="cxrow"><h3>' + esc(r.label) + '</h3>' + cmpTowers(r, ready, !compact, compact) + (compact ? "" : cmpNote(r, ready)) + '</article>'; }).join("");
+      var rows = (!compact && gr.g === "move" ? cmpMapCard("transit", ready, T("Map of transit stops")) : "") + gr.rows.map(function (r) { return '<article class="cxrow"><h3>' + esc(r.label) + '</h3>' + cmpTowers(r, ready, !compact, compact) + (compact ? "" : cmpNote(r, ready)) + '</article>'; }).join("");
       h += cmpScene(gr.g, T(CMP_GROUPS[gr.g]), '<div class="cxrows' + (compact ? " cxcols" : "") + '">' + rows + '</div>');
     });
     if (model.same.length) {
@@ -5181,28 +5198,37 @@ var EVENT_SOURCES = [
   }
 
   /* ---- maps: same scale by default ---- */
-  function cmpDestroyViews() { CMP.views.forEach(function (v) { try { v.destroy(); } catch (e) {} }); CMP.views = []; }
-  async function cmpMaps(ready, token) {
+  function cmpDestroyViews() { CMP.views.forEach(function (v) { try { v.destroy(); } catch (e) {} }); CMP.views = []; CMP.sets = []; }
+  var CMP_DOT = { type: "simple-marker", style: "circle", size: 6, color: [10, 85, 96, 0.9], outline: { color: [255, 255, 255, 1], width: 1 } };
+  // kind: "head" (place outlines), "parks" (park shapes) or "transit" (stops). Every map in a set shares one scale unless "Fit each place" is chosen.
+  async function cmpBuildSet(kind, ready, token) {
     try {
       await needMaps();
       if (!modules.MapView || !modules.Map || token !== CMP.token) return;
       var made = [];
       for (var i = 0; i < ready.length; i++) {
-        var box = document.getElementById("cxmap" + i); if (!box) continue;
+        var box = document.getElementById("cxmap_" + kind + "_" + i); if (!box) continue;
         var d = ready[i], col = cmpColor(i);
         var map = CFG.ARCGIS_KEY ? new modules.Map({ basemap: "arcgis/community" }) : new modules.Map({ layers: [new modules.WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
+        if (kind === "parks" && modules.FeatureLayer && /^\d{7}$/.test(d.geoid)) {
+          map.add(new modules.FeatureLayer({ url: PARKS.url, definitionExpression: "park_place_fips = '" + d.geoid + "'", copyright: "© The Trust for Public Land",
+            renderer: { type: "simple", symbol: { type: "simple-fill", color: [56, 168, 0, 0.6], outline: { color: [30, 27, 75, 1], width: 1 } } } }));
+        }
         var view = new modules.MapView({ container: box, map: map, ui: { components: [] }, navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true }, constraints: { snapToZoom: false } });
         var poly = Poly(d.rings);
-        view.graphics.add(new modules.Graphic({ geometry: poly, symbol: { type: "simple-fill", color: col.rgb.concat([0.2]), outline: { color: col.rgb.concat([1]), width: 3 } } }));
+        view.graphics.add(new modules.Graphic({ geometry: poly, symbol: kind === "head" ? { type: "simple-fill", color: col.rgb.concat([0.2]), outline: { color: col.rgb.concat([1]), width: 3 } } : { type: "simple-fill", color: [0, 0, 0, 0], outline: { color: col.rgb.concat([1]), width: 3.5 } } }));
+        if (kind === "transit") {
+          (function (v) { transitStopPoints(d.rings).then(function (pts) { if (token !== CMP.token) return; v.graphics.addMany(pts.map(function (q) { return new modules.Graphic({ geometry: { type: "point", longitude: q.x, latitude: q.y }, symbol: CMP_DOT }); })); }).catch(function () {}); })(view);
+        }
         CMP.views.push(view); made.push({ view: view, poly: poly });
       }
       await Promise.all(made.map(function (m) { return m.view.when(); }));
       if (token !== CMP.token) return;
-      CMP.made = made; await cmpFit();
+      CMP.sets.push(made); await cmpFit(made);
     } catch (e) { console.info("Comparison maps unavailable:", e && e.message); }
   }
-  async function cmpFit() {
-    var made = CMP.made || []; if (!made.length) return;
+  async function cmpFit(made) {
+    if (!made || !made.length) return;
     try {
       await Promise.all(made.map(function (m) { return m.view.goTo({ target: m.poly.extent.expand(1.25) }, { animate: false }); }));
       if (!CMP.same) return;
@@ -5210,11 +5236,69 @@ var EVENT_SOURCES = [
       await Promise.all(made.map(function (m) { return m.view.goTo({ center: m.poly.extent.center, scale: scale }, { animate: false }); }));
     } catch (e) { console.info("Map fit skipped:", e && e.message); }
   }
+  // Build a set of maps when its card nears the screen (nine live maps at once would be slow).
+  function cmpLazySet(kind, ready, token) {
+    var card = document.getElementById("cxmap_" + kind + "_0"); card = card && card.closest(".cxmapcard"); if (!card) return;
+    if (!("IntersectionObserver" in window)) { cmpBuildSet(kind, ready, token); return; }
+    var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { io.disconnect(); cmpBuildSet(kind, ready, token); } }, { rootMargin: "500px" }); io.observe(card);
+  }
+  /* ---- parks and trees ---- */
+  async function cmpParksData(d) {
+    if (d.parksP) return d.parksP;
+    d.parksP = (async function () {
+      var out = {}, rows = [], ok = /^\d{7}$/.test(d.geoid);
+      if (ok) {
+        try {
+          for (var off = 0; off < 3000; off += 1000) {
+            var j = await getJSON(PARKS.url + "/query?where=" + encodeURIComponent("park_place_fips='" + d.geoid + "'") + "&outFields=park_size_acres,canopy_pct&returnGeometry=false&resultOffset=" + off + "&resultRecordCount=1000&f=json");
+            if (j.error) throw new Error("parks query error");
+            (j.features || []).forEach(function (f) { rows.push(f.attributes); });
+            if (!j.exceededTransferLimit) break;
+          }
+        } catch (e) { rows = null; }
+      } else rows = null;
+      if (rows && rows.length) {
+        var acres = 0, cw = 0, cA = 0;
+        rows.forEach(function (r) { var a = +pk(r, "park_size_acres"), c = pk(r, "canopy_pct"); if (a > 0) { acres += a; if (c != null && isFinite(+c)) { cw += a * c; cA += a; } } });
+        var landAc = d.attrs && +d.attrs.AREALAND ? +d.attrs.AREALAND / 4046.856 : 0, pv = d.vals.pop && d.vals.pop.p;
+        out.parkCount = { p: rows.length, m: null }; out.parkAcres = { p: acres, m: null };
+        if (landAc) out.parkShare = { p: acres / landAc * 100, m: null };
+        if (pv > 0) out.parkPer1k = { p: acres / pv * 1000, m: null };
+        if (cA > 0) out.parkCanopy = { p: cw / cA, m: null };
+      }
+      try {
+        await needMaps();
+        if (modules.ImageryLayer && modules.Extent) { var v = await canopyMean(canopyGrid(d.rings), TCC.years[TCC.years.length - 1]); if (v != null) out.cityCanopy = { p: v, m: null }; }
+      } catch (e) {}
+      Object.assign(d.vals, out);
+      return out;
+    })();
+    return d.parksP;
+  }
+  function cmpInsertScene(out, html) {
+    var tmp = document.createElement("div"); tmp.innerHTML = html; var node = tmp.firstChild, before = null;
+    ["move", "same"].some(function (g) { before = out.querySelector('[data-g="' + g + '"]'); return !!before; });
+    if (!before) { var ys = out.querySelectorAll(":scope > .cxyel"); before = ys[ys.length - 1] || null; }
+    out.insertBefore(node, before); return node;
+  }
+  async function cmpParksFlow(ready, token, full) {
+    var out = document.getElementById("cxOut"); if (!out) return;
+    var node = cmpInsertScene(out, cmpScene("parks", T("Parks and trees"), '<p class="cxwait">' + esc(T("Loading parks and trees…")) + '</p>'));
+    await Promise.all(ready.map(function (d) { return cmpParksData(d).catch(function () { return {}; }); }));
+    if (token !== CMP.token || !node.isConnected) return;
+    var model = cmpModel(ready, "parks"), inner = "";
+    var rows = model.groups.length ? model.groups[0].rows : [];
+    if (!rows.length) { node.remove(); return; }
+    inner = '<div class="cxrows' + (full ? "" : " cxcols") + '">' + (full ? cmpMapCard("parks", ready, T("Map of parks")) : "") + rows.map(function (r) { return '<article class="cxrow"><h3>' + esc(r.label) + '</h3>' + cmpTowers(r, ready, false, !full) + '</article>'; }).join("") + '</div>';
+    var fresh = cmpInsertScene(out, cmpScene("parks", T("Parks and trees"), inner)); node.remove();
+    cmpGrow(fresh);
+    if (full) cmpLazySet("parks", ready, token);
+  }
   function cmpHeads(ready, full) {
     var h = '<div class="cxheads cxn' + ready.length + '">';
     ready.forEach(function (d, i) {
       h += '<div class="cxhead" style="--pc:' + cmpColor(i).hex + '">' + cmpBadge(i) + '<h2>' + esc(d.name) + '</h2><p>' + esc(d.stateName) + '</p>' +
-        (full ? '<div class="cxmap" id="cxmap' + i + '" role="img" aria-label="' + esc(T("Map of {name}", { name: d.name + ", " + d.stateName })) + '"></div>' : '') + '</div>';
+        (full ? '<div class="cxmap" id="cxmap_head_' + i + '" role="img" aria-label="' + esc(T("Map of {name}", { name: d.name + ", " + d.stateName })) + '"></div>' : '') + '</div>';
     });
     return h + '</div>' + (full ? '<p class="cxmaptoggle"><button type="button" class="pill" id="cxScale" aria-pressed="' + (CMP.same ? "true" : "false") + '">' + esc(CMP.same ? T("Same scale") : T("Fit each place")) + '</button></p>' : '');
   }
@@ -5270,7 +5354,7 @@ var EVENT_SOURCES = [
     var ready = res.filter(function (r) { return r.d; }).map(function (r) { return r.d; }), bad = res.filter(function (r) { return r.bad; }).map(function (r) { return r.bad; });
     cmpChips();
     if (status) status.textContent = bad.length ? T("Couldn't load {name}. Remove it and try again.", { name: bad.map(cmpLabel).join(", ") }) : "";
-    cmpDestroyViews(); CMP.made = null;
+    cmpDestroyViews();
     var title = T("Side by side · Know Your City"); document.title = title;
     $("#loading").classList.add("gone");
     if (ready.length < 2) {
@@ -5279,12 +5363,13 @@ var EVENT_SOURCES = [
     }
     var full = ready.length <= 3, model = cmpModel(ready);
     out.innerHTML = '<div class="cxyel"><div class="cxwrap">' + cmpHeads(ready, full) + '<p class="cxhow">' + esc(T("Biggest differences come first. Rows near the bottom are nearly the same.")) + '</p></div></div>' + cmpFull(model, ready, !full) +
-      '<div class="cxyel"><div class="cxwrap"><p class="cxsrc">' + esc(T("Source: U.S. Census Bureau, American Community Survey 5-year estimates (2020–2024), and the National Transit Map.")) + ' ' + esc(T("The numbers are survey estimates, so small gaps can be noise.")) + (full ? "" : ' ' + esc(T("State figures appear when you compare three places or fewer."))) + '</p></div></div>';
+      '<div class="cxyel"><div class="cxwrap"><p class="cxsrc">' + esc(T("Source: U.S. Census Bureau, American Community Survey 5-year estimates (2020–2024), and the National Transit Map.")) + ' ' + esc(T("Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.")) + ' ' + esc(T("The numbers are survey estimates, so small gaps can be noise.")) + (full ? "" : ' ' + esc(T("State figures appear when you compare three places or fewer."))) + '</p></div></div>';
     out.removeAttribute("aria-busy");
     cmpGrow(out);
     var sc = document.getElementById("cxScale");
-    if (sc) sc.onclick = function () { CMP.same = !CMP.same; sc.setAttribute("aria-pressed", CMP.same ? "true" : "false"); sc.textContent = CMP.same ? T("Same scale") : T("Fit each place"); cmpFit(); };
-    if (full) cmpMaps(ready, token);
+    if (sc) sc.onclick = function () { CMP.same = !CMP.same; sc.setAttribute("aria-pressed", CMP.same ? "true" : "false"); sc.textContent = CMP.same ? T("Same scale") : T("Fit each place"); CMP.sets.forEach(function (m) { cmpFit(m); }); };
+    if (full) { cmpBuildSet("head", ready, token); cmpLazySet("transit", ready, token); }
+    cmpParksFlow(ready, token, full);
   }
   // Picker: suggestions come from the same Census place search the top bar uses.
   function cmpPicker(host) {
