@@ -540,6 +540,9 @@ button{font:inherit;color:inherit}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
 .foot{max-width:1000px;margin:6vh auto 0;font-size:15px}
 .foot p{margin:0 0 .8em;max-width:75ch}
+.datanotes{margin:0 0 1.4em}
+.datanotes h3{font:800 22px var(--f-display);margin:0 0 .5em}
+.datanotes ul{margin:0;padding-left:20px;display:grid;gap:8px;max-width:75ch}
 .err{max-width:760px;margin:20vh auto;background:#fff;border:4px solid var(--ink);border-radius:22px;padding:26px}
 .err h2{font:800 32px var(--f-display);margin:0 0 8px}
 
@@ -2373,6 +2376,39 @@ var EVENT_SOURCES = [
   /* ---------- Compare places: wording in the other languages ---------- */
   var CMP_STR = {
     es: {
+      "Pick up to five places and I'll show you around!": "¡Elige hasta cinco lugares y te los enseño!",
+      "{a} and {b}, side by side. Let's take a look!": "{a} y {b}, lado a lado. ¡Vamos a ver!",
+      "{n} places at once. Busy and fun!": "{n} lugares a la vez. ¡Movido y divertido!",
+      "Tall tower, short tower. Different, not better!": "Torre alta, torre baja. ¡Distintas, no mejores!",
+      "Every place has its own personality.": "Cada lugar tiene su propia personalidad.",
+      "Homes come in all shapes and sizes.": "Las casas vienen en todas las formas y tamaños.",
+      "Housing, told in towers. A taller tower is just a bigger number.": "La vivienda, contada en torres. Una torre más alta es solo un número mayor.",
+      "Knock, knock! Who's home? Let's find out.": "¡Toc, toc! ¿Quién está en casa? Vamos a ver.",
+      "Dollars and cents, no judging. Just numbers!": "Dólares y centavos, sin juzgar. ¡Solo números!",
+      "These are typical amounts, not a scoreboard.": "Son cantidades típicas, no un marcador.",
+      "Money talk! Every number comes from the same survey.": "¡Hablemos de dinero! Todas las cifras vienen de la misma encuesta.",
+      "School days! Here's how many finished each step.": "¡Días de escuela! Aquí ves cuántas personas terminaron cada etapa.",
+      "Every diploma tower tells a different story.": "Cada torre de diplomas cuenta una historia distinta.",
+      "Class is in session. Check out the degrees!": "La clase ha empezado. ¡Mira los títulos!",
+      "Campus life! Some towns grow when the students arrive.": "¡Vida de campus! Algunos pueblos crecen cuando llegan los estudiantes.",
+      "Students count too. They can add lots of people to a town.": "Los estudiantes también cuentan. Pueden sumar muchísima gente a un pueblo.",
+      "Trees, grass and swings. Let's go outside!": "Árboles, pasto y columpios. ¡Salgamos!",
+      "Shade is a feature! Look at all that leafy green.": "¡La sombra es una ventaja! Mira todo ese verde.",
+      "Fresh air ahead. Parks and trees coming up.": "Aire fresco adelante. Vienen parques y árboles.",
+      "Beep beep! Here's how people get around.": "¡Pip, pip! Así se mueve la gente.",
+      "Walk, bike, bus or car. Every town moves its own way.": "A pie, en bici, en bus o en auto. Cada lugar se mueve a su manera.",
+      "Little dots, big picture. Those are transit stops.": "Puntitos, gran panorama. Son paradas de transporte.",
+      "About the same here. Twins!": "Casi igual aquí. ¡Gemelos!",
+      "Not every number has to be different.": "No todas las cifras tienen que ser distintas.",
+      "Almost matching! Spot the little differences.": "¡Casi iguales! Busca las pequeñas diferencias.",
+      "Psst, over here! ": "Psst, ¡por aquí! ",
+      "Fun one: ": "Una divertida: ",
+      "Peek at this: ": "Mira esto: ",
+      "Hey, hey! ": "¡Oye, oye! ",
+      "Don't miss this: ": "No te pierdas esto: ",
+      "Zooming around {P}!": "¡Dando vueltas por {P}!",
+      "A sneak peek of {P}.": "Un vistazo a {P}.",
+      "Say cheese, {P}!": "¡Sonríe, {P}!",
       "Compare places": "Comparar lugares", "{n} mi": "{n} mi", "{n} ft": "{n} pies", "Same scale: every map shows the same amount of ground, so a bigger city looks bigger.": "Misma escala: todos los mapas muestran la misma cantidad de terreno, así que una ciudad más grande se ve más grande.", "Fit each place: every city fills its own map, so use the scale bar to compare sizes.": "Ajustar cada lugar: cada ciudad llena su propio mapa, así que usa la barra de escala para comparar tamaños.", "Search": "Buscar", "Compare": "Comparar", "Side by side.": "Lado a lado.",
       "Compare homes, money, getting around and learning in up to five places.": "Compara viviendas, dinero, cómo moverse y estudios en hasta cinco lugares.",
       "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Todas las cifras vienen de la misma encuesta de la Oficina del Censo, así que los lugares se comparan con justicia.",
@@ -2404,6 +2440,39 @@ var EVENT_SOURCES = [
       "Places in this comparison": "Lugares en esta comparación", "Search isn't working right now.": "La búsqueda no funciona en este momento.", "Parks and trees": "Parques y árboles", "Parks": "Parques", "Acres of parks": "Acres de parques", "Park land as a share of the city": "Parques como parte del territorio de la ciudad", "Park acres for every 1,000 people": "Acres de parque por cada 1,000 personas", "Tree cover inside parks": "Cobertura de árboles en los parques", "Tree cover across the whole city": "Cobertura de árboles en toda la ciudad", "Map of parks": "Mapa de parques", "Map of transit stops": "Mapa de paradas de transporte público", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Los parques y la cobertura de árboles vienen de ParkServe, de The Trust for Public Land, y del Servicio Forestal de EE. UU.", "Loading parks and trees…": "Cargando parques y árboles…", "Adults by highest degree": "Adultos según su título más alto", "Associate's degree": "Título de grado asociado", "Bachelor's degree": "Licenciatura", "Graduate or professional degree": "Posgrado o título profesional", "Colleges and universities": "Colegios y universidades", "Students enrolled": "Estudiantes matriculados", "Students enrolled for every 100 residents": "Estudiantes matriculados por cada 100 residentes", "{n} colleges and universities": "{n} colegios y universidades", "1 college or university": "1 colegio o universidad", "None listed": "Ninguno en la lista", "About {n} students": "Unos {n} estudiantes", "{n} students": "{n} estudiantes", "No count listed": "Sin cifra publicada", "Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.": "Las cifras de estudiantes vienen de Wikidata, que mantienen voluntarios. Pueden incluir otros campus o estar desactualizadas. Los residentes se cuentan donde viven, así que los estudiantes que viven en la ciudad ya forman parte de la población residente.", "Loading colleges and universities…": "Cargando colegios y universidades…", "Notes about the data": "Notas sobre los datos", "* A star means the gap between the highest and lowest place is bigger than the survey's margin of error. Census numbers for cities come from a sample of households, so each one is an estimate that could be a little high or low. The margin of error is how far off it could be. A star means the difference is bigger than that, so it is probably real. With no star, the places are close enough that the survey can't say for sure which is higher.": "* Una estrella significa que la diferencia entre el lugar más alto y el más bajo es mayor que el margen de error de la encuesta. Las cifras del Censo para las ciudades vienen de una muestra de hogares, así que cada una es una estimación que podría ser un poco alta o baja. El margen de error indica cuánto podría desviarse. Una estrella significa que la diferencia es mayor que eso, así que probablemente es real. Sin estrella, los lugares están tan cerca que la encuesta no puede decir con seguridad cuál es mayor."
     },
     fr: {
+      "Pick up to five places and I'll show you around!": "Choisis jusqu'à cinq lieux et je te fais visiter !",
+      "{a} and {b}, side by side. Let's take a look!": "{a} et {b}, côte à côte. Regardons ça !",
+      "{n} places at once. Busy and fun!": "{n} lieux d'un coup. Animé et amusant !",
+      "Tall tower, short tower. Different, not better!": "Tour haute, tour basse. Différentes, pas meilleures !",
+      "Every place has its own personality.": "Chaque lieu a sa propre personnalité.",
+      "Homes come in all shapes and sizes.": "Les maisons existent en toutes formes et tailles.",
+      "Housing, told in towers. A taller tower is just a bigger number.": "Le logement, en tours. Une tour plus haute n'est qu'un plus grand nombre.",
+      "Knock, knock! Who's home? Let's find out.": "Toc, toc ! Qui est à la maison ? Voyons ça.",
+      "Dollars and cents, no judging. Just numbers!": "Des dollars et des cents, sans juger. Juste des chiffres !",
+      "These are typical amounts, not a scoreboard.": "Ce sont des montants habituels, pas un tableau de scores.",
+      "Money talk! Every number comes from the same survey.": "Parlons argent ! Tous les chiffres viennent de la même enquête.",
+      "School days! Here's how many finished each step.": "Jours d'école ! Voici combien ont fini chaque étape.",
+      "Every diploma tower tells a different story.": "Chaque tour de diplômes raconte une histoire différente.",
+      "Class is in session. Check out the degrees!": "Le cours commence. Regarde les diplômes !",
+      "Campus life! Some towns grow when the students arrive.": "La vie de campus ! Certaines villes grandissent à l'arrivée des étudiants.",
+      "Students count too. They can add lots of people to a town.": "Les étudiants comptent aussi. Ils peuvent ajouter beaucoup de monde à une ville.",
+      "Trees, grass and swings. Let's go outside!": "Des arbres, de l'herbe et des balançoires. Allons dehors !",
+      "Shade is a feature! Look at all that leafy green.": "L'ombre, c'est un plus ! Regarde tout ce vert.",
+      "Fresh air ahead. Parks and trees coming up.": "De l'air frais devant. Parcs et arbres en vue.",
+      "Beep beep! Here's how people get around.": "Bip bip ! Voici comment les gens se déplacent.",
+      "Walk, bike, bus or car. Every town moves its own way.": "À pied, à vélo, en bus ou en voiture. Chaque ville bouge à sa façon.",
+      "Little dots, big picture. Those are transit stops.": "Petits points, grand tableau. Ce sont des arrêts de transport.",
+      "About the same here. Twins!": "À peu près pareil ici. Des jumeaux !",
+      "Not every number has to be different.": "Tous les chiffres n'ont pas à être différents.",
+      "Almost matching! Spot the little differences.": "Presque pareils ! Trouve les petites différences.",
+      "Psst, over here! ": "Psst, par ici ! ",
+      "Fun one: ": "Une chouette : ",
+      "Peek at this: ": "Jette un œil : ",
+      "Hey, hey! ": "Hé, hé ! ",
+      "Don't miss this: ": "À ne pas manquer : ",
+      "Zooming around {P}!": "On fait un tour dans {P} !",
+      "A sneak peek of {P}.": "Un petit aperçu de {P}.",
+      "Say cheese, {P}!": "Souris, {P} !",
       "Compare places": "Comparer des lieux", "{n} mi": "{n} mi", "{n} ft": "{n} pi", "Same scale: every map shows the same amount of ground, so a bigger city looks bigger.": "Même échelle : toutes les cartes montrent la même étendue de terrain, donc une grande ville paraît plus grande.", "Fit each place: every city fills its own map, so use the scale bar to compare sizes.": "Ajuster chaque lieu : chaque ville remplit sa propre carte, donc servez-vous de l'échelle pour comparer les tailles.", "Search": "Chercher", "Compare": "Comparer", "Side by side.": "Côte à côte.",
       "Compare homes, money, getting around and learning in up to five places.": "Comparez logement, argent, déplacements et études dans cinq lieux au maximum.",
       "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Tous les chiffres viennent de la même enquête du Bureau du recensement, donc les lieux se comparent équitablement.",
@@ -2435,6 +2504,39 @@ var EVENT_SOURCES = [
       "Places in this comparison": "Lieux de cette comparaison", "Search isn't working right now.": "La recherche ne fonctionne pas pour le moment.", "Parks and trees": "Parcs et arbres", "Parks": "Parcs", "Acres of parks": "Acres de parcs", "Park land as a share of the city": "Part du territoire de la ville occupée par les parcs", "Park acres for every 1,000 people": "Acres de parc pour 1,000 habitants", "Tree cover inside parks": "Couverture arborée dans les parcs", "Tree cover across the whole city": "Couverture arborée dans toute la ville", "Map of parks": "Carte des parcs", "Map of transit stops": "Carte des arrêts de transport en commun", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Les parcs et la couverture arborée viennent de ParkServe, de The Trust for Public Land, et du Service forestier des États-Unis.", "Loading parks and trees…": "Chargement des parcs et des arbres…", "Adults by highest degree": "Adultes selon leur diplôme le plus élevé", "Associate's degree": "Diplôme de premier cycle court (associate)", "Bachelor's degree": "Licence (bachelor)", "Graduate or professional degree": "Diplôme d'études supérieures ou professionnel", "Colleges and universities": "Collèges et universités", "Students enrolled": "Étudiants inscrits", "Students enrolled for every 100 residents": "Étudiants inscrits pour 100 habitants", "{n} colleges and universities": "{n} collèges et universités", "1 college or university": "1 collège ou université", "None listed": "Aucun répertorié", "About {n} students": "Environ {n} étudiants", "{n} students": "{n} étudiants", "No count listed": "Aucun effectif publié", "Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.": "Les chiffres d'étudiants viennent de Wikidata, que des bénévoles tiennent à jour. Ils peuvent inclure d'autres campus ou être périmés. Les habitants sont comptés là où ils vivent : les étudiants qui vivent en ville font donc déjà partie de la population résidente.", "Loading colleges and universities…": "Chargement des collèges et universités…", "Notes about the data": "Notes sur les données", "* A star means the gap between the highest and lowest place is bigger than the survey's margin of error. Census numbers for cities come from a sample of households, so each one is an estimate that could be a little high or low. The margin of error is how far off it could be. A star means the difference is bigger than that, so it is probably real. With no star, the places are close enough that the survey can't say for sure which is higher.": "* Une étoile signifie que l'écart entre le lieu le plus élevé et le plus bas dépasse la marge d'erreur de l'enquête. Les chiffres du recensement pour les villes viennent d'un échantillon de ménages : chacun est une estimation, un peu trop haute ou trop basse. La marge d'erreur indique de combien elle peut se tromper. Une étoile signifie que l'écart est plus grand que cela, donc probablement réel. Sans étoile, les lieux sont si proches que l'enquête ne peut pas dire avec certitude lequel est plus élevé."
     },
     vi: {
+      "Pick up to five places and I'll show you around!": "Chọn tối đa năm nơi, mình sẽ dẫn bạn đi xem nhé!",
+      "{a} and {b}, side by side. Let's take a look!": "{a} và {b}, đặt cạnh nhau. Cùng xem nào!",
+      "{n} places at once. Busy and fun!": "{n} nơi cùng lúc. Rộn ràng và vui ghê!",
+      "Tall tower, short tower. Different, not better!": "Tháp cao, tháp thấp. Khác nhau, không hơn kém!",
+      "Every place has its own personality.": "Mỗi nơi có một cá tính riêng.",
+      "Homes come in all shapes and sizes.": "Nhà có đủ hình dáng và kích cỡ.",
+      "Housing, told in towers. A taller tower is just a bigger number.": "Nhà ở, kể bằng những tòa tháp. Tháp cao hơn chỉ là số lớn hơn.",
+      "Knock, knock! Who's home? Let's find out.": "Cốc, cốc! Ai ở nhà không? Cùng xem nào.",
+      "Dollars and cents, no judging. Just numbers!": "Đô la và xu, không phán xét. Chỉ là con số!",
+      "These are typical amounts, not a scoreboard.": "Đây là mức thường gặp, không phải bảng điểm.",
+      "Money talk! Every number comes from the same survey.": "Chuyện tiền bạc! Mọi con số đều từ cùng một cuộc khảo sát.",
+      "School days! Here's how many finished each step.": "Ngày đi học! Đây là số người hoàn thành từng bậc.",
+      "Every diploma tower tells a different story.": "Mỗi tháp bằng cấp kể một câu chuyện khác nhau.",
+      "Class is in session. Check out the degrees!": "Vào học rồi. Xem các bằng cấp nào!",
+      "Campus life! Some towns grow when the students arrive.": "Đời sống đại học! Có nơi đông hẳn lên khi sinh viên đến.",
+      "Students count too. They can add lots of people to a town.": "Sinh viên cũng được tính. Họ có thể làm đông thêm cả một thị trấn.",
+      "Trees, grass and swings. Let's go outside!": "Cây, cỏ và xích đu. Ra ngoài chơi nào!",
+      "Shade is a feature! Look at all that leafy green.": "Bóng mát là một điểm cộng! Xem màu xanh lá kìa.",
+      "Fresh air ahead. Parks and trees coming up.": "Không khí trong lành phía trước. Công viên và cây xanh đây.",
+      "Beep beep! Here's how people get around.": "Bíp bíp! Đây là cách mọi người đi lại.",
+      "Walk, bike, bus or car. Every town moves its own way.": "Đi bộ, xe đạp, xe buýt hay ô tô. Mỗi nơi đi lại một kiểu.",
+      "Little dots, big picture. Those are transit stops.": "Chấm nhỏ, bức tranh lớn. Đó là các trạm giao thông công cộng.",
+      "About the same here. Twins!": "Gần như giống nhau ở đây. Song sinh!",
+      "Not every number has to be different.": "Không phải con số nào cũng khác nhau.",
+      "Almost matching! Spot the little differences.": "Gần như giống hệt! Tìm điểm khác nhỏ nhé.",
+      "Psst, over here! ": "Này, bên này nè! ",
+      "Fun one: ": "Cái vui nè: ",
+      "Peek at this: ": "Ngó cái này: ",
+      "Hey, hey! ": "Này này! ",
+      "Don't miss this: ": "Đừng bỏ lỡ nè: ",
+      "Zooming around {P}!": "Đi một vòng quanh {P} nào!",
+      "A sneak peek of {P}.": "Xem nhanh {P} nào.",
+      "Say cheese, {P}!": "Cười lên nào, {P}!",
       "Compare places": "So sánh các nơi", "{n} mi": "{n} dặm", "{n} ft": "{n} ft", "Same scale: every map shows the same amount of ground, so a bigger city looks bigger.": "Cùng tỉ lệ: mọi bản đồ hiển thị cùng một diện tích mặt đất, nên thành phố lớn hơn trông lớn hơn.", "Fit each place: every city fills its own map, so use the scale bar to compare sizes.": "Vừa khít từng nơi: mỗi thành phố lấp đầy bản đồ riêng, nên hãy dùng thanh tỉ lệ để so sánh kích thước.", "Search": "Tìm kiếm", "Compare": "So sánh", "Side by side.": "Cạnh nhau.",
       "Compare homes, money, getting around and learning in up to five places.": "So sánh nhà ở, tiền bạc, việc đi lại và học vấn ở tối đa năm nơi.",
       "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Mọi con số đều lấy từ cùng một cuộc khảo sát của Cục Điều tra Dân số, nên các nơi được so sánh công bằng.",
@@ -3357,7 +3459,8 @@ var EVENT_SOURCES = [
         '<p>' + esc(now.name === "Tonight" || !now.isDaytime ? "Tonight" : "Right now") + ' in ' + esc(P) + ': ' + esc(now.shortForecast.toLowerCase()) + ', wind ' + esc(now.windSpeed || "light") + '.</p></div>' +
         '<div class="wxdays">' + days.map(function (d) {
           return '<div class="wxday"><b>' + esc(d.label) + '</b><span class="wxico" aria-hidden="true">' + wxIcon(d.txt) + '</span><span class="wxt">' + (d.hi != null ? esc(d.hi) + '°' : '') + (d.lo != null ? ' <span>' + esc(d.lo) + '°</span>' : '') + '</span><small>' + esc(d.txt) + (rainTxt(d.rain) ? '<br>' + esc(rainTxt(d.rain)) : '') + '</small></div>';
-        }).join("") + '</div><p class="wxsrc">Forecast: <a href="' + esc(link) + '" target="_blank" rel="noopener">National Weather Service</a>. Big number is the high, small number is the low.</p>';
+        }).join("") + '</div><p class="wxsrc">Big number is the high, small number is the low.</p>';
+      addNote("weather", 'Forecast: <a href="' + esc(link) + '" target="_blank" rel="noopener">National Weather Service</a>.');
       S.SAY.weather = "It's " + now.temperature + " degrees and " + now.shortForecast.toLowerCase() + " in " + P + ". Here's the next few days.";
     } else {
       w.innerHTML = '<h2>What\'s the weather like?</h2><p class="evnote">The forecast didn\'t load just now. The National Weather Service has the latest for ' + esc(P) + '.</p><div class="evgrid"><a class="evcard" href="' + esc(link) + '" target="_blank" rel="noopener"><span class="evtag">Forecast</span><b>Forecast for ' + esc(P) + '</b><span class="evhow">National Weather Service web page</span></a></div>';
@@ -3450,7 +3553,8 @@ var EVENT_SOURCES = [
       (imgs ? '<div class="ntimgs">' + imgs + '</div>' : '') +
       (people.length ? '<h3>Born in ' + esc(P) + '</h3><ul class="ntpeople">' + people.map(function (x) { return '<li><a href="https://www.wikidata.org/wiki/' + esc(x.id) + '" target="_blank" rel="noopener"><b>' + esc(x.name) + '</b></a><span>' + esc(x.desc.charAt(0).toUpperCase() + x.desc.slice(1)) + '</span></li>'; }).join("") + '</ul>' : '') +
       (grew.length ? '<h3>Grew up in ' + esc(P) + '</h3><ul class="ntpeople">' + grew.map(function (x) { return '<li><a href="' + esc(x.url) + '" target="_blank" rel="noopener"><b>' + esc(x.name) + '</b></a><span>' + esc(x.desc) + '</span></li>'; }).join("") + '</ul>' : '') +
-      '<p class="wxsrc">From <a href="https://www.wikidata.org/wiki/' + esc(qid) + '" target="_blank" rel="noopener">Wikidata</a>, which volunteers keep up to date, so some facts may be missing.</p>';
+      '';
+    addNote("namecard", 'From <a href="https://www.wikidata.org/wiki/' + esc(qid) + '" target="_blank" rel="noopener">Wikidata</a>, which volunteers keep up to date, so some facts may be missing.');
     sc.appendChild(w);
     S.SAY.namecard = demo ? "People from " + P + " are called " + demo + (/s$/i.test(demo) ? "." : "s.") : nick.length ? P + " is nicknamed " + nick[0] + "." : "Here's a little about the name " + P + ".";
     var story = $("#story"), t = story.querySelector(".cards-title"), at = t && t.closest(".scene");
@@ -3729,7 +3833,8 @@ var EVENT_SOURCES = [
       var k = poiKind(a), ik = poiIconKey(a, k), ic = ICONS[ik] || ICONS.pin;
       return '<article class="poitile poicard"' + (a.OBJECTID != null ? ' data-oid="' + a.OBJECTID + '"' : '') + '><div class="pimg"><div class="pmedia" style="background:' + ic[1] + '"><span class="picon">' + poiIconHTML(ik) + '</span></div><span class="pkind">' + esc(k ? k.label : "Place") + '</span></div><div class="pbody"><span class="pname"><span>' + esc(poiName(a)) + '</span>' + wcIcon + '</span>' +
         (a.OBJECTID != null && S.webmap ? '<button type="button" class="pill poibtn" data-oid="' + a.OBJECTID + '" aria-label="Show ' + esc(poiName(a)) + ' on the map">Show on map</button>' : '') + '</div></article>'; }).join("") + '</div>'; }
-    w.innerHTML = '<h2>Places to see.</h2><p class="evnote">Landmarks, museums and historic sites in ' + esc(P) + ', plus emergency services. The list comes from OpenStreetMap volunteers, so it may be incomplete. Each place shows its hours, parking and wheelchair access when that is known.</p>' +
+    addNote("pois", "The list comes from OpenStreetMap volunteers, so it may be incomplete.");
+    w.innerHTML = '<h2>Places to see.</h2><p class="evnote">Landmarks, museums and historic sites in ' + esc(P) + ', plus emergency services. Each place shows its hours, parking and wheelchair access when that is known.</p>' +
       (S.webmap ? '<div class="poimapwrap"><div id="poiMap" class="poimap" role="region" aria-label="Map of the places listed below"></div><p id="poiStatus" class="evnote" role="status" aria-live="polite">Select &ldquo;Show on the map&rdquo; on any place below to find it here.</p></div>' : '') +
       (see.length ? '<h3>Landmarks and history</h3>' + cards(see) : '') + (safe.length ? '<h3>Emergency and safety</h3>' + cards(safe) : '');
     sc.appendChild(w);
@@ -3953,7 +4058,8 @@ var EVENT_SOURCES = [
     var sum = !bits.length ? "" : XL ? (function () { var b = bits.map(tr); return T("Inside {P} there are {x}.", { P: esc(P), x: b.length > 1 ? b.slice(0, -1).join(", ") + " " + T("and") + " " + b[b.length - 1] : b[0] }); })() : "Inside " + esc(P) + " there " + (bits.length === 1 && /^1 /.test(bits[0]) ? "is " : "are ") + bits.join(", ").replace(/, ([^,]*)$/, bits.length > 2 ? ", and $1" : " and $1") + ".";
     var more = leaids.length > shown.length ? " Plus " + plural(leaids.length - shown.length, "other district") + " with a school here." : "";
     var sc = scene("leaf", "Schools in " + P), w = el("div", "evwrap schwrap"); w.setAttribute("data-hid", "schools");
-    w.innerHTML = '<h2>Schools and colleges.</h2><p class="evnote">' + sum + (dists.length ? ' School districts don\'t follow city limits, so the districts below are the ones that run a school in ' + esc(P) + '. A district may serve other places too.' : '') + more + ' Data is from the National Center for Education Statistics.</p>' +
+    addNote("schools", "Data is from the National Center for Education Statistics.");
+    w.innerHTML = '<h2>Schools and colleges.</h2><p class="evnote">' + sum + (dists.length ? ' School districts don\'t follow city limits, so the districts below are the ones that run a school in ' + esc(P) + '. A district may serve other places too.' : '') + more + '</p>' +
       (dists.length ? '<div class="dgrid">' + dists.map(distCard).join("") + '</div>' : '') +
       ('<div class="poimapwrap"><div id="schoolMap" class="poimap" role="region" aria-label="Map of schools and colleges in ' + esc(P) + '"></div>' +
         '<ul class="skey"><li><i class="k-pub"></i>Public school</li><li><i class="k-priv"></i>Private school</li><li><i class="k-col"></i>College or university</li><li><i class="k-dist"></i>School district</li><li><i class="k-city"></i>' + esc(P) + ' boundary</li></ul>' +
@@ -4090,7 +4196,8 @@ var EVENT_SOURCES = [
       var bars = TCC.years.map(function (y, i) { var v = vals[i]; return v == null ? "" : '<div class="tccbar"><span class="tccv">' + pct(v) + '%</span><i style="height:' + Math.max(3, v / mx * 100) + '%"></i><b>' + y + '</b></div>'; }).join("");
       var label = "Tree cover in " + P + " by year: " + TCC.years.map(function (y, i) { return vals[i] == null ? "" : y + ", " + pct(vals[i]) + " percent"; }).filter(Boolean).join("; ") + ".";
       box.innerHTML = '<h3>Tree cover across the whole city</h3><p class="evnote">' + s + trend + '</p><div class="tccchart" role="img" aria-label="' + esc(label) + '">' + bars + '</div>' +
-        '<p class="evnote tccnote">Each bar is the average of every 30-meter square inside the city limits, so streets, roofs and open ground count as no trees. The numbers come from the U.S. Forest Service and are modeled from satellite pictures, so small differences from year to year are best treated as estimates.</p>';
+        '';
+      addNote("trees", "Tree cover across the whole city: each bar is the average of every 30-meter square inside the city limits, so streets, roofs and open ground count as no trees. The numbers come from the U.S. Forest Service and are modeled from satellite pictures, so small differences from year to year are best treated as estimates.");
       box.hidden = false;
       S.SAY.parks = "About " + pct(now) + "% of " + P + " is covered by tree canopy.";
     } catch (e) { console.info("Whole-city tree cover unavailable:", e && e.message); }
@@ -4128,7 +4235,8 @@ var EVENT_SOURCES = [
         '<div class="pbtns"><button type="button" class="pill poibtn pkbtn" data-oid="' + esc(oid) + '" aria-label="Show ' + esc(nm) + ' on the map">Show on map</button></div></div></article>';
     }
     var sc = scene("leaf", "Parks and trees in " + P), w = el("div", "evwrap pkwrap"); w.setAttribute("data-hid", "parks");
-    w.innerHTML = '<h2>Parks and trees.</h2><p class="evnote">' + sum + ' Source: The Trust for Public Land\'s ParkServe.</p>' +
+    addNote("parks", "Source: The Trust for Public Land's ParkServe.");
+    w.innerHTML = '<h2>Parks and trees.</h2><p class="evnote">' + sum + '</p>' +
       '<dl class="dnums pknums">' + nums.map(function (n) { return "<div><dd>" + esc(n[1]) + "</dd><dt>" + esc(n[0]) + (n[2] ? "<small>" + esc(n[2]) + "</small>" : "") + "</dt></div>"; }).join("") + '</dl>' +
       '<div class="pkcity" id="pkCity" hidden></div>' +
       '<div class="poimapwrap"><div id="parkMap" class="poimap" role="region" aria-label="Map of parks in ' + esc(P) + '"></div>' +
@@ -4248,7 +4356,8 @@ var EVENT_SOURCES = [
       (nums.length ? '<dl class="dnums trnums">' + nums.map(function (x) { return "<div><dd>" + esc(x[1]) + "</dd><dt>" + esc(x[0]) + (x[2] ? "<small>" + esc(x[2]) + "</small>" : "") + "</dt></div>"; }).join("") + '</dl>' : '') +
       (chips.length ? '<p class="evnote trkinds">Kinds of stops:</p><ul class="trmodes">' + chips.map(function (k) { return '<li><span>' + esc(k) + '</span><b>' + esc(fmtN(kinds[k])) + '</b></li>'; }).join("") + '</ul>' : '') +
       (n > 0 ? '<div class="poimapwrap trmapwrap"><div id="transitMap" class="poimap" role="region" aria-label="Map of public transit stops in ' + esc(P) + '"></div><p class="evnote">Each dot is a transit stop. The thick line is the edge of ' + esc(P) + '.</p></div>' : '') +
-      '<p class="evnote trsrc">Source: U.S. Department of Transportation, National Transit Map. Stops come from schedule data that transit agencies publish, so service that is not in that data is not counted. This counts stops, not how often vehicles come.</p>';
+      '';
+    addNote("transit", "Source: U.S. Department of Transportation, National Transit Map. Stops come from schedule data that transit agencies publish, so service that is not in that data is not counted. This counts stops, not how often vehicles come.");
     sc.appendChild(w);
     var tBox = w.querySelector("#transitMap");
     if (tBox) { if ("IntersectionObserver" in window) { var tio = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { tio.disconnect(); ensureTransitMap(tBox); } }, { rootMargin: "500px" }); tio.observe(tBox); } else ensureTransitMap(tBox); }
@@ -4294,7 +4403,8 @@ var EVENT_SOURCES = [
   async function loadWayback(myLoad) {
     var poly = await needMaps(); if (myLoad !== S.loadId || !poly || !modules.Map || !modules.WebTileLayer || !modules.MapView || !modules.Swipe) return;
     var P = S.name, sc = scene("tang", "Then and now in " + P), w = el("div", "evwrap wbwrap"); w.setAttribute("data-hid", "wayback");
-    w.innerHTML = '<h2>Then and now.</h2><p class="evnote">Drag the bar on the map to compare two aerial photos of ' + esc(P) + '. Pick any two dates. The photos come from Esri World Imagery Wayback. Each date is when that version was released, so the photos themselves can be a little older.</p>' +
+    addNote("wayback", "The photos come from Esri World Imagery Wayback. Each date is when that version was released, so the photos themselves can be a little older.");
+    w.innerHTML = '<h2>Then and now.</h2><p class="evnote">Drag the bar on the map to compare two aerial photos of ' + esc(P) + '. Pick any two dates.</p>' +
       '<div class="poimapwrap"><div class="wbfs" id="wbFs"><div class="wbpick"><label for="wbThen">Left side<select id="wbThen"></select></label><label for="wbNow">Right side<select id="wbNow"></select></label>' +
       '<form class="wbfind" id="wbFind" role="search" hidden><label for="wbQ">Find an address<span class="wbrow"><input id="wbQ" type="search" autocomplete="off" placeholder="Street, city, state"><button type="submit" class="wbgo">Search</button></span></label></form></div>' +
       '<div class="wbframe"><div id="wbMap" class="poimap" role="region" aria-label="Aerial photos of ' + esc(P) + ' from two dates, with a bar you can drag to compare them"></div><span class="wbcap l" id="wbCapL"></span><span class="wbcap r" id="wbCapR"></span></div></div>' +
@@ -4684,11 +4794,12 @@ var EVENT_SOURCES = [
     e.innerHTML = '<h2>Pick another place.</h2><input class="big" id="q2" type="search" placeholder="Type a town or city" autocomplete="off" aria-label="Search for another place"><div class="chips" id="chips"></div>';
     end.appendChild(e);
     var foot = el("div", "foot");
-    foot.innerHTML = '<p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
+    foot.innerHTML = '<div class="datanotes" id="dataNotesBox" hidden><h3>Notes about the data</h3><ul id="dataNotes"></ul></div><p><b>Facts only.</b> Know Your City describes places and compares them with the U.S. average' + (S.showState && S.st ? ' and with ' + esc(S.stateName) : '') + '. It doesn\'t rank places, judge what\'s good or bad, or use political data.</p>' +
       '<p>Inside each section, the facts run from most different from the U.S. average to closest to it, and the sections are ordered the same way.</p>' +
       '<p>Numbers: U.S. Census Bureau, American Community Survey 5-year estimates (2020-2024), Data Profiles DP02-DP05 and Subject Table S2501. A gap only counts as real when it is larger than the survey\'s margin of error (95% level). Boundaries: Census TIGERweb. Photos: Wikimedia Commons contributors, credited on each card. Stories: <a href="' + esc(S.wikiUrl || "https://en.wikipedia.org") + '" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA). Weather: <a href="https://www.weather.gov" target="_blank" rel="noopener">National Weather Service</a>. Map: <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>. Aerial photos over time: <a href="https://livingatlas.arcgis.com/wayback/" target="_blank" rel="noopener">Esri World Imagery Wayback</a>. Parks: <a href="https://www.tpl.org/park-data-downloads" target="_blank" rel="noopener">ParkServe, The Trust for Public Land</a>. Tree cover: <a href="https://imagery.geoplatform.gov/iipp/rest/services/Vegetation/USFS_EDW_NLCD_TCC_CONUS/ImageServer" target="_blank" rel="noopener">U.S. Forest Service</a>. Places: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>.' + (S.keyIssue ? ' (This site is using the OpenStreetMap basemap because its ArcGIS key was not accepted for ' + esc(location.origin) + '.)' : '') + '</p>';
     end.appendChild(foot);
     story.appendChild(end);
+    renderNotes();
     var chips = $("#chips", end);
     NEXT_STOPS.concat(["Surprise me"]).forEach(function (n) {
       var b = el("button", "pill", esc(n)); b.type = "button";
@@ -4704,7 +4815,7 @@ var EVENT_SOURCES = [
 
     observeAll();
   }
-  var BREAK_QUIPS = ["Here's another look at {P}.", "Quick scenery break in {P}!", "More of what {P} looks like.", "Another view around {P}.", "Still in {P}. Look at that!", "One more photo from {P}."];
+  var BREAK_QUIPS = ["Here's another look at {P}.", "Quick scenery break in {P}!", "More of what {P} looks like.", "Another view around {P}.", "Still in {P}. Look at that!", "One more photo from {P}.", "Zooming around {P}!", "A sneak peek of {P}.", "Say cheese, {P}!"];
   var PHOTO_QUIPS = ["Here's what it looks like around here.", "A snapshot from a local.", "Take a look at this view.", "Somebody took this nearby.", "A little scenery for you."];
   var QUIPS = ["Here's a story from this place.", "Locals might know this one.", "A little local trivia.", "One more from around town.", "This one's from the history books.", "And one more for the road."];
 
@@ -4738,7 +4849,7 @@ var EVENT_SOURCES = [
     hbub.classList.remove("show"); void hbub.offsetWidth;
     hbub.textContent = text; hbub.classList.add("show");
   }
-  var PREFIX = ["Look at this! ", "Check it out: ", "Ooh, this one: ", "Here's something: ", "Take a look: "], pfx = 0;
+  var PREFIX = ["Look at this! ", "Check it out: ", "Ooh, this one: ", "Here's something: ", "Take a look: ", "Psst, over here! ", "Fun one: ", "Peek at this: ", "Hey, hey! ", "Don't miss this: "], pfx = 0;
   function setActive(t, again) {
     if (activeEl && activeEl !== t) activeEl.classList.remove("spot");
     activeEl = t; t.classList.add("spot");
@@ -5002,6 +5113,16 @@ var EVENT_SOURCES = [
     drawPlace(S.pendingPoly);
   }
 
+  // Sources and limits live in one place at the bottom of the page, not inside each section.
+  var NOTE_ORDER = ["weather", "namecard", "pois", "schools", "parks", "trees", "transit", "wayback"];
+  var NOTE_LABEL = { weather: "What's the weather like?", namecard: "What's in a name?", pois: "Places to see.", schools: "Schools and colleges.", parks: "Parks and trees.", trees: "Parks and trees.", transit: "Getting around.", wayback: "Then and now." };
+  function addNote(key, html) { S.notes = S.notes || {}; S.notes[key] = html; renderNotes(); }
+  function renderNotes() {
+    var ul = document.getElementById("dataNotes"), box = document.getElementById("dataNotesBox"); if (!ul) return;
+    ul.innerHTML = "";
+    NOTE_ORDER.forEach(function (k) { if (S.notes && S.notes[k]) ul.appendChild(el("li", null, "<b>" + esc(NOTE_LABEL[k]) + "</b> " + S.notes[k])); });
+    if (box) box.hidden = !ul.children.length;
+  }
   async function loadPlace(feature) {
     var myLoad = ++S.loadId, a = feature.attributes;
     if (S.poiView) { try { S.poiView.destroy(); } catch (e) {} }
@@ -5010,7 +5131,7 @@ var EVENT_SOURCES = [
     if (S.schoolView) { try { S.schoolView.destroy(); } catch (e) {} }
     S.schoolView = null; S.schoolMapP = null; S.schoolWM = null; S.sch = null; S.schoolHl = null;
     S.poiView = null; S.poiMapP = null; S.poiLayer = null; S.poiPhotos = {}; S.poiOids = null; S.poiAllOids = null; S.poiTruncated = false; S.poiItems = [];
-    S.qid = null; S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.photos = []; S.img = null; S.wikiUrl = null;
+    S.notes = {}; S.qid = null; S.geoid = a.GEOID; S.st = null; S.fips = a.STATE; S.own = null; S.facts = []; S.photos = []; S.img = null; S.wikiUrl = null;
     S.jump = S.placeLoaded ? null : (JUMP || null); S.placeLoaded = true; jumpMoved = false; clearTimeout(jumpTimer);
     if (S.jump) jumpTimer = setTimeout(function () { S.jump = null; }, 25000);
     document.documentElement.classList.remove("wbfsLock");
@@ -5502,7 +5623,7 @@ var EVENT_SOURCES = [
       out.removeAttribute("aria-busy"); return;
     }
     var full = ready.length <= 3, model = cmpModel(ready);
-    out.innerHTML = '<div class="cxyel"><div class="cxwrap">' + cmpHeads(ready, full) + '<p class="cxhow">' + esc(T("Biggest differences come first. Rows near the bottom are nearly the same.")) + '</p></div></div>' + cmpFull(model, ready, !full) +
+    out.innerHTML = '<div class="cxyel"><div class="cxwrap">' + cmpHeads(ready, full) + '</div></div>' + cmpFull(model, ready, !full) +
       '<div class="cxyel"><div class="cxwrap cxnotes"><h2>' + esc(T("Notes about the data")) + '</h2><ul id="cxNotes"><li>' + esc(T("* A star means the gap between the highest and lowest place is bigger than the survey's margin of error. Census numbers for cities come from a sample of households, so each one is an estimate that could be a little high or low. The margin of error is how far off it could be. A star means the difference is bigger than that, so it is probably real. With no star, the places are close enough that the survey can't say for sure which is higher.")) + '</li><li>' + esc(T("Source: U.S. Census Bureau, American Community Survey 5-year estimates (2020–2024), and the National Transit Map.")) + '</li><li>' + esc(T("The numbers are survey estimates, so small gaps can be noise.")) + '</li>' + (full ? "" : '<li>' + esc(T("State figures appear when you compare three places or fewer.")) + '</li>') + '</ul></div></div>';    out.removeAttribute("aria-busy");
     cmpGrow(out);
     var sc = document.getElementById("cxScale");
@@ -5561,6 +5682,45 @@ var EVENT_SOURCES = [
     }
     plus.addEventListener("click", addFromText);
   }
+
+  /* ---------- Homie on the Compare page ---------- */
+  var CMP_SAY = {
+    basics: ["{a} and {b}, side by side. Let's take a look!", "Tall tower, short tower. Different, not better!", "Every place has its own personality.", "{n} places at once. Busy and fun!"],
+    homes: ["Homes come in all shapes and sizes.", "Housing, told in towers. A taller tower is just a bigger number.", "Knock, knock! Who's home? Let's find out."],
+    money: ["Dollars and cents, no judging. Just numbers!", "These are typical amounts, not a scoreboard.", "Money talk! Every number comes from the same survey."],
+    learn: ["School days! Here's how many finished each step.", "Every diploma tower tells a different story.", "Class is in session. Check out the degrees!"],
+    college: ["Campus life! Some towns grow when the students arrive.", "Students count too. They can add lots of people to a town."],
+    parks: ["Trees, grass and swings. Let's go outside!", "Shade is a feature! Look at all that leafy green.", "Fresh air ahead. Parks and trees coming up."],
+    move: ["Beep beep! Here's how people get around.", "Walk, bike, bus or car. Every town moves its own way.", "Little dots, big picture. Those are transit stops."],
+    same: ["About the same here. Twins!", "Not every number has to be different.", "Almost matching! Spot the little differences."]
+  };
+  var cmpHomieTimer = 0;
+  function cmpHomie() {
+    var out = document.getElementById("cxOut"), pick = document.getElementById("cxPick");
+    if (!out) return;
+    S.SAY = S.SAY || {};
+    var nm = CMP.list.map(function (g) { return CMP.names[g] ? CMP.names[g].name : ""; });
+    var vars = { a: nm[0] || "", b: nm[1] || "", n: CMP.list.length };
+    if (pick) { pick.setAttribute("data-hid", "hero"); S.SAY.hero = T("Pick up to five places and I'll show you around!"); }
+    $$("#cxOut section.cxscene").forEach(function (sc) {
+      var g = sc.getAttribute("data-g"), pool = (CMP_SAY[g] || []).filter(function (l) { return CMP.list.length > 1 || !/\{b\}|\{n\}/.test(l); });
+      if (!pool.length) return;
+      var rows = sc.querySelectorAll(".cxrow");
+      var targets = rows.length ? Array.prototype.slice.call(rows, 0, 3) : [sc.querySelector(".sign")];
+      targets.forEach(function (r, i) {
+        if (!r) return;
+        var hid = "factcx-" + g + "-" + i;
+        r.setAttribute("data-hid", hid);
+        S.SAY[hid] = T(pool[i % pool.length], vars);
+      });
+    });
+    TARGETS = $$("[data-hid]"); sched();
+  }
+  function cmpHomieWatch() {
+    var out = document.getElementById("cxOut"); if (!out || !window.MutationObserver) return;
+    new MutationObserver(function () { clearTimeout(cmpHomieTimer); cmpHomieTimer = setTimeout(cmpHomie, 300); }).observe(out, { childList: true, subtree: true });
+    cmpHomie();
+  }
   function cmpBoot() {
     document.body.classList.add("cxmode");
     var ids = (qs.get("compare") || "").split(",").map(function (s) { return s.replace(/\D/g, ""); }).filter(function (s, i, a) { return s && a.indexOf(s) === i; }).slice(0, CMP.max);
@@ -5571,7 +5731,7 @@ var EVENT_SOURCES = [
       '<div class="cxyel"><div class="cxwrap"><p class="cxfoot"><a id="cxBack" class="pill" href="./">' + esc(T("Back to {name}", { name: "…" })) + '</a> <button type="button" class="pill" id="cxCopy">' + esc(T("Copy link")) + '</button> <span id="cxCopied" class="cxsr" role="status"></span></p></div></div>';
     main.appendChild(sec);
     var lr = document.getElementById("langRow"), host = document.getElementById("cxLangHost"); if (lr && host) host.appendChild(lr);
-    cmpPicker(document.getElementById("cxPick")); cmpChips();
+    cmpPicker(document.getElementById("cxPick")); cmpChips(); cmpHomieWatch();
     var back = document.getElementById("cxBack");
     if (ids[0]) { back.href = cmpWith("?place=" + ids[0]); cmpLoad(ids[0]).then(function (d) { back.textContent = T("Back to {name}", { name: d.name }); }, function () {}); }
     document.getElementById("cxCopy").onclick = function () {
