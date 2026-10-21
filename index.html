@@ -633,7 +633,15 @@ i.sw{border-width:3px}
 .step .col .u2{position:absolute;left:0;right:0;height:0;border-top:4px dotted #fff;bottom:var(--u2)}
 .pill[disabled]{opacity:.6;cursor:progress}
 @media (max-width:820px){.pill{padding:7px 10px;font-size:14px}.top{gap:6px}}
-@media (max-width:560px){.cxbtn{font-size:12px;padding:6px 9px}.brand span{display:none}}
+@media (max-width:560px){
+  .top{gap:6px;padding:8px 10px}
+  .brand span{display:none}
+  .top .brand,.top .pill,.top .search input{box-sizing:border-box;height:44px;border-width:3px;display:flex;align-items:center;justify-content:center;font:700 14px var(--f-body);white-space:nowrap}
+  .top .brand{padding:0;width:44px;border-radius:999px;flex:none}
+  .top .pill{padding:0 11px;flex:none}
+  .top .search input{display:block;padding:0 14px;border-radius:999px}
+  .top .search{min-width:0;flex:1}
+}
 
 /* Homie */
 #homie{position:fixed;bottom:14px;left:14px;width:128px;z-index:70;transition:left .9s cubic-bezier(.5,0,.2,1);pointer-events:none}
@@ -2362,7 +2370,7 @@ var EVENT_SOURCES = [
   /* ---------- Compare places: wording in the other languages ---------- */
   var CMP_STR = {
     es: {
-      "Compare places": "Comparar lugares", "Compare": "Comparar", "Side by side.": "Lado a lado.",
+      "Compare places": "Comparar lugares", "Search": "Buscar", "Compare": "Comparar", "Side by side.": "Lado a lado.",
       "Compare homes, money, getting around and learning in up to five places.": "Compara viviendas, dinero, cómo moverse y estudios en hasta cinco lugares.",
       "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Todas las cifras vienen de la misma encuesta de la Oficina del Censo, así que los lugares se comparan con justicia.",
       "Add a place to compare": "Añade un lugar para comparar", "City, State": "Ciudad, Estado", "Add place": "Añadir lugar",
@@ -2393,7 +2401,7 @@ var EVENT_SOURCES = [
       "Places in this comparison": "Lugares en esta comparación", "Search isn't working right now.": "La búsqueda no funciona en este momento.", "Parks and trees": "Parques y árboles", "Parks": "Parques", "Acres of parks": "Acres de parques", "Park land as a share of the city": "Parques como parte del territorio de la ciudad", "Park acres for every 1,000 people": "Acres de parque por cada 1,000 personas", "Tree cover inside parks": "Cobertura de árboles en los parques", "Tree cover across the whole city": "Cobertura de árboles en toda la ciudad", "Map of parks": "Mapa de parques", "Map of transit stops": "Mapa de paradas de transporte público", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Los parques y la cobertura de árboles vienen de ParkServe, de The Trust for Public Land, y del Servicio Forestal de EE. UU.", "Loading parks and trees…": "Cargando parques y árboles…", "Adults by highest degree": "Adultos según su título más alto", "Associate's degree": "Título de grado asociado", "Bachelor's degree": "Licenciatura", "Graduate or professional degree": "Posgrado o título profesional", "Colleges and universities": "Colegios y universidades", "Students enrolled": "Estudiantes matriculados", "Students enrolled for every 100 residents": "Estudiantes matriculados por cada 100 residentes", "{n} colleges and universities": "{n} colegios y universidades", "1 college or university": "1 colegio o universidad", "None listed": "Ninguno en la lista", "About {n} students": "Unos {n} estudiantes", "{n} students": "{n} estudiantes", "No count listed": "Sin cifra publicada", "Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.": "Las cifras de estudiantes vienen de Wikidata, que mantienen voluntarios. Pueden incluir otros campus o estar desactualizadas. Los residentes se cuentan donde viven, así que los estudiantes que viven en la ciudad ya forman parte de la población residente.", "Loading colleges and universities…": "Cargando colegios y universidades…", "Notes about the data": "Notas sobre los datos", "* A star means the gap between the highest and lowest place is bigger than the survey's margin of error. Census numbers for cities come from a sample of households, so each one is an estimate that could be a little high or low. The margin of error is how far off it could be. A star means the difference is bigger than that, so it is probably real. With no star, the places are close enough that the survey can't say for sure which is higher.": "* Una estrella significa que la diferencia entre el lugar más alto y el más bajo es mayor que el margen de error de la encuesta. Las cifras del Censo para las ciudades vienen de una muestra de hogares, así que cada una es una estimación que podría ser un poco alta o baja. El margen de error indica cuánto podría desviarse. Una estrella significa que la diferencia es mayor que eso, así que probablemente es real. Sin estrella, los lugares están tan cerca que la encuesta no puede decir con seguridad cuál es mayor."
     },
     fr: {
-      "Compare places": "Comparer des lieux", "Compare": "Comparer", "Side by side.": "Côte à côte.",
+      "Compare places": "Comparer des lieux", "Search": "Chercher", "Compare": "Comparer", "Side by side.": "Côte à côte.",
       "Compare homes, money, getting around and learning in up to five places.": "Comparez logement, argent, déplacements et études dans cinq lieux au maximum.",
       "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Tous les chiffres viennent de la même enquête du Bureau du recensement, donc les lieux se comparent équitablement.",
       "Add a place to compare": "Ajoutez un lieu à comparer", "City, State": "Ville, État", "Add place": "Ajouter le lieu",
@@ -2424,7 +2432,7 @@ var EVENT_SOURCES = [
       "Places in this comparison": "Lieux de cette comparaison", "Search isn't working right now.": "La recherche ne fonctionne pas pour le moment.", "Parks and trees": "Parcs et arbres", "Parks": "Parcs", "Acres of parks": "Acres de parcs", "Park land as a share of the city": "Part du territoire de la ville occupée par les parcs", "Park acres for every 1,000 people": "Acres de parc pour 1,000 habitants", "Tree cover inside parks": "Couverture arborée dans les parcs", "Tree cover across the whole city": "Couverture arborée dans toute la ville", "Map of parks": "Carte des parcs", "Map of transit stops": "Carte des arrêts de transport en commun", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Les parcs et la couverture arborée viennent de ParkServe, de The Trust for Public Land, et du Service forestier des États-Unis.", "Loading parks and trees…": "Chargement des parcs et des arbres…", "Adults by highest degree": "Adultes selon leur diplôme le plus élevé", "Associate's degree": "Diplôme de premier cycle court (associate)", "Bachelor's degree": "Licence (bachelor)", "Graduate or professional degree": "Diplôme d'études supérieures ou professionnel", "Colleges and universities": "Collèges et universités", "Students enrolled": "Étudiants inscrits", "Students enrolled for every 100 residents": "Étudiants inscrits pour 100 habitants", "{n} colleges and universities": "{n} collèges et universités", "1 college or university": "1 collège ou université", "None listed": "Aucun répertorié", "About {n} students": "Environ {n} étudiants", "{n} students": "{n} étudiants", "No count listed": "Aucun effectif publié", "Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.": "Les chiffres d'étudiants viennent de Wikidata, que des bénévoles tiennent à jour. Ils peuvent inclure d'autres campus ou être périmés. Les habitants sont comptés là où ils vivent : les étudiants qui vivent en ville font donc déjà partie de la population résidente.", "Loading colleges and universities…": "Chargement des collèges et universités…", "Notes about the data": "Notes sur les données", "* A star means the gap between the highest and lowest place is bigger than the survey's margin of error. Census numbers for cities come from a sample of households, so each one is an estimate that could be a little high or low. The margin of error is how far off it could be. A star means the difference is bigger than that, so it is probably real. With no star, the places are close enough that the survey can't say for sure which is higher.": "* Une étoile signifie que l'écart entre le lieu le plus élevé et le plus bas dépasse la marge d'erreur de l'enquête. Les chiffres du recensement pour les villes viennent d'un échantillon de ménages : chacun est une estimation, un peu trop haute ou trop basse. La marge d'erreur indique de combien elle peut se tromper. Une étoile signifie que l'écart est plus grand que cela, donc probablement réel. Sans étoile, les lieux sont si proches que l'enquête ne peut pas dire avec certitude lequel est plus élevé."
     },
     vi: {
-      "Compare places": "So sánh các nơi", "Compare": "So sánh", "Side by side.": "Cạnh nhau.",
+      "Compare places": "So sánh các nơi", "Search": "Tìm kiếm", "Compare": "So sánh", "Side by side.": "Cạnh nhau.",
       "Compare homes, money, getting around and learning in up to five places.": "So sánh nhà ở, tiền bạc, việc đi lại và học vấn ở tối đa năm nơi.",
       "Every number comes from the same Census Bureau survey, so the places line up fairly.": "Mọi con số đều lấy từ cùng một cuộc khảo sát của Cục Điều tra Dân số, nên các nơi được so sánh công bằng.",
       "Add a place to compare": "Thêm một nơi để so sánh", "City, State": "Thành phố, Tiểu bang", "Add place": "Thêm nơi này",
@@ -5550,6 +5558,7 @@ var EVENT_SOURCES = [
     cmpRefresh();
   }
 
+  try { if (window.matchMedia && matchMedia("(max-width:560px)").matches) $("#q").placeholder = T("Search"); } catch (e) {}
   $("#cxGo").addEventListener("click", function () { if (S.geoid) location.href = cmpWith("?compare=" + S.geoid); });
 
   /* ---------- Boot ---------- */
