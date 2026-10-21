@@ -136,6 +136,25 @@ button{font:inherit;color:inherit}
 .cxmaps.cxn2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .cxmapname{display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:8px}
 .cxmapcol .cxmap{height:240px;margin-top:0}
+.cxleg{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-weight:700;font-size:15px}
+.cxleg li{display:flex;align-items:center;gap:7px}
+.cxleg i{display:inline-block;width:18px;height:18px;border-radius:5px}
+.cxtc .b.cxstk{background:none;background-image:none;display:flex;flex-direction:column-reverse;overflow:hidden}
+.cxstk i{display:flex;align-items:center;justify-content:center;flex:var(--f) 1 0;min-height:0;font:700 12px var(--f-body);font-style:normal;color:var(--ink);overflow:hidden}
+.cxstk i.s2{color:#fff}
+.cxcolls{display:grid;gap:clamp(12px,2vw,24px);grid-template-columns:repeat(3,minmax(0,1fr))}
+.cxcolls.cxn2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cxcolls.cxn4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cxcolls.cxn5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.cxcoll{border-top:6px solid var(--pc);padding-top:10px;min-width:0}
+.cxbig{display:flex;flex-direction:column;margin:4px 0 6px}
+.cxbignum{font:800 clamp(38px,5.4vw,72px)/.95 var(--f-display);letter-spacing:-.03em;color:var(--pc)}
+.cxbigl{font-weight:700;font-size:16px}
+.cxbigtxt{font:800 22px var(--f-display)}
+.cxcnt{margin:0 0 8px;font-weight:700}
+.cxinst{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:15px}
+.cxinst li{display:flex;flex-direction:column}
+.cxinst span{opacity:.8}
 .cxwait{font:700 22px var(--f-display);margin:0}
 .cxnote{margin:16px 0 0;font-size:17px;font-weight:600}
 .cxsamelist{list-style:none;margin:0;padding:0;background:#fff;border:4px solid var(--ink);border-radius:24px;box-shadow:7px 7px 0 var(--ink)}
@@ -153,6 +172,8 @@ button{font:inherit;color:inherit}
   .cxheads.cxn4,.cxheads.cxn5{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cxrows.cxcols{grid-template-columns:minmax(0,1fr)}
   .cxmaps,.cxmaps.cxn2{grid-template-columns:minmax(0,1fr)}
+  .cxcolls,.cxcolls.cxn2,.cxcolls.cxn3{grid-template-columns:minmax(0,1fr)}
+  .cxcolls.cxn4,.cxcolls.cxn5{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cxbs{height:270px}
   .cxnm .cxbadge{width:22px;height:22px;font-size:12px}
   .cxnm{font-size:11px}
@@ -2365,7 +2386,7 @@ var EVENT_SOURCES = [
       "State figures appear when you compare three places or fewer.": "Las cifras estatales aparecen cuando comparas tres lugares o menos.",
       "Back to {name}": "Volver a {name}", "Copy link": "Copiar enlace", "Link copied.": "Enlace copiado.", "Gathering the numbers…": "Reuniendo las cifras…", "No data": "Sin datos",
       "Side by side · Know Your City": "Lado a lado · Conoce tu ciudad", "Type a city and state first.": "Escribe primero una ciudad y un estado.",
-      "Places in this comparison": "Lugares en esta comparación", "Search isn't working right now.": "La búsqueda no funciona en este momento.", "Parks and trees": "Parques y árboles", "Parks": "Parques", "Acres of parks": "Acres de parques", "Park land as a share of the city": "Parques como parte del territorio de la ciudad", "Park acres for every 1,000 people": "Acres de parque por cada 1,000 personas", "Tree cover inside parks": "Cobertura de árboles en los parques", "Tree cover across the whole city": "Cobertura de árboles en toda la ciudad", "Map of parks": "Mapa de parques", "Map of transit stops": "Mapa de paradas de transporte público", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Los parques y la cobertura de árboles vienen de ParkServe, de The Trust for Public Land, y del Servicio Forestal de EE. UU.", "Loading parks and trees…": "Cargando parques y árboles…"
+      "Places in this comparison": "Lugares en esta comparación", "Search isn't working right now.": "La búsqueda no funciona en este momento.", "Parks and trees": "Parques y árboles", "Parks": "Parques", "Acres of parks": "Acres de parques", "Park land as a share of the city": "Parques como parte del territorio de la ciudad", "Park acres for every 1,000 people": "Acres de parque por cada 1,000 personas", "Tree cover inside parks": "Cobertura de árboles en los parques", "Tree cover across the whole city": "Cobertura de árboles en toda la ciudad", "Map of parks": "Mapa de parques", "Map of transit stops": "Mapa de paradas de transporte público", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Los parques y la cobertura de árboles vienen de ParkServe, de The Trust for Public Land, y del Servicio Forestal de EE. UU.", "Loading parks and trees…": "Cargando parques y árboles…", "Adults by highest degree": "Adultos según su título más alto", "Associate's degree": "Título de grado asociado", "Bachelor's degree": "Licenciatura", "Graduate or professional degree": "Posgrado o título profesional", "Colleges and universities": "Colegios y universidades", "Students enrolled": "Estudiantes matriculados", "Students enrolled for every 100 residents": "Estudiantes matriculados por cada 100 residentes", "{n} colleges and universities": "{n} colegios y universidades", "1 college or university": "1 colegio o universidad", "None listed": "Ninguno en la lista", "About {n} students": "Unos {n} estudiantes", "{n} students": "{n} estudiantes", "No count listed": "Sin cifra publicada", "Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.": "Las cifras de estudiantes vienen de Wikidata, que mantienen voluntarios. Pueden incluir otros campus o estar desactualizadas. Los residentes se cuentan donde viven, así que los estudiantes que viven en la ciudad ya forman parte de la población residente.", "Loading colleges and universities…": "Cargando colegios y universidades…"
     },
     fr: {
       "Compare places": "Comparer des lieux", "Side by side.": "Côte à côte.",
@@ -2396,7 +2417,7 @@ var EVENT_SOURCES = [
       "State figures appear when you compare three places or fewer.": "Les chiffres des États apparaissent quand vous comparez trois lieux ou moins.",
       "Back to {name}": "Retour à {name}", "Copy link": "Copier le lien", "Link copied.": "Lien copié.", "Gathering the numbers…": "Rassemblement des chiffres…", "No data": "Pas de données",
       "Side by side · Know Your City": "Côte à côte · Connaître sa ville", "Type a city and state first.": "Saisissez d'abord une ville et un État.",
-      "Places in this comparison": "Lieux de cette comparaison", "Search isn't working right now.": "La recherche ne fonctionne pas pour le moment.", "Parks and trees": "Parcs et arbres", "Parks": "Parcs", "Acres of parks": "Acres de parcs", "Park land as a share of the city": "Part du territoire de la ville occupée par les parcs", "Park acres for every 1,000 people": "Acres de parc pour 1,000 habitants", "Tree cover inside parks": "Couverture arborée dans les parcs", "Tree cover across the whole city": "Couverture arborée dans toute la ville", "Map of parks": "Carte des parcs", "Map of transit stops": "Carte des arrêts de transport en commun", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Les parcs et la couverture arborée viennent de ParkServe, de The Trust for Public Land, et du Service forestier des États-Unis.", "Loading parks and trees…": "Chargement des parcs et des arbres…"
+      "Places in this comparison": "Lieux de cette comparaison", "Search isn't working right now.": "La recherche ne fonctionne pas pour le moment.", "Parks and trees": "Parcs et arbres", "Parks": "Parcs", "Acres of parks": "Acres de parcs", "Park land as a share of the city": "Part du territoire de la ville occupée par les parcs", "Park acres for every 1,000 people": "Acres de parc pour 1,000 habitants", "Tree cover inside parks": "Couverture arborée dans les parcs", "Tree cover across the whole city": "Couverture arborée dans toute la ville", "Map of parks": "Carte des parcs", "Map of transit stops": "Carte des arrêts de transport en commun", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Les parcs et la couverture arborée viennent de ParkServe, de The Trust for Public Land, et du Service forestier des États-Unis.", "Loading parks and trees…": "Chargement des parcs et des arbres…", "Adults by highest degree": "Adultes selon leur diplôme le plus élevé", "Associate's degree": "Diplôme de premier cycle court (associate)", "Bachelor's degree": "Licence (bachelor)", "Graduate or professional degree": "Diplôme d'études supérieures ou professionnel", "Colleges and universities": "Collèges et universités", "Students enrolled": "Étudiants inscrits", "Students enrolled for every 100 residents": "Étudiants inscrits pour 100 habitants", "{n} colleges and universities": "{n} collèges et universités", "1 college or university": "1 collège ou université", "None listed": "Aucun répertorié", "About {n} students": "Environ {n} étudiants", "{n} students": "{n} étudiants", "No count listed": "Aucun effectif publié", "Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.": "Les chiffres d'étudiants viennent de Wikidata, que des bénévoles tiennent à jour. Ils peuvent inclure d'autres campus ou être périmés. Les habitants sont comptés là où ils vivent : les étudiants qui vivent en ville font donc déjà partie de la population résidente.", "Loading colleges and universities…": "Chargement des collèges et universités…"
     },
     vi: {
       "Compare places": "So sánh các nơi", "Side by side.": "Cạnh nhau.",
@@ -2427,7 +2448,7 @@ var EVENT_SOURCES = [
       "State figures appear when you compare three places or fewer.": "Số liệu cấp tiểu bang xuất hiện khi bạn so sánh tối đa ba nơi.",
       "Back to {name}": "Quay lại {name}", "Copy link": "Sao chép liên kết", "Link copied.": "Đã sao chép liên kết.", "Gathering the numbers…": "Đang gom số liệu…", "No data": "Không có dữ liệu",
       "Side by side · Know Your City": "Cạnh nhau · Hiểu thành phố của bạn", "Type a city and state first.": "Hãy nhập thành phố và tiểu bang trước.",
-      "Places in this comparison": "Các nơi trong phần so sánh này", "Search isn't working right now.": "Tính năng tìm kiếm hiện không hoạt động.", "Parks and trees": "Công viên và cây xanh", "Parks": "Công viên", "Acres of parks": "Mẫu Anh công viên", "Park land as a share of the city": "Tỉ lệ đất công viên so với thành phố", "Park acres for every 1,000 people": "Mẫu Anh công viên cho mỗi 1,000 người", "Tree cover inside parks": "Độ phủ cây trong công viên", "Tree cover across the whole city": "Độ phủ cây trên toàn thành phố", "Map of parks": "Bản đồ công viên", "Map of transit stops": "Bản đồ điểm dừng giao thông công cộng", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Dữ liệu công viên và độ phủ cây lấy từ ParkServe của The Trust for Public Land và Sở Lâm nghiệp Hoa Kỳ.", "Loading parks and trees…": "Đang tải công viên và cây xanh…"
+      "Places in this comparison": "Các nơi trong phần so sánh này", "Search isn't working right now.": "Tính năng tìm kiếm hiện không hoạt động.", "Parks and trees": "Công viên và cây xanh", "Parks": "Công viên", "Acres of parks": "Mẫu Anh công viên", "Park land as a share of the city": "Tỉ lệ đất công viên so với thành phố", "Park acres for every 1,000 people": "Mẫu Anh công viên cho mỗi 1,000 người", "Tree cover inside parks": "Độ phủ cây trong công viên", "Tree cover across the whole city": "Độ phủ cây trên toàn thành phố", "Map of parks": "Bản đồ công viên", "Map of transit stops": "Bản đồ điểm dừng giao thông công cộng", "Parks and tree cover come from The Trust for Public Land's ParkServe and the U.S. Forest Service.": "Dữ liệu công viên và độ phủ cây lấy từ ParkServe của The Trust for Public Land và Sở Lâm nghiệp Hoa Kỳ.", "Loading parks and trees…": "Đang tải công viên và cây xanh…", "Adults by highest degree": "Người lớn theo bằng cấp cao nhất", "Associate's degree": "Bằng cao đẳng (associate)", "Bachelor's degree": "Bằng cử nhân", "Graduate or professional degree": "Bằng sau đại học hoặc chuyên môn", "Colleges and universities": "Cao đẳng và đại học", "Students enrolled": "Sinh viên đang theo học", "Students enrolled for every 100 residents": "Sinh viên theo học trên mỗi 100 cư dân", "{n} colleges and universities": "{n} trường cao đẳng và đại học", "1 college or university": "1 trường cao đẳng hoặc đại học", "None listed": "Chưa có trường nào được liệt kê", "About {n} students": "Khoảng {n} sinh viên", "{n} students": "{n} sinh viên", "No count listed": "Chưa có số liệu", "Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.": "Số liệu sinh viên lấy từ Wikidata, do tình nguyện viên cập nhật. Có thể gồm cả các cơ sở khác hoặc đã cũ. Cư dân được tính tại nơi họ sống, nên sinh viên sống trong thành phố đã nằm trong dân số cư trú.", "Loading colleges and universities…": "Đang tải các trường cao đẳng và đại học…"
     }
   };
   if (XL) { var CMP_L = CMP_STR[ES ? "es" : FR ? "fr" : "vi"]; Object.keys(CMP_L).forEach(function (k) { CODE_TX[k] = CMP_L[k]; if (DICT_TX[k] == null) DICT_TX[k] = CMP_L[k]; }); }
@@ -5033,7 +5054,7 @@ var EVENT_SOURCES = [
     { hex: "#6D34B8", rgb: [109, 52, 184], tint: "#D3BDEE" }, { hex: "#2F7D22", rgb: [47, 125, 34], tint: "#BFE0B7" },
     { hex: "#B8307F", rgb: [184, 48, 127], tint: "#EDB8DB" }
   ];
-  var CMP_GROUPS = { basics: "The basics", homes: "Homes", money: "Work and money", move: "Getting around", learn: "Learning", parks: "Parks and trees" };
+  var CMP_GROUPS = { basics: "The basics", homes: "Homes", money: "Work and money", move: "Getting around", learn: "Learning", college: "Colleges and universities", parks: "Parks and trees" };
   var CMP_ROWS = [
     { g: "basics", key: "pop", label: "Population", kind: "cnt" }, { g: "basics", key: "area", label: "Land area", kind: "area" },
     { g: "basics", key: "density", label: "People per square mile", kind: "cnt" },
@@ -5049,6 +5070,8 @@ var EVENT_SOURCES = [
     { g: "parks", key: "parkCount", label: "Parks", kind: "cnt" }, { g: "parks", key: "parkAcres", label: "Acres of parks", kind: "cnt" },
     { g: "parks", key: "parkShare", label: "Park land as a share of the city", kind: "pct" }, { g: "parks", key: "parkPer1k", label: "Park acres for every 1,000 people", kind: "dens1" },
     { g: "parks", key: "parkCanopy", label: "Tree cover inside parks", kind: "pct" }, { g: "parks", key: "cityCanopy", label: "Tree cover across the whole city", kind: "pct" },
+    { g: "learn", key: "capAssoc", ind: "capAssoc", hidden: true }, { g: "learn", key: "capBach", ind: "capBach", hidden: true }, { g: "learn", key: "capGrad", ind: "capGrad", hidden: true },
+    { g: "college", key: "collStudents", label: "Students enrolled", kind: "cnt" }, { g: "college", key: "collPer100", label: "Students enrolled for every 100 residents", kind: "cnt" },
     { g: "learn", key: "capAll", label: "Adults with a college degree", ind: "capAll" }, { g: "learn", key: "hs", label: "Adults with at least a high school diploma", ind: "hs", tkey: "Adults with a high school diploma or more" }
   ];
   function cmpColor(i) { return CMP_COLORS[i % CMP_COLORS.length]; }
@@ -5126,7 +5149,7 @@ var EVENT_SOURCES = [
   function cmpModel(ready, only) {
     var idx = ready.map(function (_, i) { return i; }), rows = [];
     CMP_ROWS.forEach(function (r) {
-      if (only ? r.g !== only : r.g === "parks") return;
+      if (r.hidden || (only ? r.g !== only : (r.g === "parks" || r.g === "college"))) return;
       var v = ready.map(function (d) { return d.vals[r.key] || null; });
       if (v.filter(Boolean).length < Math.min(2, ready.length)) return;
       var ref = null; v.forEach(function (x) { if (!ref && x && x.c) ref = x.c; });
@@ -5141,12 +5164,13 @@ var EVENT_SOURCES = [
     var order = Object.keys(groups).map(function (g) { groups[g].sort(function (a, b) { return b.rel - a.rel; }); return { g: g, rows: groups[g], top: groups[g][0].rel }; })
       .sort(function (a, b) { return CMP_ORDER.indexOf(a.g) - CMP_ORDER.indexOf(b.g); });
     same.sort(function (a, b) { return a.rel - b.rel; });
+    if (!only && !order.some(function (g) { return g.g === "learn"; }) && ready.some(function (d) { return d.vals.capBach; })) { order.push({ g: "learn", rows: [], top: 0 }); order.sort(function (a, b) { return CMP_ORDER.indexOf(a.g) - CMP_ORDER.indexOf(b.g); }); }
     return { groups: order, same: same };
   }
   function cmpBadge(i) { return '<b class="cxbadge" style="background:' + cmpColor(i).hex + '" aria-hidden="true">' + cmpLetter(i) + '</b>'; }
 
   /* ---- rendering: vertical towers, the same look as a single-place page ---- */
-  var CMP_SCENES = { basics: "tang", homes: "mint", money: "lilac", learn: "yellow", parks: "leaf", move: "teal", same: "pink" }, CMP_ORDER = ["basics", "homes", "money", "learn", "parks", "move"];
+  var CMP_SCENES = { basics: "tang", homes: "mint", money: "lilac", learn: "yellow", parks: "leaf", move: "teal", same: "mint", college: "pink" }, CMP_ORDER = ["basics", "homes", "money", "learn", "college", "parks", "move"];
   function cmpTowers(row, ready, withState, short) {
     var vals = [];
     row.v.forEach(function (x) { if (x && x.p != null) vals.push(x.p); });
@@ -5177,6 +5201,29 @@ var EVENT_SOURCES = [
   function cmpScene(key, title, inner) {
     return '<section class="scene cxscene" data-g="' + key + '" style="--bg:' + SC[CMP_SCENES[key]].bg + '"><div class="cxwrap"><div class="sign">' + esc(title) + '</div>' + inner + '</div></section>';
   }
+  function cmpRgba(hex, a) { var n = parseInt(hex.slice(1), 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; }
+  // Degrees stacked in each tower: associate's, bachelor's, graduate or professional.
+  function cmpDegrees(ready, withState, short) {
+    var keys = ["capAssoc", "capBach", "capGrad"], alphas = [0.4, 0.7, 1];
+    if (!ready.some(function (d) { return d.vals.capBach; })) return "";
+    function parts(get) { var v = keys.map(function (k) { return get(k); }); return v.every(function (x) { return x == null; }) ? null : v.map(function (x) { return x || 0; }); }
+    var cols = [];
+    ready.forEach(function (d, i) { var v = parts(function (k) { var x = d.vals[k]; return x ? x.p : null; }); cols.push({ cls: "pl", v: v, name: cmpBadge(i) + '<span>' + esc(d.name) + '</span>', base: cmpColor(i).hex }); });
+    var stCols = [], seen = {};
+    if (withState) ready.forEach(function (d, i) { if (seen[d.fips]) return; var v = parts(function (k) { var x = d.vals[k]; return x ? x.st : null; }); if (!v) return; seen[d.fips] = 1; stCols.push({ cls: "st", v: v, name: '<span>' + esc(d.stateName) + '</span>', base: cmpColor(i).tint }); });
+    var us = parts(function (k) { var x = ready[0].vals[k]; return x ? x.us : null; }), usCols = us ? [{ cls: "us", v: us, name: '<span>' + esc(T("U.S.")) + '</span>', base: "#1E1B4B" }] : [];
+    var all = cols.concat(stCols, usCols), max = Math.max.apply(null, all.map(function (c) { return c.v ? c.v[0] + c.v[1] + c.v[2] : 0; })) || 1;
+    function tc(c) {
+      if (!c.v) return { b: '<div class="cxtc"><div class="v">' + esc(T("No data")) + '</div><div class="b"></div></div>', n: '<div class="cxnm">' + c.name + '</div>' };
+      var tot = c.v[0] + c.v[1] + c.v[2], h = Math.max(5, tot / max * 80);
+      var segs = c.v.map(function (x, k) { return '<i class="s' + k + '" style="--f:' + Math.max(x, 0.001) + ';background:' + cmpRgba(c.base, c.cls === "us" ? [0.3, 0.5, 0.75][k] : c.cls === "st" ? [0.5, 0.75, 1][k] : alphas[k]) + '">' + (x >= 4 && !short ? Math.round(x) + "%" : "") + '</i>'; }).join("");
+      return { b: '<div class="cxtc ' + c.cls + '" style="--h:' + h.toFixed(1) + '%"><div class="v">' + esc(cmpFmt({ kind: "pct" }, tot)) + '</div><div class="b cxstk" role="img" aria-label="' + esc(c.v.map(function (x, k) { return T(["Associate's degree", "Bachelor's degree", "Graduate or professional degree"][k]) + " " + Math.round(x) + "%"; }).join(", ")) + '">' + segs + '</div></div>', n: '<div class="cxnm">' + c.name + '</div>' };
+    }
+    var groups = [cols, stCols, usCols].filter(function (g) { return g.length; });
+    var tw = '<div class="cxtw' + (short ? " cxshort" : "") + '">' + groups.map(function (g) { var t = g.map(tc); return '<div class="cxtg" style="flex:' + g.length + '"><div class="cxbs">' + t.map(function (x) { return x.b; }).join("") + '</div><div class="cxns">' + t.map(function (x) { return x.n; }).join("") + '</div></div>'; }).join("") + '</div>';
+    var leg = '<ul class="cxleg" aria-hidden="true">' + ["Associate's degree", "Bachelor's degree", "Graduate or professional degree"].map(function (l, k) { return '<li><i style="background:rgba(30,27,75,' + [0.3, 0.55, 0.85][k] + ')"></i>' + esc(T(l)) + '</li>'; }).join("") + '</ul>';
+    return '<article class="cxrow"><h3>' + esc(T("Adults by highest degree")) + '</h3>' + leg + tw + '</article>';
+  }
   function cmpMapCard(kind, ready, title) {
     return '<article class="cxrow cxmapcard"><h3>' + esc(title) + '</h3><div class="cxmaps cxn' + ready.length + '">' + ready.map(function (d, i) {
       return '<div class="cxmapcol"><div class="cxmapname">' + cmpBadge(i) + '<span>' + esc(d.name) + '</span></div><div class="cxmap" id="cxmap_' + kind + '_' + i + '" role="img" aria-label="' + esc(T(kind === "parks" ? "Map of parks" : "Map of transit stops") + ": " + d.name + ", " + d.stateName) + '"></div></div>';
@@ -5185,7 +5232,7 @@ var EVENT_SOURCES = [
   function cmpFull(model, ready, compact) {
     var h = "";
     model.groups.forEach(function (gr) {
-      var rows = (!compact && gr.g === "move" ? cmpMapCard("transit", ready, T("Map of transit stops")) : "") + gr.rows.map(function (r) { return '<article class="cxrow"><h3>' + esc(r.label) + '</h3>' + cmpTowers(r, ready, !compact, compact) + (compact ? "" : cmpNote(r, ready)) + '</article>'; }).join("");
+      var rows = (!compact && gr.g === "move" ? cmpMapCard("transit", ready, T("Map of transit stops")) : "") + (gr.g === "learn" ? cmpDegrees(ready, !compact, compact) : "") + gr.rows.map(function (r) { return '<article class="cxrow"><h3>' + esc(r.label) + '</h3>' + cmpTowers(r, ready, !compact, compact) + (compact ? "" : cmpNote(r, ready)) + '</article>'; }).join("");
       h += cmpScene(gr.g, T(CMP_GROUPS[gr.g]), '<div class="cxrows' + (compact ? " cxcols" : "") + '">' + rows + '</div>');
     });
     if (model.same.length) {
@@ -5275,9 +5322,58 @@ var EVENT_SOURCES = [
     })();
     return d.parksP;
   }
-  function cmpInsertScene(out, html) {
+  /* ---- colleges and universities (names and student counts from Wikidata) ---- */
+  function cmpCollegeData(d) {
+    if (d.collP) return d.collP;
+    d.collP = (async function () {
+      var xs = [], ys = []; d.rings.forEach(function (r) { r.forEach(function (c) { xs.push(c[0]); ys.push(c[1]); }); });
+      var w = Math.min.apply(null, xs), e = Math.max.apply(null, xs), so = Math.min.apply(null, ys), n = Math.max.apply(null, ys);
+      var q = 'SELECT ?u ?uLabel ?n ?t ?loc ?parent WHERE { SERVICE wikibase:box { ?u wdt:P625 ?loc . bd:serviceParam wikibase:cornerSouthWest "Point(' + w + ' ' + so + ')"^^geo:wktLiteral . bd:serviceParam wikibase:cornerNorthEast "Point(' + e + ' ' + n + ')"^^geo:wktLiteral . } ' +
+        '?u wdt:P31/wdt:P279* wd:Q38723 . OPTIONAL { ?u wdt:P361 ?parent } OPTIONAL { ?u p:P2196 ?st . ?st ps:P2196 ?n . OPTIONAL { ?st pq:P585 ?t } } SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }';
+      var j = await getJSON("https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(q));
+      var by = {};
+      (j.results.bindings || []).forEach(function (b) {
+        var m = /Point\(([-\d.]+) ([-\d.]+)\)/.exec(b.loc && b.loc.value); if (!m || !pointInRings(d.rings, +m[1], +m[2])) return;
+        var id = b.u.value.split("/").pop(), name = b.uLabel && b.uLabel.value; if (!name || /^Q\d+$/.test(name)) return;
+        var o = by[id] || (by[id] = { id: id, name: name, n: null, t: "", parents: {} });
+        if (b.parent) o.parents[b.parent.value.split("/").pop()] = 1;
+        if (b.n) { var t = b.t ? b.t.value : ""; if (o.n == null || t > o.t) { o.n = +b.n.value; o.t = t; } }
+      });
+      var list = Object.keys(by).map(function (k) { return by[k]; }).filter(function (o) { return !Object.keys(o.parents).some(function (p) { return by[p]; }); });
+      list.sort(function (a, b) { return (b.n || 0) - (a.n || 0) || a.name.localeCompare(b.name); });
+      var total = 0, counted = 0; list.forEach(function (o) { if (o.n > 0) { total += o.n; counted++; } });
+      var pop = d.vals.pop && d.vals.pop.p, out = { list: list, total: counted ? total : null };
+      if (counted && pop > 0) d.vals.collPer100 = { p: total / pop * 100, m: null };
+      if (counted) d.vals.collStudents = { p: total, m: null };
+      return out;
+    })();
+    return d.collP;
+  }
+  function cmpRound(n) { return n >= 1000 ? Math.round(n / 100) * 100 : Math.round(n); }
+  async function cmpCollegeFlow(ready, token, full) {
+    var out = document.getElementById("cxOut"); if (!out) return;
+    var node = cmpInsertScene(out, cmpScene("college", T("Colleges and universities"), '<p class="cxwait">' + esc(T("Loading colleges and universities…")) + '</p>'), ["parks", "move", "same"]);
+    var res = await Promise.all(ready.map(function (d) { return cmpCollegeData(d).catch(function (e) { console.info("Colleges unavailable:", e && e.message); return null; }); }));
+    if (token !== CMP.token || !node.isConnected) return;
+    if (!res.some(function (r) { return r && r.list.length; })) { node.remove(); return; }
+    var cards = ready.map(function (d, i) {
+      var r = res[i], big, sub, ul = "";
+      if (!r || !r.list.length) { big = '<span class="cxbigtxt">' + esc(T("None listed")) + '</span>'; sub = ""; }
+      else {
+        big = r.total != null ? '<span class="cxbignum">' + esc(cmpRound(r.total).toLocaleString("en-US")) + '</span><span class="cxbigl">' + esc(T("Students enrolled")) + '</span>' : '<span class="cxbigtxt">' + esc(T("No count listed")) + '</span>';
+        sub = '<p class="cxcnt">' + esc(r.list.length === 1 ? T("1 college or university") : T("{n} colleges and universities", { n: r.list.length })) + '</p>';
+        ul = '<ul class="cxinst">' + r.list.slice(0, 4).map(function (o) { return '<li><b>' + esc(o.name) + '</b>' + (o.n ? '<span>' + esc(T("{n} students", { n: cmpRound(o.n).toLocaleString("en-US") })) + '</span>' : '') + '</li>'; }).join("") + '</ul>';
+      }
+      return '<div class="cxcoll" style="--pc:' + cmpColor(i).hex + '"><div class="cxmapname">' + cmpBadge(i) + '<span>' + esc(d.name) + '</span></div><div class="cxbig">' + (FR || VI ? "\u2060" : "") + big + '</div>' + sub + ul + '</div>';
+    }).join("");
+    var model = cmpModel(ready, "college"), rows = model.groups.length ? model.groups[0].rows : [];
+    var inner = '<div class="cxrows"><article class="cxrow cxcollcard"><h3>' + esc(T("Colleges and universities")) + '</h3><div class="cxcolls cxn' + ready.length + '">' + cards + '</div><p class="cxnote">' + esc(T("Student numbers come from Wikidata, which volunteers keep up to date. They can include other campuses or be out of date. Residents are counted where they live, so students who live in town are already part of the resident count.")) + '</p></article>' +
+      rows.map(function (r) { return '<article class="cxrow"><h3>' + esc(r.label) + '</h3>' + cmpTowers(r, ready, false, !full) + '</article>'; }).join("") + '</div>';
+    var fresh = cmpInsertScene(out, cmpScene("college", T("Colleges and universities"), inner), ["parks", "move", "same"]); node.remove(); cmpGrow(fresh);
+  }
+  function cmpInsertScene(out, html, after) {
     var tmp = document.createElement("div"); tmp.innerHTML = html; var node = tmp.firstChild, before = null;
-    ["move", "same"].some(function (g) { before = out.querySelector('[data-g="' + g + '"]'); return !!before; });
+    (after || ["move", "same"]).some(function (g) { before = out.querySelector('[data-g="' + g + '"]'); return !!before; });
     if (!before) { var ys = out.querySelectorAll(":scope > .cxyel"); before = ys[ys.length - 1] || null; }
     out.insertBefore(node, before); return node;
   }
@@ -5370,6 +5466,7 @@ var EVENT_SOURCES = [
     if (sc) sc.onclick = function () { CMP.same = !CMP.same; sc.setAttribute("aria-pressed", CMP.same ? "true" : "false"); sc.textContent = CMP.same ? T("Same scale") : T("Fit each place"); CMP.sets.forEach(function (m) { cmpFit(m); }); };
     if (full) { cmpBuildSet("head", ready, token); cmpLazySet("transit", ready, token); }
     cmpParksFlow(ready, token, full);
+    cmpCollegeFlow(ready, token, full);
   }
   // Picker: suggestions come from the same Census place search the top bar uses.
   function cmpPicker(host) {
