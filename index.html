@@ -3081,6 +3081,29 @@ var EVENT_SOURCES = [
     var cands = [];
     // Photos found by searching for words (not by location) must actually mention the place by name. Without this a stray word like "skyline" can bring in a photo of somewhere else entirely.
     var nameRe = new RegExp("(^|[^A-Za-z])" + place.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "[\\s_-]+") + "(?!\\s+(Heights|Hills|Park|Beach|Junction|Springs|Falls|Lakes|Village|Township|Valley|Grove|Gardens|Estates|Woods|Ridge|Shores)\\b)($|[^A-Za-z])", "i");
+    // Many places share a name ("Vista" is also Rio Vista, Valle Vista, Isla Vista). A word search must find this place, not one that merely contains its name.
+    var stFull = "", stAbbr = ""; Object.keys(STATES).forEach(function (k) { if (STATES[k][0] === state || STATES[k][1] === state) { stFull = STATES[k][0]; stAbbr = STATES[k][1]; } });
+    var otherSt = Object.keys(STATES).map(function (k) { return STATES[k]; }).filter(function (x) { return x[0] !== stFull; }).map(function (x) { return x[0]; });
+    var nameG = new RegExp(place.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "[\\s_-]+"), "gi");
+    var TRAIL_OK = /^(city|downtown|historic|old|civic|public|library|museum|courthouse|station|skyline|aerial|high|school|hall|theater|theatre|church|mission|main|street|avenue|boulevard|plaza|square|center|centre|tower|bridge|depot|creek|and|in|at|from|looking|view|panorama|sign|water|fire|police)$/i;
+    var LEAD_OK = /^(downtown|historic|old|city|central|main|aerial|view|views|the|in|of|at|near|from|and)$/i;
+    var stRe = stFull ? new RegExp("^[\\s_]*,?[\\s_]*(" + stFull + "|" + stAbbr + ")(?![A-Za-z])", "i") : /(?!)/, otherRe = new RegExp("^[\\s_]*,[\\s_]*(" + otherSt.join("|") + ")(?![A-Za-z])", "i");
+    function mentionsThisPlace(text) {
+      var m; nameG.lastIndex = 0;
+      while ((m = nameG.exec(text))) {
+        var a = m.index, b = a + m[0].length, before = text.slice(0, a), after = text.slice(b);
+        if (/[A-Za-z]$/.test(before) || /^[A-Za-z]/.test(after)) continue;                 // part of a longer word
+        if (/^[\s_]+(Heights|Hills|Park|Beach|Junction|Springs|Falls|Lakes|Village|Township|Valley|Grove|Gardens|Estates|Woods|Ridge|Shores)\b/i.test(after) && !stRe.test(after)) continue;
+        if (otherRe.test(after)) continue;                                                   // "Vista, Texas"
+        var w = /([A-Za-z]+)[\s_-]+$/.exec(before);
+        if (w && /^[A-Z]/.test(w[1]) && !LEAD_OK.test(w[1])) continue;                       // "Rio Vista", "Isla Vista", "Valle Vista"
+        if (stRe.test(after)) return true;                                                   // "Vista, California" or "Vista, CA"
+        var t = /^[\s_]+([A-Za-z]+)/.exec(after);
+        if (t && /^[A-Z]/.test(t[1]) && !TRAIL_OK.test(t[1])) continue;                      // "Vista Santa Rosa"
+        return true;
+      }
+      return false;
+    }
     results.forEach(function (j, src) {
       var pages = (j.query && j.query.pages) || {};
       Object.keys(pages).forEach(function (k) { var pg = pages[k]; if (seen[pg.pageid || pg.title]) return; seen[pg.pageid || pg.title] = 1; cands.push({ pg: pg, src: src, idx: pg.index || 0 }); });
@@ -3098,7 +3121,7 @@ var EVENT_SOURCES = [
       var desc = plainText(m.ImageDescription && m.ImageDescription.value);
       var cats = plainText(m.Categories && m.Categories.value).replace(/\|/g, " ; ");
       var all = title + " ; " + desc + " ; " + cats;
-      if (cd.src >= 2 && !nameRe.test(all + " ; " + pg.title)) return;
+      if (cd.src >= 2 && !mentionsThisPlace(all + " ; " + pg.title)) return;
       if (!PHOTO_WANT.test(all) || PHOTO_AVOID.test(title + " ; " + cats) || PHOTO_AVOID.test(desc.slice(0, 160))) return;
       if (PHOTO_SKIP.test(title) || !K.isNeutralText(title) || !K.isNeutralText(desc)) return;
       if (/^(IMG|DSC|P)[_ -]?\d+/i.test(title) && !desc) return;
