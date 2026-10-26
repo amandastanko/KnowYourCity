@@ -4195,7 +4195,7 @@ var EVENT_SOURCES = [
         renderer: { type: "simple", symbol: { type: "simple-fill", color: [56, 168, 0, 0.55], outline: { color: [30, 27, 75, 1], width: 1 } } },
         popupTemplate: { title: function (f) { return properName(pk(f.graphic.attributes, "park_name") || "Park"); }, content: function (f) { return parkPopup(f.graphic.attributes); } } });
       map.add(lyr); S.parkLayer = lyr;
-      var view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 12, ui: { components: ["zoom", "attribution"] },
+      var view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 12, ui: { components: ["zoom"] },
         popup: { collapseEnabled: true, dockEnabled: false }, navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
       S.parkView = view; S.park2d = view; S.parkMode = "2d";
       view.on("click", function () { view.navigation.mouseWheelZoomEnabled = true; });
@@ -4260,7 +4260,7 @@ var EVENT_SOURCES = [
           // Esri's 3D topographic basemap: real terrain, 3D buildings and trees. It needs its own map, so the parks layer is copied onto it.
           var smap = new modules.Map({ basemap: "topo-3d", ground: "world-elevation" }), l3 = S.parkLayer.clone();
           smap.add(l3); S.parkLayer2d = S.parkLayer; S.parkLayer3d = l3; parkTilesStyle(false);
-          S.parkScene = new SV({ container: box, map: smap, viewpoint: vp, ui: { components: ["zoom", "navigation-toggle", "compass", "attribution"] },
+          S.parkScene = new SV({ container: box, map: smap, viewpoint: vp, ui: { components: ["zoom", "navigation-toggle", "compass"] },
             popup: { collapseEnabled: true, dockEnabled: false }, navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
           var sv = S.parkScene;
           sv.on("click", function () { try { sv.navigation.mouseWheelZoomEnabled = true; } catch (e) {} });
@@ -4474,7 +4474,7 @@ var EVENT_SOURCES = [
       if (!modules.MapView || !modules.Map) throw new Error("transit map not available");
       var map = CFG.ARCGIS_KEY ? new modules.Map({ basemap: "arcgis/community" }) : new modules.Map({ layers: [new modules.WebTileLayer({ urlTemplate: "https://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png", subDomains: ["a", "b", "c"], copyright: "© OpenStreetMap contributors" })] });
       var pts = await transitStopPoints(S.rings);   // only the stops inside this place, so the map stays light
-      var view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 12, ui: { components: ["zoom", "attribution"] },
+      var view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 12, ui: { components: ["zoom"] },
         popup: { collapseEnabled: true, dockEnabled: false }, navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
       view.on("click", function () { view.navigation.mouseWheelZoomEnabled = true; });
       box.addEventListener("mouseleave", function () { view.navigation.mouseWheelZoomEnabled = false; });
@@ -4586,7 +4586,7 @@ var EVENT_SOURCES = [
         function mk(r) { var o = { urlTemplate: r.url, copyright: C }; if (TI) { try { o.tileInfo = TI.create({ numLODs: NATIVE + 1 }); } catch (e) {} } return new modules.WebTileLayer(o); }
         var map = new modules.Map({ layers: [] }), lT = mk(keep[0]), lN = mk(keep[keep.length - 1]);
         map.addMany([lT, lN]);
-        view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 14, ui: { components: ["zoom", "attribution"] }, constraints: TI ? { lods: TI.create({ numLODs: MAXZ + 1 }).lods } : { maxZoom: NATIVE },
+        view = new modules.MapView({ container: box, map: map, center: [S.center.longitude, S.center.latitude], zoom: 14, ui: { components: ["zoom"] }, constraints: TI ? { lods: TI.create({ numLODs: MAXZ + 1 }).lods } : { maxZoom: NATIVE },
           navigation: { mouseWheelZoomEnabled: false, browserTouchPanEnabled: true } });
         S.wbView = view;
         view.ui.move("zoom", "bottom-left");
