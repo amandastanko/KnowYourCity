@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://js.arcgis.com/4.33/esri/themes/light/main.css">
+<link rel="stylesheet" href="https://js.arcgis.com/5.1/esri/themes/light/main.css">
 <style>
 :root{
   --ink:#1E1B4B; --paper:#fff; --us:rgba(30,27,75,.5); --track:rgba(30,27,75,.14);
@@ -769,7 +769,7 @@ html[lang="vi"]{--f-body:"Be Vietnam Pro","Atkinson Hyperlegible",system-ui,sans
 // Map widgets (zoom buttons, popups, the compare bar) speak the page's language. The choice is the ?lang= link, or the one saved earlier.
 (function () { var l = "en"; try { var q = (new URLSearchParams(location.search).get("lang") || localStorage.getItem("kyc_lang") || "").slice(0, 2); if (q === "es" || q === "fr" || q === "vi") l = q; } catch (e) {} window.dojoConfig = { locale: l }; if (l === "vi") { var fl = document.createElement("link"); fl.rel = "stylesheet"; fl.href = "https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700&display=swap"; document.head.appendChild(fl); } })();
 </script>
-<script src="https://js.arcgis.com/4.33/"></script>
+<script type="module" src="https://js.arcgis.com/5.1/"></script>
 <script>
 /* ---------- Configuration ---------- */
 // Keys can live here for a public deployment. ArcGIS key is optional (OpenStreetMap basemap + free geocoder without it).
@@ -2952,6 +2952,19 @@ var EVENT_SOURCES = [
   var modules = {}, modulesDone = null;
   // The map library can finish loading after the place data does (slow phones), so sections that need it wait here first.
   var modulesReady = new Promise(function (res) { modulesDone = res; });
+  // ArcGIS Maps SDK 5.1 loads as a module. Its documented loader for plain pages is $arcgis.import, which takes "@arcgis/core/..." paths.
+  // This small helper waits for the SDK, then loads the named modules (written as "esri/..." in the lists below).
+  function arcRequire(names, ok, fail) {
+    var t0 = Date.now();
+    (function wait() {
+      if (window.$arcgis && $arcgis.import) {
+        $arcgis.import(names.map(function (n) { return n.replace(/^esri\//, "@arcgis/core/") + ".js"; })).then(function (mods) {
+          try { ok.apply(null, mods); } catch (e) { console.warn("ArcGIS modules failed to start:", e); if (fail) fail(e); }
+        }, function (e) { if (fail) fail(e); });
+      } else if (Date.now() - t0 < 25000) setTimeout(wait, 100);
+      else if (fail) fail(new Error("ArcGIS Maps SDK did not load"));
+    })();
+  }
   async function needMaps() {
     await Promise.race([modulesReady, new Promise(function (res) { setTimeout(res, 25000); })]);
     if (!S.pendingPoly && S.rings && modules.Polygon) S.pendingPoly = Poly(S.rings);
@@ -4203,16 +4216,14 @@ var EVENT_SOURCES = [
   function loadSceneView() {
     return new Promise(function (res, rej) {
       if (modules.SceneView) return res(modules.SceneView);
-      if (typeof require === "undefined") return rej(new Error("no ArcGIS SDK"));
-      require(["esri/views/SceneView"], function (SV) { modules.SceneView = SV; res(SV); }, rej);
+      arcRequire(["esri/views/SceneView"], function (SV) { modules.SceneView = SV; res(SV); }, rej);
     });
   }
   // Widgets and layers loaded only when the 3D or basemap controls are used.
   function loadParkParts() {
     return new Promise(function (res, rej) {
       if (modules.BasemapGallery) return res();
-      if (typeof require === "undefined") return rej(new Error("no ArcGIS SDK"));
-      require(["esri/widgets/BasemapGallery", "esri/widgets/Expand"], function (BG, EX) { modules.BasemapGallery = BG; modules.Expand = EX; res(); }, rej);
+      arcRequire(["esri/widgets/BasemapGallery", "esri/widgets/Expand"], function (BG, EX) { modules.BasemapGallery = BG; modules.Expand = EX; res(); }, rej);
     });
   }
   // Basemap gallery inside the map frame (the full ArcGIS gallery, for both the flat map and the 3D scene).
@@ -5896,9 +5907,8 @@ var EVENT_SOURCES = [
 
   /* ---------- Boot ---------- */
   function startMap() {
-    if (typeof require === "undefined") { console.warn("ArcGIS Maps SDK did not load; continuing without the map."); modulesDone(); return; }
     try {
-      require(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home", "esri/widgets/Swipe", "esri/layers/FeatureLayer", "esri/layers/ImageryLayer", "esri/geometry/Extent", "esri/layers/support/TileInfo"],
+      arcRequire(["esri/config", "esri/Map", "esri/WebMap", "esri/views/MapView", "esri/Graphic", "esri/geometry/Polygon", "esri/layers/WebTileLayer", "esri/core/reactiveUtils", "esri/layers/support/FeatureFilter", "esri/Viewpoint", "esri/widgets/Zoom", "esri/widgets/Home", "esri/widgets/Swipe", "esri/layers/FeatureLayer", "esri/layers/ImageryLayer", "esri/geometry/Extent", "esri/layers/support/TileInfo"],
         function (esriConfig, Map, WebMap, MapView, Graphic, Polygon, WebTileLayer, reactiveUtils, FeatureFilter, Viewpoint, Zoom, Home, Swipe, FeatureLayer, ImageryLayer, Extent, TileInfo) {
           modules.TileInfo = TileInfo; modules.Swipe = Swipe; modules.FeatureLayer = FeatureLayer; modules.ImageryLayer = ImageryLayer; modules.Extent = Extent;
           modules.Graphic = Graphic; modules.Polygon = Polygon; modules.WebMap = WebMap; modules.MapView = MapView; modules.Map = Map; modules.WebTileLayer = WebTileLayer; modules.reactiveUtils = reactiveUtils; modules.FeatureFilter = FeatureFilter; modules.Viewpoint = Viewpoint;
