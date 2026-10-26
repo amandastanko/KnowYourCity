@@ -5077,6 +5077,12 @@ var EVENT_SOURCES = [
     activeEl = null; sched();
   }
 
+  // Sections such as parks, weather and schools arrive after the page is built. Homie needs to know about them too.
+  var tgTimer = 0;
+  if (window.MutationObserver && $("#story")) new MutationObserver(function () {
+    clearTimeout(tgTimer); tgTimer = setTimeout(function () { TARGETS = $$("[data-hid]"); sched(); }, 250);
+  }).observe($("#story"), { childList: true, subtree: true });
+
   function setHomieOn(on) {
     homieOn = on; safeSet("kyc_homie", on ? "on" : "off");
     homie.classList.toggle("off", !on); ptr.classList.toggle("off", !on);
@@ -5114,7 +5120,7 @@ var EVENT_SOURCES = [
     var ex = SAYX[hid]; if (typeof ex === "function") ex = ex();
     if (ex && ex.length && !again) {   // rotate through the section's lines, one per visit
       var all = (text ? [text] : []).concat(ex.map(function (l) { return T(l, { P: S.name }); }));
-      sayN[hid] = sayN[hid] == null ? 0 : sayN[hid] + 1; text = all[sayN[hid] % all.length];
+      sayN[hid] = sayN[hid] == null ? Math.floor(Math.random() * all.length) : sayN[hid] + 1; text = all[sayN[hid] % all.length];
       S.cur = S.cur || {}; S.cur[hid] = text;
     } else if (again && S.cur && S.cur[hid]) text = S.cur[hid];
     var isHero = hid === "hero", isFact = /^fact/.test(hid);
